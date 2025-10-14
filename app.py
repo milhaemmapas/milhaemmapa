@@ -734,7 +734,7 @@ with aba2:
         st.error(f"❌ Não foi possível carregar o CSV de obras em: {CSV_OBRAS}")
 
 # =====================================================
-# 3) Milhã em Mapas - COM MAPAS FUNCIONAIS
+# 3) Milhã em Mapas - COM MAPAS FUNCIONAIS (corrigido)
 # =====================================================
 with aba3:
     # Cabeçalho em card consolidado (um único bloco)
@@ -743,22 +743,29 @@ with aba3:
         "<p>Explore as camadas territoriais, de infraestrutura e recursos hídricos do município</p>",
     )
 
-    # estado inicial do painel
+    # Estado inicial do painel e da centralização do mapa
     if "show_layer_panel" not in st.session_state:
         st.session_state["show_layer_panel"] = True
+    if "m3_should_fit" not in st.session_state:
+        # Centraliza apenas na primeira carga
+        st.session_state["m3_should_fit"] = True
 
-    # Botão com ícone para exibir/ocultar
+    # Botão com ícone para exibir/ocultar painel
     show_now = st.session_state["show_layer_panel"]
     wrapper_id = "toggle-panel" if show_now else "toggle-panel-pulse"
 
-    col_btn, _ = st.columns([1, 6])
-    with col_btn:
+    col_btnL, col_btnR = st.columns([1, 6])
+    with col_btnL:
         st.markdown(f"<div id='{wrapper_id}'>", unsafe_allow_html=True)
         label = ("🙈 Ocultar painel de camadas" if show_now else "👁️ Exibir painel de camadas")
         if st.button(label, use_container_width=True, key="toggle_panel_btn"):
             st.session_state["show_layer_panel"] = not st.session_state["show_layer_panel"]
             st.rerun()
         st.markdown("</div>", unsafe_allow_html=True)
+    with col_btnR:
+        # Botão explícito para recentralizar quando quiser
+        if st.button("📍 Centralizar em Milhã", use_container_width=True, key="btn_center_milha"):
+            st.session_state["m3_should_fit"] = True   # permite um novo fit_bounds
 
     show_panel = st.session_state["show_layer_panel"]
 
@@ -787,7 +794,7 @@ with aba3:
     if show_panel:
         with col_panel:
             st.markdown('<div class="sticky-panel">', unsafe_allow_html=True)
-            st.markdown('<div class="panel-title">🎯 Camadas do Mapa</div>', unsafe_allow_html=True)  # CORRIGIDO
+            st.markdown('<div class="panel-title">🎯 Camadas do Mapa</div>', unsafe_allow_html=True)
             st.markdown('<div class="panel-subtitle">Selecione o que deseja visualizar</div>', unsafe_allow_html=True)
 
             with st.expander("🗾 Território", expanded=True):
@@ -806,7 +813,6 @@ with aba3:
                 show_pocos_rural = st.checkbox("Poços Zona Rural", value=False, key="lyr_pr")
 
             st.markdown('</div>', unsafe_allow_html=True)
-
     else:
         # painel oculto → usa valores atuais/padrão
         show_distritos      = st.session_state.get("lyr_distritos", True)
@@ -821,19 +827,24 @@ with aba3:
     # ----- MAPA FUNCIONAL -----
     with col_map:
         st.markdown("### 🗺️ Mapa Interativo")
-        
-        m3 = folium.Map(location=[-5.680, -39.200], zoom_start=10, tiles=None)
+
+        # Local/zoom default (usados apenas se não houver fit_bounds)
+        default_center = [-5.680, -39.200]
+        default_zoom = 10
+
+        m3 = folium.Map(location=default_center, zoom_start=default_zoom, tiles=None)
         add_base_tiles(m3)
         Fullscreen(position='topright', title='Tela Cheia', title_cancel='Sair', force_separate_button=True).add_to(m3)
         m3.add_child(MeasureControl(primary_length_unit="meters", secondary_length_unit="kilometers", primary_area_unit="hectares"))
         MousePosition().add_to(m3)
 
-        # Centraliza por Distritos se disponível
-        if data_geo.get("Distritos"):
+        # >>> Centraliza APENAS quando permitido (primeira carga ou após clicar no botão)
+        if st.session_state["m3_should_fit"] and data_geo.get("Distritos"):
             b = geojson_bounds(data_geo["Distritos"])
             if b:
                 (min_lat, min_lon), (max_lat, max_lon) = b
                 m3.fit_bounds([[min_lat, min_lon], [max_lat, max_lon]])
+            st.session_state["m3_should_fit"] = False   # trava para não re-fitar a cada rerun
 
         # 1. Território
         if show_distritos and data_geo.get("Distritos"):
@@ -940,6 +951,7 @@ with aba3:
 
         folium.LayerControl(collapsed=True).add_to(m3)
         folium_static(m3, width=1200, height=700)
+
 
 # =====================================================
 # Rodapé
