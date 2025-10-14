@@ -8,7 +8,7 @@ import re
 import os
 
 # =====================================================
-# Configuração inicial da página
+# Configuração inicial
 # =====================================================
 st.set_page_config(page_title="ATLAS • Milhã", layout="wide")
 
@@ -29,57 +29,40 @@ def css_global():
             .hero { display:flex; gap:16px; align-items:center; }
             .hero img { height: 90px; }
             .hero h2 { margin: 0; font-size: 1.6rem; color: #0f172a; }
+            /* de leve para o radio parecer tabs */
+            div[role="radiogroup"] > label { border:1px solid #dbe2ea; padding:6px 10px; border-radius:8px; margin-right:6px; }
         </style>
         """,
         unsafe_allow_html=True,
     )
 
-
 def show_top_banner():
-    st.markdown(
-        """
-        <img class="top-banner" src="https://i.ibb.co/v4d32PvX/banner.jpg" alt="Banner topo" />
-        """,
-        unsafe_allow_html=True,
-    )
-
+    st.markdown('<img class="top-banner" src="https://i.ibb.co/v4d32PvX/banner.jpg" alt="Banner topo" />',
+                unsafe_allow_html=True)
 
 def show_footer_banner():
-    st.markdown(
-        """
-        <img class="footer-banner" src="https://i.ibb.co/8nQQp8pS/barra-inferrior.png" alt="Banner rodapé" />
-        """,
-        unsafe_allow_html=True,
-    )
-
+    st.markdown('<img class="footer-banner" src="https://i.ibb.co/8nQQp8pS/barra-inferrior.png" alt="Banner rodapé" />',
+                unsafe_allow_html=True)
 
 def autodetect_coords(df: pd.DataFrame):
-    """Retorna (lat_col, lon_col) ou None. Tenta pares comuns e coluna única 'COORDENADAS'."""
     # Pares latitude/longitude
-    candidates_lat = [c for c in df.columns if re.search(r"(?:^|\b)(lat|latitude|y)(?:\b|$)", c, re.I)]
-    candidates_lon = [c for c in df.columns if re.search(r"(?:^|\b)(lon|long|longitude|x)(?:\b|$)", c, re.I)]
+    candidates_lat = [c for c in df.columns if re.search(r"(?:^|\\b)(lat|latitude|y)(?:\\b|$)", c, re.I)]
+    candidates_lon = [c for c in df.columns if re.search(r"(?:^|\\b)(lon|long|longitude|x)(?:\\b|$)", c, re.I)]
     if candidates_lat and candidates_lon:
         return candidates_lat[0], candidates_lon[0]
-
     # Coluna única tipo "-5.123, -39.456"
-    single = None
     for c in df.columns:
         if re.search(r"coord|coordenad", c, re.I):
-            single = c
-            break
-    if single is not None:
-        try:
-            tmp = df[single].astype(str).str.extract(r"(-?\d+[\.,]?\d*)\s*[,;]\s*(-?\d+[\.,]?\d*)")
-            tmp.columns = ["LATITUDE", "LONGITUDE"]
-            # Converte vírgula decimal
-            tmp["LATITUDE"] = tmp["LATITUDE"].str.replace(",", ".", regex=False).astype(float)
-            tmp["LONGITUDE"] = tmp["LONGITUDE"].str.replace(",", ".", regex=False).astype(float)
-            df["__LAT__"], df["__LON__"] = tmp["LATITUDE"], tmp["LONGITUDE"]
-            return "__LAT__", "__LON__"
-        except Exception:
-            return None
+            try:
+                tmp = df[c].astype(str).str.extract(r"(-?\\d+[\\.,]?\\d*)\\s*[,;]\\s*(-?\\d+[\\.,]?\\d*)")
+                tmp.columns = ["LATITUDE", "LONGITUDE"]
+                tmp["LATITUDE"] = tmp["LATITUDE"].str.replace(",", ".", regex=False).astype(float)
+                tmp["LONGITUDE"] = tmp["LONGITUDE"].str.replace(",", ".", regex=False).astype(float)
+                df["__LAT__"], df["__LON__"] = tmp["LATITUDE"], tmp["LONGITUDE"]
+                return "__LAT__", "__LON__"
+            except Exception:
+                return None
     return None
-
 
 def add_base_tiles(m: folium.Map):
     tiles = [
@@ -91,7 +74,6 @@ def add_base_tiles(m: folium.Map):
     for name, url, attr in tiles:
         folium.TileLayer(tiles=url, name=name, attr=attr).add_to(m)
 
-
 def load_geojson_any(path_candidates):
     for p in path_candidates:
         if p and os.path.exists(p):
@@ -102,6 +84,47 @@ def load_geojson_any(path_candidates):
                 st.warning(f"Erro ao ler {p}: {e}")
     return None
 
+# Pequenos utils do painel de obras
+def br_money(x):
+    try:
+        s = str(x).replace("R$", "").strip()
+        if "," in s and s.count(".") >= 1:
+            s = s.replace(".", "")
+        v = float(s.replace(",", "."))
+        return f"R$ {v:,.2f}".replace(",", "_").replace(".", ",").replace("_", ".")
+    except Exception:
+        return str(x)
+
+def pick(colnames, *options):
+    cols = list(colnames)
+    for o in options:
+        if o in cols:
+            return o
+    lower = {c.lower(): c for c in cols}
+    for o in options:
+        if o.lower() in lower:
+            return lower[o.lower()]
+    return None
+
+def sniff_read_csv(path: str) -> pd.DataFrame:
+    try:
+        with open(path, "r", encoding="utf-8-sig") as f:
+            sample = f.read(4096); f.seek(0)
+            sep = ";" if sample.count(";") > sample.count(",") else ","
+            return pd.read_csv(f, sep=sep)
+    except Exception as e:
+        st.error(f"Falha ao ler CSV em '{path}': {e}")
+        return pd.DataFrame()
+
+def to_float_series(s: pd.Series) -> pd.Series:
+    def _conv(v):
+        if pd.isna(v): return None
+        txt = str(v)
+        m = re.search(r"-?\\d+[.,]?\\d*", txt)
+        if not m: return None
+        try: return float(m.group(0).replace(",", "."))
+        except Exception: return None
+    return s.apply(_conv)
 
 # =====================================================
 # Layout comum
@@ -109,18 +132,50 @@ def load_geojson_any(path_candidates):
 css_global()
 show_top_banner()
 
-# Abas
-aba1, aba2, aba3 = st.tabs(["Página inicial", "Painel de Obras", "Milhã em Mapas"])
+# ---- Navegação controlada (parece tabs) ----
+page = st.radio(
+    "Navegação",
+    ["Página inicial", "Painel de Obras", "Milhã em Mapas"],
+    horizontal=True,
+    label_visibility="collapsed",
+    index=0,
+    key="nav_page"
+)
+
+# =====================================================
+# Sidebar: só desenhamos quando for "Milhã em Mapas"
+# =====================================================
+if page == "Milhã em Mapas":
+    st.sidebar.markdown("### Milhã em Mapas — Camadas")
+    # flags serão usados mais abaixo, dentro da página
+    with st.sidebar.expander("1) Território", expanded=True):
+        show_distritos = st.checkbox("Distritos", value=True, key="lyr_distritos")
+        show_sede_distritos = st.checkbox("Sede Distritos", value=True, key="lyr_sede")
+        show_localidades = st.checkbox("Localidades", value=True, key="lyr_local")
+        st.markdown("**Domicílios**")
+        show_dom_cidade = st.checkbox("Domicílios Cidade", value=False, key="lyr_dom_cid")
+        show_dom_rural = st.checkbox("Domicílios Rural", value=False, key="lyr_dom_rur")
+    with st.sidebar.expander("2) Infraestrutura", expanded=False):
+        show_escolas = st.checkbox("Escolas", value=False, key="lyr_escolas")
+        show_unidades = st.checkbox("Unidades de Saúde", value=False, key="lyr_unid")
+    with st.sidebar.expander("3) Recursos Hídricos", expanded=False):
+        show_tecnologias = st.checkbox("Tecnologias Sociais", value=False, key="lyr_tec")
+        st.markdown("**Poços**")
+        show_pocos_cidade = st.checkbox("Poços Cidade", value=False, key="lyr_pc")
+        show_pocos_rural = st.checkbox("Poços Zona Rural", value=False, key="lyr_pr")
+else:
+    # limpa a sidebar quando não for a página de mapas (opcional)
+    st.sidebar.empty()
 
 # =====================================================
 # 1) Página inicial
 # =====================================================
-with aba1:
+if page == "Página inicial":
     st.markdown("## Bem-vindo ao ATLAS de Milhã")
     st.markdown(
         """
         Este espaço reúne dados geoespaciais para apoiar decisões públicas, qualificar projetos e aproximar a gestão das pessoas.
-        O uso de mapas facilita a leitura do território, integra informações e ajuda a priorizar ações. Explore as abas para
+        O uso de mapas facilita a leitura do território, integra informações e ajuda a priorizar ações. Explore as páginas para
         visualizar obras, equipamentos e recursos hídricos.
         """
     )
@@ -139,71 +194,20 @@ with aba1:
         )
 
 # =====================================================
-# 2) Painel de Obras  (base: CSV em dados/milha_obras.csv)
+# 2) Painel de Obras
 # =====================================================
-with aba2:
+elif page == "Painel de Obras":
     st.subheader("Mapa das Obras")
     st.caption("Fonte: CSV oficial (pasta dados)")
 
-    # Caminhos possíveis para o CSV
     CSV_OBRAS_CANDIDATES = ["dados/milha_obras.csv", "/mnt/data/milha_obras.csv"]
     CSV_OBRAS = next((p for p in CSV_OBRAS_CANDIDATES if os.path.exists(p)), CSV_OBRAS_CANDIDATES[0])
 
-    # Helpers locais
-    def br_money(x):
-        try:
-            s = str(x).replace("R$", "").strip()
-            if "," in s and s.count(".") >= 1:
-                s = s.replace(".", "")
-            v = float(s.replace(",", "."))
-            return f"R$ {v:,.2f}".replace(",", "_").replace(".", ",").replace("_", ".")
-        except Exception:
-            return str(x)
-
-    def pick(colnames, *options):
-        cols = list(colnames)
-        for o in options:
-            if o in cols:
-                return o
-        lower = {c.lower(): c for c in cols}
-        for o in options:
-            if o.lower() in lower:
-                return lower[o.lower()]
-        return None
-
-    def sniff_read_csv(path: str) -> pd.DataFrame:
-        try:
-            with open(path, "r", encoding="utf-8-sig") as f:
-                sample = f.read(4096)
-                f.seek(0)
-                sep = ";" if sample.count(";") > sample.count(",") else ","
-                return pd.read_csv(f, sep=sep)
-        except Exception as e:
-            st.error(f"Falha ao ler CSV em '{path}': {e}")
-            return pd.DataFrame()
-
-    def to_float_series(s: pd.Series) -> pd.Series:
-        def _conv(v):
-            if pd.isna(v):
-                return None
-            txt = str(v)
-            m = re.search(r"-?\d+[.,]?\d*", txt)
-            if not m:
-                return None
-            try:
-                return float(m.group(0).replace(",", "."))
-            except Exception:
-                return None
-        return s.apply(_conv)
-
-    # === Carregamento do CSV ===
     df_obras = sniff_read_csv(CSV_OBRAS)
 
     if not df_obras.empty:
-        # 1) Detectar coordenadas
         coords = autodetect_coords(df_obras)
         if coords is None:
-            # tenta pares usuais manualmente
             lat = pick(df_obras.columns, "LAT", "Latitude", "LATITUDE", "lat")
             lon = pick(df_obras.columns, "LON", "Longitude", "LONGITUDE", "lon", "long")
             if lat and lon:
@@ -217,20 +221,15 @@ with aba2:
             df_obras["__LAT__"] = to_float_series(df_obras[lat_col])
             df_obras["__LON__"] = to_float_series(df_obras[lon_col])
 
-        # 2) Correção heurística para enquadrar Milhã-CE (lat/lon invertidos e/ou longitude positiva)
         if "__LAT__" in df_obras.columns and "__LON__" in df_obras.columns:
-            # força dtype numérico para permitir operações como -lon
             lat_s = pd.to_numeric(df_obras["__LAT__"], errors="coerce")
             lon_s = pd.to_numeric(df_obras["__LON__"], errors="coerce")
-
             def _pct_inside(a, b):
                 try:
-                    # Milhã/CE ~ lat -6.5..-4.5, lon -40.5..-38.0
                     m = (a.between(-6.5, -4.5)) & (b.between(-40.5, -38.0))
                     return float(m.mean())
                 except Exception:
                     return 0.0
-
             cands = [
                 ("orig",     lat_s,            lon_s,            _pct_inside(lat_s,            lon_s)),
                 ("swap",     lon_s,            lat_s,            _pct_inside(lon_s,            lat_s)),
@@ -241,10 +240,8 @@ with aba2:
             if best[0] != "orig" and best[3] > cands[0][3]:
                 df_obras["__LAT__"], df_obras["__LON__"] = best[1], best[2]
 
-        # 3) Filtrar coordenadas válidas
         df_map = df_obras.dropna(subset=["__LAT__", "__LON__"]).copy()
 
-        # 4) Colunas prioritárias
         cols = list(df_obras.columns)
         c_obra    = pick(cols, "Obra", "OBRA", "Nome", "NOME", "Projeto", "Descrição")
         c_status  = pick(cols, "Status", "STATUS", "Situação", "SITUACAO", "SITUAÇÃO")
@@ -256,12 +253,10 @@ with aba2:
 
         st.success(f"{len(df_map)} obra(s) com coordenadas válidas. (Arquivo: {os.path.basename(CSV_OBRAS)})")
 
-        # 5) Centro do mapa
         center = [-5.680, -39.200]
         if not df_map.empty:
             center = [df_map["__LAT__"].mean(), df_map["__LON__"].mean()]
 
-        # 6) Mapa e controles
         m2 = folium.Map(location=center, zoom_start=12, tiles=None)
         add_base_tiles(m2)
         Fullscreen(position='topright', title='Tela Cheia', title_cancel='Sair', force_separate_button=True).add_to(m2)
@@ -269,7 +264,6 @@ with aba2:
         MousePosition().add_to(m2)
         Draw(export=True).add_to(m2)
 
-        # 7) Cor por status
         def status_icon_color(status_val: str):
             s = (status_val or "").strip().lower()
             if any(k in s for k in ["conclu", "finaliz"]):     return "green"
@@ -278,7 +272,6 @@ with aba2:
             if any(k in s for k in ["planej", "licita", "proj"]): return "blue"
             return "gray"
 
-        # 8) Marcadores + popups
         ignore_cols = {"__LAT__", "__LON__"}
         for _, r in df_map.iterrows():
             nome   = str(r.get(c_obra, "Obra")) if c_obra else "Obra"
@@ -320,7 +313,6 @@ with aba2:
         folium.LayerControl(collapsed=True).add_to(m2)
         folium_static(m2, width=1200, height=700)
 
-        # 9) Tabela
         st.markdown("### Tabela de Obras")
         ordered = []
         for c in [c_obra, c_status, c_empresa, c_valor, c_bairro, c_dtini, c_dtfim]:
@@ -334,12 +326,9 @@ with aba2:
 # =====================================================
 # 3) Milhã em Mapas
 # =====================================================
-with aba3:
+elif page == "Milhã em Mapas":
     st.subheader("Camadas do Território, Infraestrutura e Recursos Hídricos")
 
-    # ================================
-    # Carregamento dos arquivos (pasta dados)
-    # ================================
     base_dir_candidates = ["dados", "/mnt/data"]
     files = {
         # Território
@@ -362,32 +351,6 @@ with aba3:
         candidates = [os.path.join(b, fname) for b in base_dir_candidates]
         data_geo[name] = load_geojson_any(candidates)
 
-    # ================================
-    # Barra lateral (hierarquia de camadas)
-    # ================================
-    st.sidebar.markdown("### Milhã em Mapas — Camadas")
-
-    with st.sidebar.expander("1) Território", expanded=True):
-        show_distritos = st.checkbox("Distritos", value=True)
-        show_sede_distritos = st.checkbox("Sede Distritos", value=True)
-        show_localidades = st.checkbox("Localidades", value=True)
-        st.markdown("**Domicílios**")
-        show_dom_cidade = st.checkbox("Domicílios Cidade", value=False)
-        show_dom_rural = st.checkbox("Domicílios Rural", value=False)
-
-    with st.sidebar.expander("2) Infraestrutura", expanded=False):
-        show_escolas = st.checkbox("Escolas", value=False)
-        show_unidades = st.checkbox("Unidades de Saúde", value=False)
-
-    with st.sidebar.expander("3) Recursos Hídricos", expanded=False):
-        show_tecnologias = st.checkbox("Tecnologias Sociais", value=False)
-        st.markdown("**Poços**")
-        show_pocos_cidade = st.checkbox("Poços Cidade", value=False)
-        show_pocos_rural = st.checkbox("Poços Zona Rural", value=False)
-
-    # ================================
-    # Mapa
-    # ================================
     m3 = folium.Map(location=[-5.680, -39.200], zoom_start=10, tiles=None)
     add_base_tiles(m3)
     Fullscreen(position='topright', title='Tela Cheia', title_cancel='Sair', force_separate_button=True).add_to(m3)
@@ -395,7 +358,7 @@ with aba3:
     MousePosition().add_to(m3)
 
     # 1. Território
-    if show_distritos and data_geo.get("Distritos"):
+    if st.session_state.get("lyr_distritos", True) and data_geo.get("Distritos"):
         folium.GeoJson(
             data_geo["Distritos"],
             name="Distritos",
@@ -403,19 +366,15 @@ with aba3:
             tooltip=folium.GeoJsonTooltip(fields=list(data_geo["Distritos"]["features"][0]["properties"].keys())[:3])
         ).add_to(m3)
 
-    if show_sede_distritos and data_geo.get("Sede Distritos"):
+    if st.session_state.get("lyr_sede", True) and data_geo.get("Sede Distritos"):
         layer_sd = folium.FeatureGroup(name="Sede Distritos")
         for ftr in data_geo["Sede Distritos"]["features"]:
             x, y = ftr["geometry"]["coordinates"]
             nome = ftr["properties"].get("Name", "Sede")
-            folium.Marker(
-                location=[y, x],
-                tooltip=nome,
-                icon=folium.Icon(color="green", icon="home")
-            ).add_to(layer_sd)
+            folium.Marker([y, x], tooltip=nome, icon=folium.Icon(color="green", icon="home")).add_to(layer_sd)
         layer_sd.add_to(m3)
 
-    if show_localidades and data_geo.get("Localidades"):
+    if st.session_state.get("lyr_local", True) and data_geo.get("Localidades"):
         layer_loc = folium.FeatureGroup(name="Localidades")
         for ftr in data_geo["Localidades"]["features"]:
             x, y = ftr["geometry"]["coordinates"]
@@ -426,14 +385,14 @@ with aba3:
             folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="purple", icon="flag")).add_to(layer_loc)
         layer_loc.add_to(m3)
 
-    if show_dom_cidade and data_geo.get("Domicílios Cidade"):
+    if st.session_state.get("lyr_dom_cid", False) and data_geo.get("Domicílios Cidade"):
         folium.GeoJson(
             data_geo["Domicílios Cidade"],
             name="Domicílios Cidade",
             style_function=lambda x: {"fillColor": "#0ea5e9", "fillOpacity": 0.3, "color": "#0369a1", "weight": 1},
         ).add_to(m3)
 
-    if show_dom_rural and data_geo.get("Domicílios Rural"):
+    if st.session_state.get("lyr_dom_rur", False) and data_geo.get("Domicílios Rural"):
         folium.GeoJson(
             data_geo["Domicílios Rural"],
             name="Domicílios Rural",
@@ -441,7 +400,7 @@ with aba3:
         ).add_to(m3)
 
     # 2. Infraestrutura
-    if show_escolas and data_geo.get("Escolas"):
+    if st.session_state.get("lyr_escolas", False) and data_geo.get("Escolas"):
         layer_esc = folium.FeatureGroup(name="Escolas")
         for ftr in data_geo["Escolas"]["features"]:
             x, y = ftr["geometry"]["coordinates"]
@@ -456,7 +415,7 @@ with aba3:
             folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="red", icon="education")).add_to(layer_esc)
         layer_esc.add_to(m3)
 
-    if show_unidades and data_geo.get("Unidades de Saúde"):
+    if st.session_state.get("lyr_unid", False) and data_geo.get("Unidades de Saúde"):
         layer_saude = folium.FeatureGroup(name="Unidades de Saúde")
         for ftr in data_geo["Unidades de Saúde"]["features"]:
             x, y = ftr["geometry"]["coordinates"]
@@ -473,21 +432,17 @@ with aba3:
         layer_saude.add_to(m3)
 
     # 3. Recursos Hídricos
-    if show_tecnologias and data_geo.get("Tecnologias Sociais"):
+    if st.session_state.get("lyr_tec", False) and data_geo.get("Tecnologias Sociais"):
         layer_tec = folium.FeatureGroup(name="Tecnologias Sociais")
         for ftr in data_geo["Tecnologias Sociais"]["features"]:
             x, y = ftr["geometry"]["coordinates"]
             props = ftr["properties"]
             nome = props.get("Comunidade", props.get("Name", "Tecnologia Social"))
-            popup = (
-                "<div style='font-family:Arial;font-size:13px'>"
-                f"<b>Local:</b> {nome}"
-                "</div>"
-            )
+            popup = "<div style='font-family:Arial;font-size:13px'><b>Local:</b> {}</div>".format(nome)
             folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="orange", icon="tint")).add_to(layer_tec)
         layer_tec.add_to(m3)
 
-    if show_pocos_cidade and data_geo.get("Poços Cidade"):
+    if st.session_state.get("lyr_pc", False) and data_geo.get("Poços Cidade"):
         layer_pc = folium.FeatureGroup(name="Poços Cidade")
         for ftr in data_geo["Poços Cidade"]["features"]:
             x, y = ftr["geometry"]["coordinates"]
@@ -503,7 +458,7 @@ with aba3:
             folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="blue", icon="tint")).add_to(layer_pc)
         layer_pc.add_to(m3)
 
-    if show_pocos_rural and data_geo.get("Poços Zona Rural"):
+    if st.session_state.get("lyr_pr", False) and data_geo.get("Poços Zona Rural"):
         layer_pr = folium.FeatureGroup(name="Poços Zona Rural")
         for ftr in data_geo["Poços Zona Rural"]["features"]:
             x, y = ftr["geometry"]["coordinates"]
