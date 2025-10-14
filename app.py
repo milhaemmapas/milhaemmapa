@@ -305,7 +305,7 @@ with aba2:
         st.error(f"Não foi possível carregar o CSV de obras em: {CSV_OBRAS}")
 
 # =====================================================
-# 3) Milhã em Mapas — painel interno com botão (com ícones)
+# 3) Milhã em Mapas — painel interno com botão (com ícones + animação)
 # =====================================================
 with aba3:
     st.subheader("Camadas do Território, Infraestrutura e Recursos Hídricos")
@@ -314,15 +314,40 @@ with aba3:
     if "show_layer_panel" not in st.session_state:
         st.session_state["show_layer_panel"] = True
 
+    # CSS da animação (aplicado só quando o painel estiver oculto)
+    st.markdown(
+        """
+        <style>
+        @keyframes pulse {
+            0%   { transform: scale(1);   box-shadow: 0 0 0 0 rgba(15, 118, 110, 0.35); }
+            70%  { transform: scale(1.03); box-shadow: 0 0 0 12px rgba(15, 118, 110, 0); }
+            100% { transform: scale(1);   box-shadow: 0 0 0 0 rgba(15, 118, 110, 0); }
+        }
+        /* quando o painel estiver oculto, usamos um wrapper com este id */
+        #toggle-panel-pulse button {
+            animation: pulse 1.1s ease-in-out 0s 2; /* 2 pulsos suaves */
+            border-color: #0f766e !important;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
     # Botão com ícone para exibir/ocultar
+    # Se o painel estiver oculto, usamos um wrapper com id "toggle-panel-pulse" para aplicar a animação
+    show_now = st.session_state["show_layer_panel"]
+    wrapper_id = "toggle-panel" if show_now else "toggle-panel-pulse"
+
     col_btn, _ = st.columns([1, 6])
     with col_btn:
+        st.markdown(f"<div id='{wrapper_id}'>", unsafe_allow_html=True)
         label = ("🙈 Ocultar painel de camadas"
-                 if st.session_state["show_layer_panel"]
-                 else "👁️ Exibir painel de camadas")
+                 if show_now else
+                 "👁️ Exibir painel de camadas")
         if st.button(label, use_container_width=True, key="toggle_panel_btn"):
             st.session_state["show_layer_panel"] = not st.session_state["show_layer_panel"]
             st.rerun()
+        st.markdown("</div>", unsafe_allow_html=True)
 
     show_panel = st.session_state["show_layer_panel"]
 
@@ -377,7 +402,7 @@ with aba3:
             st.markdown('</div>', unsafe_allow_html=True)
 
     else:
-        # painel oculto → usa valores atuais/ padrão
+        # painel oculto → usa valores atuais/padrão
         show_distritos      = st.session_state.get("lyr_distritos", True)
         show_sede_distritos = st.session_state.get("lyr_sede", True)
         show_localidades    = st.session_state.get("lyr_local", True)
@@ -516,6 +541,7 @@ with aba3:
 
         folium.LayerControl(collapsed=True).add_to(m3)
         folium_static(m3, width=1200, height=700)
+
 
 
 # Rodapé comum
