@@ -184,57 +184,106 @@ with aba2:
     CSV_OBRAS_CANDIDATES = ["dados/milha_obras.csv", "/mnt/data/milha_obras.csv"]
     CSV_OBRAS = next((p for p in CSV_OBRAS_CANDIDATES if os.path.exists(p)), CSV_OBRAS_CANDIDATES[0])
 
-    df_obras = sniff_read_csv(CSV_OBRAS)
+    df_obras_raw = sniff_read_csv(CSV_OBRAS)
 
-    if not df_obras.empty:
-        coords = autodetect_coords(df_obras)
-        if coords is None:
-            lat = pick(df_obras.columns, "LAT", "Latitude", "LATITUDE", "lat")
-            lon = pick(df_obras.columns, "LON", "Longitude", "LONGITUDE", "lon", "long")
-            if lat and lon:
-                df_obras["__LAT__"] = to_float_series(df_obras[lat])
-                df_obras["__LON__"] = to_float_series(df_obras[lon])
-            else:
-                st.error("Não foi possível identificar colunas de latitude/longitude nem 'COORDENADAS'.")
-                df_map = pd.DataFrame()
-        else:
-            lat_col, lon_col = coords
-            df_obras["__LAT__"] = to_float_series(df_obras[lat_col])
-            df_obras["__LON__"] = to_float_series(df_obras[lon_col])
+    if not df_obras_raw.empty:
+        import unicodedata
 
-        # Heurística p/ Milhã-CE (lat/lon invertidos e/ou long positiva)
-        if "__LAT__" in df_obras.columns and "__LON__" in df_obras.columns:
-            lat_s = pd.to_numeric(df_obras["__LAT__"], errors="coerce")
-            lon_s = pd.to_numeric(df_obras["__LON__"], errors="coerce")
-            def _pct_inside(a, b):
+        # ---------- Normalização de nomes de colunas ----------
+        def _norm_col(c: str) -> str:
+            s = unicodedata.normalize("NFKD", str(c))
+            s = "".join(ch for ch in s if not unicodedata.combining(ch))  # remove acentos
+            s = s.strip().lower()
+            s = re.sub(r"[^a-z0-9]+", "_", s)  # troca espaços/simbolos por _
+            return s.strip("_")
+
+        colmap = {c: _norm_col(c) for c in df_obras_raw.columns}
+        df_obras = df_obras_raw.rename(columns=colmap).copy()
+
+        # ---------- Descoberta das colunas lat/lon ----------
+        # aceita latitude, lat; longitude, long, lon
+        lat_col = next((c for c in df_obras.columns if c in {"latitude","lat"}), None)
+        lon_col = next((c for c in df_obras.columns if c in {"longitude","long","lon"}), None)
+
+        # fallback: tentar por padrão da função antiga (coord única)
+        if not lat_col or not lon_col:
+            coords = autodetect_coords(df_obras_raw.copy())  # usa a função util existente
+            if coords:
+                lat_col, lon_col = coords
+
+        # ---------- Conversão robusta para float ----------
+        def _to_float_series(s: pd.Series) -> pd.Series:
+            def _conv(v):
+                if pd.isna(v): return None
+                txt = str(v).strip()
+                # extrai primeiro número (com vírgula/ponto e sinal)
+                m = re.search(r"-?\d+(?:[.,]\d+)?", txt)
+                if not m: return None
+                num = m.group(0).replace(",", ".")
                 try:
-                    m = (a.between(-6.5, -4.5)) & (b.between(-40.5, -38.0))
-                    return float(m.mean())
+                    return float(num)
                 except Exception:
-                    return 0.0
-            cands = [
-                ("orig",     lat_s,            lon_s,            _pct_inside(lat_s,            lon_s)),
-                ("swap",     lon_s,            lat_s,            _pct_inside(lon_s,            lat_s)),
-                ("neg_lon",  lat_s,            lon_s.mul(-1.0),  _pct_inside(lat_s,            lon_s.mul(-1.0))),
-                ("swap_neg", lon_s,            lat_s.mul(-1.0),  _pct_inside(lon_s,            lat_s.mul(-1.0))),
-            ]
-            best = max(cands, key=lambda x: x[3])
-            if best[0] != "orig" and best[3] > cands[0][3]:
-                df_obras["__LAT__"], df_obras["__LON__"] = best[1], best[2]
+                    return None
+            return s.apply(_conv)
 
+        if not lat_col or not lon_col:
+            st.error("Não foi possível localizar colunas de latitude/longitude (mesmo após normalização).")
+            st.stop()
+
+        # Gera colunas numéricas internas
+        df_obras["__LAT__"] = _to_float_series(df_obras[lat_col])
+        df_obras["__LON__"] = _to_float_series(df_obras[lon_col])
+
+        # ---------- Heurística para corrigir inversão e sinal ----------
+        lat_s = pd.to_numeric(df_obras["__LAT__"], errors="coerce")
+        lon_s = pd.to_numeric(df_obras["__LON__"], errors="coerce")
+
+        def _pct_inside(a, b):
+            # janela ampla: NE do Brasil (~Milhã-CE: lat -5.x, lon -39.x)
+            try:
+                m = (a.between(-6.5, -4.5)) & (b.between(-40.5, -38.0))
+                return float(m.mean())
+            except Exception:
+                return 0.0
+
+        cands = [
+            ("orig",     lat_s,            lon_s,            _pct_inside(lat_s,            lon_s)),
+            ("swap",     lon_s,            lat_s,            _pct_inside(lon_s,            lat_s)),
+            ("neg_lon",  lat_s,            lon_s.mul(-1.0),  _pct_inside(lat_s,            lon_s.mul(-1.0))),
+            ("swap_neg", lon_s,            lat_s.mul(-1.0),  _pct_inside(lon_s,            lat_s.mul(-1.0))),
+        ]
+        best = max(cands, key=lambda x: x[3])
+        if best[0] != "orig" and best[3] >= cands[0][3]:
+            df_obras["__LAT__"], df_obras["__LON__"] = best[1], best[2]
+
+        # ---------- Filtra apenas geolocalizadas ----------
         df_map = df_obras.dropna(subset=["__LAT__", "__LON__"]).copy()
 
+        # ---------- Diagnóstico (útil para checar) ----------
+        with st.expander("🔎 Diagnóstico (ajuda rápida)"):
+            st.write("Arquivo:", os.path.basename(CSV_OBRAS))
+            st.write("Colunas originais:", list(df_obras_raw.columns))
+            st.write("Colunas normalizadas:", list(df_obras.columns))
+            st.write("Detectado como latitude:", lat_col, " | longitude:", lon_col)
+            st.write("Total linhas:", len(df_obras_raw), " | Geolocalizadas:", len(df_map))
+            st.dataframe(df_obras.head(5), use_container_width=True)
+
+        # ---------- Campos para popup/tabela ----------
         cols = list(df_obras.columns)
-        c_obra    = pick(cols, "Obra", "OBRA", "Nome", "NOME", "Projeto", "Descrição")
-        c_status  = pick(cols, "Status", "STATUS", "Situação", "SITUACAO", "SITUAÇÃO")
-        c_empresa = pick(cols, "Empresa", "EMPRESA", "Contratada", "CONTRATADA")
-        c_valor   = pick(cols, "Valor", "VALOR", "Valor Total", "VALOR_TOTAL", "Custo", "CUSTO")
-        c_bairro  = pick(cols, "Bairro", "BAIRRO", "Localidade", "LOCALIDADE")
-        c_dtini   = pick(cols, "Início", "DATA_INICIO", "Data Início", "DATA INICIO", "Inicio")
-        c_dtfim   = pick(cols, "Término", "DATA_FIM", "Data Fim", "DATA FIM", "Termino")
+        def pick_norm(*options):
+            return next((c for c in cols if c in [ _norm_col(o) for o in options ]), None)
+
+        c_obra    = pick_norm("Obra", "Nome", "Projeto", "Descrição")
+        c_status  = pick_norm("Status", "Situação")
+        c_empresa = pick_norm("Empresa", "Contratada")
+        c_valor   = pick_norm("Valor", "Valor Total", "Custo")
+        c_bairro  = pick_norm("Bairro", "Localidade")
+        c_dtini   = pick_norm("Início", "Data Início", "Inicio")
+        c_dtfim   = pick_norm("Término", "Data Fim", "Termino")
 
         st.success(f"{len(df_map)} obra(s) com coordenadas válidas. (Arquivo: {os.path.basename(CSV_OBRAS)})")
 
+        # ---------- Mapa ----------
         center = [-5.680, -39.200]
         if not df_map.empty:
             center = [df_map["__LAT__"].mean(), df_map["__LON__"].mean()]
@@ -247,7 +296,7 @@ with aba2:
         Draw(export=True).add_to(m2)
 
         def status_icon_color(status_val: str):
-            s = (status_val or "").strip().lower()
+            s = (str(status_val) if status_val is not None else "").strip().lower()
             if any(k in s for k in ["conclu", "finaliz"]):     return "green"
             if any(k in s for k in ["execu", "andamento"]):    return "orange"
             if any(k in s for k in ["paralis", "suspens"]):    return "red"
@@ -294,15 +343,16 @@ with aba2:
 
         folium.LayerControl(collapsed=True).add_to(m2)
         folium_static(m2, width=1200, height=700)
+
+        # ---------- Tabela ----------
         st.markdown("### Tabela de Obras")
-        ordered = []
-        for c in [c_obra, c_status, c_empresa, c_valor, c_bairro, c_dtini, c_dtfim]:
-            if c and c not in ordered:
-                ordered.append(c)
+        priority = [c_obra, c_status, c_empresa, c_valor, c_bairro, c_dtini, c_dtfim]
+        ordered = [c for c in priority if c and c in df_obras.columns]
         rest = [c for c in df_obras.columns if c not in ordered]
         st.dataframe(df_obras[ordered + rest] if ordered else df_obras, use_container_width=True)
     else:
         st.error(f"Não foi possível carregar o CSV de obras em: {CSV_OBRAS}")
+
 
 # =====================================================
 # 3) Milhã em Mapas — painel interno com botão (com ícones + animação)
