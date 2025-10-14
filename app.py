@@ -314,7 +314,9 @@ with aba2:
 with aba3:
     st.subheader("Camadas do Território, Infraestrutura e Recursos Hídricos")
 
-    # Arquivos esperados
+    # ================================
+    # Carregamento dos arquivos (pasta dados)
+    # ================================
     base_dir_candidates = ["dados", "/mnt/data"]
     files = {
         # Território
@@ -332,15 +334,37 @@ with aba3:
         "Poços Zona Rural": "pocos_rural_mil.geojson",
     }
 
-    # Carrega todos
     data_geo = {}
     for name, fname in files.items():
         candidates = [os.path.join(b, fname) for b in base_dir_candidates]
         data_geo[name] = load_geojson_any(candidates)
-        if data_geo[name] is None:
-            st.warning(f"Arquivo não encontrado ou inválido: {fname}")
 
+    # ================================
+    # Barra lateral (hierarquia de camadas)
+    # ================================
+    st.sidebar.markdown("### Milhã em Mapas — Camadas")
+
+    with st.sidebar.expander("1) Território", expanded=True):
+        show_distritos = st.checkbox("Distritos", value=True)
+        show_sede_distritos = st.checkbox("Sede Distritos", value=True)
+        show_localidades = st.checkbox("Localidades", value=True)
+        st.markdown("**Domicílios**")
+        show_dom_cidade = st.checkbox("Domicílios Cidade", value=False)
+        show_dom_rural = st.checkbox("Domicílios Rural", value=False)
+
+    with st.sidebar.expander("2) Infraestrutura", expanded=False):
+        show_escolas = st.checkbox("Escolas", value=False)
+        show_unidades = st.checkbox("Unidades de Saúde", value=False)
+
+    with st.sidebar.expander("3) Recursos Hídricos", expanded=False):
+        show_tecnologias = st.checkbox("Tecnologias Sociais", value=False)
+        st.markdown("**Poços**")
+        show_pocos_cidade = st.checkbox("Poços Cidade", value=False)
+        show_pocos_rural = st.checkbox("Poços Zona Rural", value=False)
+
+    # ================================
     # Mapa
+    # ================================
     m3 = folium.Map(location=[-5.680, -39.200], zoom_start=10, tiles=None)
     add_base_tiles(m3)
     Fullscreen(position='topright', title='Tela Cheia', title_cancel='Sair', force_separate_button=True).add_to(m3)
@@ -348,7 +372,7 @@ with aba3:
     MousePosition().add_to(m3)
 
     # 1. Território
-    if data_geo.get("Distritos"):
+    if show_distritos and data_geo.get("Distritos"):
         folium.GeoJson(
             data_geo["Distritos"],
             name="Distritos",
@@ -356,7 +380,7 @@ with aba3:
             tooltip=folium.GeoJsonTooltip(fields=list(data_geo["Distritos"]["features"][0]["properties"].keys())[:3])
         ).add_to(m3)
 
-    if data_geo.get("Sede Distritos"):
+    if show_sede_distritos and data_geo.get("Sede Distritos"):
         layer_sd = folium.FeatureGroup(name="Sede Distritos")
         for ftr in data_geo["Sede Distritos"]["features"]:
             x, y = ftr["geometry"]["coordinates"]
@@ -368,7 +392,7 @@ with aba3:
             ).add_to(layer_sd)
         layer_sd.add_to(m3)
 
-    if data_geo.get("Localidades"):
+    if show_localidades and data_geo.get("Localidades"):
         layer_loc = folium.FeatureGroup(name="Localidades")
         for ftr in data_geo["Localidades"]["features"]:
             x, y = ftr["geometry"]["coordinates"]
@@ -379,15 +403,14 @@ with aba3:
             folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="purple", icon="flag")).add_to(layer_loc)
         layer_loc.add_to(m3)
 
-    # Domicílios
-    if data_geo.get("Domicílios Cidade"):
+    if show_dom_cidade and data_geo.get("Domicílios Cidade"):
         folium.GeoJson(
             data_geo["Domicílios Cidade"],
             name="Domicílios Cidade",
             style_function=lambda x: {"fillColor": "#0ea5e9", "fillOpacity": 0.3, "color": "#0369a1", "weight": 1},
         ).add_to(m3)
 
-    if data_geo.get("Domicílios Rural"):
+    if show_dom_rural and data_geo.get("Domicílios Rural"):
         folium.GeoJson(
             data_geo["Domicílios Rural"],
             name="Domicílios Rural",
@@ -395,7 +418,7 @@ with aba3:
         ).add_to(m3)
 
     # 2. Infraestrutura
-    if data_geo.get("Escolas"):
+    if show_escolas and data_geo.get("Escolas"):
         layer_esc = folium.FeatureGroup(name="Escolas")
         for ftr in data_geo["Escolas"]["features"]:
             x, y = ftr["geometry"]["coordinates"]
@@ -410,7 +433,7 @@ with aba3:
             folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="red", icon="education")).add_to(layer_esc)
         layer_esc.add_to(m3)
 
-    if data_geo.get("Unidades de Saúde"):
+    if show_unidades and data_geo.get("Unidades de Saúde"):
         layer_saude = folium.FeatureGroup(name="Unidades de Saúde")
         for ftr in data_geo["Unidades de Saúde"]["features"]:
             x, y = ftr["geometry"]["coordinates"]
@@ -427,7 +450,7 @@ with aba3:
         layer_saude.add_to(m3)
 
     # 3. Recursos Hídricos
-    if data_geo.get("Tecnologias Sociais"):
+    if show_tecnologias and data_geo.get("Tecnologias Sociais"):
         layer_tec = folium.FeatureGroup(name="Tecnologias Sociais")
         for ftr in data_geo["Tecnologias Sociais"]["features"]:
             x, y = ftr["geometry"]["coordinates"]
@@ -441,7 +464,7 @@ with aba3:
             folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="orange", icon="tint")).add_to(layer_tec)
         layer_tec.add_to(m3)
 
-    if data_geo.get("Poços Cidade"):
+    if show_pocos_cidade and data_geo.get("Poços Cidade"):
         layer_pc = folium.FeatureGroup(name="Poços Cidade")
         for ftr in data_geo["Poços Cidade"]["features"]:
             x, y = ftr["geometry"]["coordinates"]
@@ -457,7 +480,7 @@ with aba3:
             folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="blue", icon="tint")).add_to(layer_pc)
         layer_pc.add_to(m3)
 
-    if data_geo.get("Poços Zona Rural"):
+    if show_pocos_rural and data_geo.get("Poços Zona Rural"):
         layer_pr = folium.FeatureGroup(name="Poços Zona Rural")
         for ftr in data_geo["Poços Zona Rural"]["features"]:
             x, y = ftr["geometry"]["coordinates"]
