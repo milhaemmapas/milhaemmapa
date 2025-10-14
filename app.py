@@ -56,8 +56,8 @@ def show_footer_banner():
 def autodetect_coords(df: pd.DataFrame):
     """Retorna (lat_col, lon_col) ou None. Tenta pares comuns e coluna única 'COORDENADAS'."""
     # Pares latitude/longitude
-    candidates_lat = [c for c in df.columns if re.search(r"(?:^|\\b)(lat|latitude|y)(?:\\b|$)", c, re.I)]
-    candidates_lon = [c for c in df.columns if re.search(r"(?:^|\\b)(lon|long|longitude|x)(?:\\b|$)", c, re.I)]
+    candidates_lat = [c for c in df.columns if re.search(r"(?:^|\b)(lat|latitude|y)(?:\b|$)", c, re.I)]
+    candidates_lon = [c for c in df.columns if re.search(r"(?:^|\b)(lon|long|longitude|x)(?:\b|$)", c, re.I)]
     if candidates_lat and candidates_lon:
         return candidates_lat[0], candidates_lon[0]
 
@@ -69,7 +69,7 @@ def autodetect_coords(df: pd.DataFrame):
             break
     if single is not None:
         try:
-            tmp = df[single].astype(str).str.extract(r"(-?\\d+[\\.,]?\\d*)\\s*[,;]\\s*(-?\\d+[\\.,]?\\d*)")
+            tmp = df[single].astype(str).str.extract(r"(-?\d+[\.,]?\d*)\s*[,;]\s*(-?\d+[\.,]?\d*)")
             tmp.columns = ["LATITUDE", "LONGITUDE"]
             # Converte vírgula decimal
             tmp["LATITUDE"] = tmp["LATITUDE"].str.replace(",", ".", regex=False).astype(float)
@@ -187,7 +187,7 @@ with aba2:
             if pd.isna(v):
                 return None
             txt = str(v)
-            m = re.search(r"-?\\d+[.,]?\\d*", txt)
+            m = re.search(r"-?\d+[.,]?\d*", txt)
             if not m:
                 return None
             try:
@@ -219,8 +219,10 @@ with aba2:
 
         # 2) Correção heurística para enquadrar Milhã-CE (lat/lon invertidos e/ou longitude positiva)
         if "__LAT__" in df_obras.columns and "__LON__" in df_obras.columns:
-            lat_s = df_obras["__LAT__"]
-            lon_s = df_obras["__LON__"]
+            # força dtype numérico para permitir operações como -lon
+            lat_s = pd.to_numeric(df_obras["__LAT__"], errors="coerce")
+            lon_s = pd.to_numeric(df_obras["__LON__"], errors="coerce")
+
             def _pct_inside(a, b):
                 try:
                     # Milhã/CE ~ lat -6.5..-4.5, lon -40.5..-38.0
@@ -228,11 +230,12 @@ with aba2:
                     return float(m.mean())
                 except Exception:
                     return 0.0
+
             cands = [
-                ("orig",     lat_s,  lon_s,  _pct_inside(lat_s,  lon_s)),
-                ("swap",     lon_s,  lat_s,  _pct_inside(lon_s,  lat_s)),
-                ("neg_lon",  lat_s, -lon_s,  _pct_inside(lat_s, -lon_s)),
-                ("swap_neg", lon_s, -lat_s,  _pct_inside(lon_s, -lat_s)),
+                ("orig",     lat_s,            lon_s,            _pct_inside(lat_s,            lon_s)),
+                ("swap",     lon_s,            lat_s,            _pct_inside(lon_s,            lat_s)),
+                ("neg_lon",  lat_s,            lon_s.mul(-1.0),  _pct_inside(lat_s,            lon_s.mul(-1.0))),
+                ("swap_neg", lon_s,            lat_s.mul(-1.0),  _pct_inside(lon_s,            lat_s.mul(-1.0))),
             ]
             best = max(cands, key=lambda x: x[3])
             if best[0] != "orig" and best[3] > cands[0][3]:
