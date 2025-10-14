@@ -8,7 +8,7 @@ import re
 import os
 
 # =====================================================
-# Configuração inicial
+# Configuração inicial da página
 # =====================================================
 st.set_page_config(page_title="ATLAS • Milhã", layout="wide")
 
