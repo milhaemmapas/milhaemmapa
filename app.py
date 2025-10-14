@@ -305,17 +305,26 @@ with aba2:
         st.error(f"Não foi possível carregar o CSV de obras em: {CSV_OBRAS}")
 
 # =====================================================
-# 3) Milhã em Mapas — painel interno com opção de recolher
+# 3) Milhã em Mapas — painel interno com botão (com ícones)
 # =====================================================
 with aba3:
     st.subheader("Camadas do Território, Infraestrutura e Recursos Hídricos")
 
-    # Toggle para mostrar/ocultar painel
-    show_panel = st.checkbox(
-        "Exibir painel de camadas",
-        value=st.session_state.get("show_layer_panel", True),
-        key="show_layer_panel"
-    )
+    # estado inicial do painel
+    if "show_layer_panel" not in st.session_state:
+        st.session_state["show_layer_panel"] = True
+
+    # Botão com ícone para exibir/ocultar
+    col_btn, _ = st.columns([1, 6])
+    with col_btn:
+        label = ("🙈 Ocultar painel de camadas"
+                 if st.session_state["show_layer_panel"]
+                 else "👁️ Exibir painel de camadas")
+        if st.button(label, use_container_width=True, key="toggle_panel_btn"):
+            st.session_state["show_layer_panel"] = not st.session_state["show_layer_panel"]
+            st.rerun()
+
+    show_panel = st.session_state["show_layer_panel"]
 
     # Carregar dados GeoJSON (pasta dados ou /mnt/data)
     base_dir_candidates = ["dados", "/mnt/data"]
@@ -334,13 +343,13 @@ with aba3:
     data_geo = {name: load_geojson_any([os.path.join(b, fname) for b in base_dir_candidates])
                 for name, fname in files.items()}
 
-    # Layout responsivo: com painel (mapa+painel) ou sem painel (mapa full)
+    # Layout: com painel (mapa + painel) ou sem painel (mapa full)
     if show_panel:
         col_map, col_panel = st.columns([5, 2], gap="large")
     else:
         col_map, = st.columns([1])
 
-    # ----- Painel de camadas (renderiza apenas se habilitado) -----
+    # ----- Painel de camadas (só quando habilitado) -----
     if show_panel:
         with col_panel:
             st.markdown('<div class="sticky-panel">', unsafe_allow_html=True)
@@ -365,14 +374,10 @@ with aba3:
                 show_pocos_cidade = st.checkbox("Poços Cidade", value=False, key="lyr_pc")
                 show_pocos_rural = st.checkbox("Poços Zona Rural", value=False, key="lyr_pr")
 
-            # Botão para recolher rapidamente o painel
-            if st.button("Recolher painel", use_container_width=True):
-                st.session_state["show_layer_panel"] = False
-                st.rerun()
-
             st.markdown('</div>', unsafe_allow_html=True)
+
     else:
-        # quando o painel está oculto, recuperar valores padrão/atuais dos toggles
+        # painel oculto → usa valores atuais/ padrão
         show_distritos      = st.session_state.get("lyr_distritos", True)
         show_sede_distritos = st.session_state.get("lyr_sede", True)
         show_localidades    = st.session_state.get("lyr_local", True)
@@ -511,6 +516,7 @@ with aba3:
 
         folium.LayerControl(collapsed=True).add_to(m3)
         folium_static(m3, width=1200, height=700)
+
 
 # Rodapé comum
 show_footer_banner()
