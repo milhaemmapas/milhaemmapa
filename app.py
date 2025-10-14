@@ -194,9 +194,11 @@ with aba2:
     df_obras = sniff_read_csv(CSV_OBRAS)
 
     if not df_obras.empty:
-        # --------------------------
-        # Identificação de colunas
-        # --------------------------
+        # -------------------------------------------------
+        # Identificação de colunas (inicialização segura)
+        # -------------------------------------------------
+        c_obra = c_status = c_empresa = c_valor = c_bairro = c_dtini = c_dtfim = None
+
         cols = list(df_obras.columns)
         c_status = pick(cols, "Status", "STATUS", "Situação", "SITUAÇÃO", "SITUACAO")
         c_valor  = pick(cols, "Valor", "VALOR", "Valor Total", "VALOR_TOTAL", "Custo", "CUSTO")
@@ -208,7 +210,6 @@ with aba2:
         # --------------------------
         # Filtros (Status / Bairro)
         # --------------------------
-        # opções disponíveis
         status_opts = sorted([str(x) for x in df_obras[c_status].dropna().unique()]) if c_status else []
         bairro_opts = sorted([str(x) for x in df_obras[c_bairro].dropna().unique()]) if c_bairro else []
 
@@ -218,10 +219,7 @@ with aba2:
         with f2:
             sel_bairro = st.multiselect("Filtrar por Bairro/Localidade", options=bairro_opts, default=bairro_opts) if bairro_opts else []
         with f3:
-            reset = st.button("Limpar filtros", use_container_width=True)
-            if reset:
-                if c_status: sel_status = status_opts
-                if c_bairro: sel_bairro = bairro_opts
+            if st.button("Limpar filtros", use_container_width=True):
                 st.experimental_rerun()
 
         # aplica filtros
@@ -270,12 +268,14 @@ with aba2:
         if "__LAT__" in df_filt.columns and "__LON__" in df_filt.columns:
             lat_s = pd.to_numeric(df_filt["__LAT__"], errors="coerce")
             lon_s = pd.to_numeric(df_filt["__LON__"], errors="coerce")
+
             def _pct_inside(a, b):
                 try:
                     m = (a.between(-6.5, -4.5)) & (b.between(-40.5, -38.0))
                     return float(m.mean())
                 except Exception:
                     return 0.0
+
             cands = [
                 ("orig",     lat_s,            lon_s,            _pct_inside(lat_s,            lon_s)),
                 ("swap",     lon_s,            lat_s,            _pct_inside(lon_s,            lat_s)),
@@ -399,17 +399,16 @@ with aba2:
         folium_static(m2, width=1200, height=700)
 
         # --------------------------
-        # Tabela (filtrada)
+        # Tabela (após filtros)
         # --------------------------
         st.markdown("### Tabela de Obras (após filtros)")
-        ordered = []
-        for c in [c_obra, c_status, c_empresa, c_valor, c_bairro, c_dtini, c_dtfim]:
-            if c and c not in ordered:
-                ordered.append(c)
+        priority = [c_obra, c_status, c_empresa, c_valor, c_bairro, c_dtini, c_dtfim]
+        ordered = [c for c in priority if c and c in df_filt.columns]
         rest = [c for c in df_filt.columns if c not in ordered]
         st.dataframe(df_filt[ordered + rest] if ordered else df_filt, use_container_width=True)
     else:
         st.error(f"Não foi possível carregar o CSV de obras em: {CSV_OBRAS}")
+
 
 
 # =====================================================
