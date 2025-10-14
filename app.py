@@ -33,130 +33,474 @@ COLORS = {
 }
 
 # =====================================================
-# CSS GLOBAL (apenas define, sem mudar layout)
+# CSS Global Atualizado
 # =====================================================
 def css_global():
-    st.markdown("""
-    <style>
-    /* ======= Cards de estatísticas ======= */
-    .stat-card {
-      background: linear-gradient(90deg, #e9eefb, #e6f5f0);
-      border-radius: 12px;
-      padding: 16px 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-      transition: transform .15s ease, box-shadow .15s ease;
-      min-height: 130px;
-    }
-    .stat-card:hover { transform: translateY(-3px); box-shadow: 0 8px 18px rgba(0,0,0,0.08); }
-    .feature-icon { font-size: 36px; line-height: 1; margin-bottom: 8px; }
-    .stat-number { font-weight: 800; font-size: 28px; color: #1E3A8A; }
-    .stat-label { font-size: 14px; color: #4B5563; }
+    st.markdown(
+        f"""
+        <style>
+            /* Configurações gerais */
+            .main {{
+                background-color: {COLORS["light_bg"]};
+            }}
+            .block-container {{
+                padding-top: 1rem;
+                padding-bottom: 1rem;
+            }}
+            
+            /* Header moderno */
+            .main-header {{
+                background: linear-gradient(135deg, {COLORS["primary"]} 0%, {COLORS["secondary"]} 100%);
+                color: white;
+                padding: 2rem 1rem;
+                border-radius: 0 0 20px 20px;
+                margin-bottom: 2rem;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            }}
+            
+            .header-content {{
+                display: flex;
+                align-items: center;
+                gap: 2rem;
+                max-width: 1200px;
+                margin: 0 auto;
+            }}
+            
+            .header-text h1 {{
+                font-size: 2.5rem;
+                font-weight: 700;
+                margin-bottom: 0.5rem;
+                color: white;
+            }}
+            
+            .header-text p {{
+                font-size: 1.1rem;
+                opacity: 0.9;
+                margin-bottom: 0;
+            }}
+            
+            .header-logo {{
+                width: 120px;
+                height: 120px;
+                border-radius: 50%;
+                border: 4px solid rgba(255,255,255,0.2);
+                padding: 8px;
+                background: rgba(255,255,255,0.1);
+            }}
+            
+            /* Cards modernos */
+            .modern-card {{
+                background: {COLORS["card_bg"]};
+                border-radius: 16px;
+                padding: 2rem;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+                border: 1px solid {COLORS["border"]};
+                margin-bottom: 1.5rem;
+                transition: transform 0.2s ease, box-shadow 0.2s ease;
+            }}
+            
+            .modern-card:hover {{
+                transform: translateY(-2px);
+                box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+            }}
+            
+            /* Abas estilizadas */
+            .stTabs [data-baseweb="tab-list"] {{
+                gap: 8px;
+                background: transparent;
+            }}
+            
+            .stTabs [data-baseweb="tab"] {{
+                background: {COLORS["card_bg"]};
+                border: 1px solid {COLORS["border"]};
+                border-radius: 12px 12px 0 0;
+                padding: 1rem 2rem;
+                font-weight: 600;
+                color: {COLORS["text_light"]};
+                transition: all 0.3s ease;
+            }}
+            
+            .stTabs [aria-selected="true"] {{
+                background: {COLORS["primary"]} !important;
+                color: white !important;
+                border-color: {COLORS["primary"]} !important;
+            }}
+            
+            /* Botões modernos */
+            .stButton button {{
+                background: linear-gradient(135deg, {COLORS["primary"]} 0%, {COLORS["secondary"]} 100%);
+                color: white;
+                border: none;
+                border-radius: 10px;
+                padding: 0.5rem 1.5rem;
+                font-weight: 600;
+                transition: all 0.3s ease;
+            }}
+            
+            .stButton button:hover {{
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(30, 58, 138, 0.3);
+            }}
+            
+            /* Painel lateral sticky */
+            .sticky-panel {{
+                position: sticky;
+                top: 20px;
+                background: {COLORS["card_bg"]};
+                border: 1px solid {COLORS["border"]};
+                border-radius: 16px;
+                padding: 1.5rem;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            }}
+            
+            .panel-title {{
+                color: {COLORS["primary"]};
+                font-size: 1.25rem;
+                font-weight: 700;
+                margin-bottom: 0.5rem;
+            }}
+            
+            .panel-subtitle {{
+                color: {COLORS["text_light"]};
+                font-size: 0.9rem;
+                margin-bottom: 1rem;
+                border-bottom: 1px solid {COLORS["border"]};
+                padding-bottom: 0.5rem;
+            }}
+            
+            /* Ícones e badges */
+            .feature-icon {{
+                font-size: 2rem;
+                margin-bottom: 1rem;
+                color: {COLORS["primary"]};
+            }}
+            
+            .stat-card {{
+                background: linear-gradient(135deg, {COLORS["primary"]}15, {COLORS["secondary"]}15);
+                border-radius: 12px;
+                padding: 1.5rem;
+                text-align: center;
+                border: 1px solid {COLORS["border"]};
+            }}
+            
+            .stat-number {{
+                font-size: 2rem;
+                font-weight: 700;
+                color: {COLORS["primary"]};
+                margin-bottom: 0.5rem;
+            }}
+            
+            .stat-label {{
+                color: {COLORS["text_light"]};
+                font-size: 0.9rem;
+            }}
+            
+            /* Animações */
+            @keyframes fadeIn {{
+                from {{ opacity: 0; transform: translateY(20px); }}
+                to {{ opacity: 1; transform: translateY(0); }}
+            }}
+            
+            .fade-in {{
+                animation: fadeIn 0.6s ease-out;
+            }}
+            
+            /* Estilos originais preservados para os mapas */
+            .top-banner, .footer-banner {{ 
+                width: 100%; 
+                height: auto; 
+                border-radius: 8px; 
+                margin-bottom: 20px; 
+            }}
+            
+            /* Botão de toggle aprimorado */
+            #toggle-lyr-obras-pulse button, #toggle-panel-pulse button {{
+                 background-color: {COLORS["accent"]} !important;
+                 border-color: {COLORS["accent"]} !important;
+                 color: white !important;
+                 font-weight: 600;
+                 border-radius: 6px;
+            }}
+            #toggle-lyr-obras button, #toggle-panel button {{
+                 background-color: #ffffff !important;
+                 border-color: {COLORS["border"]} !important;
+                 color: {COLORS["text_light"]} !important;
+                 font-weight: 500;
+                 border-radius: 6px;
+            }}
+            
+            @keyframes pulseObras {{
+                0%    {{ transform: scale(1);    box-shadow: 0 0 0 0 {COLORS["accent"]}40; }} 
+                70%  {{ transform: scale(1.03); box-shadow: 0 0 0 12px {COLORS["accent"]}00; }}
+                100% {{ transform: scale(1);    box-shadow: 0 0 0 0 {COLORS["accent"]}00; }}
+            }}
+            #toggle-lyr-obras-pulse button {{
+                animation: pulseObras 1.1s ease-in-out 0s 2;
+                border-color: {COLORS["accent"]} !important;
+            }}
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
 
-    /* ======= Cards modernos ======= */
-    .modern-card {
-      background: #fff; border-radius: 14px; padding: 22px; margin-top: 20px;
-      box-shadow: 0 6px 24px rgba(0,0,0,.06);
-      transition: transform .15s ease, box-shadow .15s ease;
-    }
-    .modern-card:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(0,0,0,.08); }
-    .fade-in { animation: fadeIn 0.7s ease-in; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px);} to { opacity: 1; transform: translateY(0);} }
-    </style>
-    """, unsafe_allow_html=True)
+def create_header():
+    st.markdown(
+        f"""
+        <div class="main-header fade-in">
+            <div class="header-content">
+                <img src="https://i.ibb.co/7Nr6N5bm/brasao-milha.png" alt="Brasão de Milhã" class="header-logo">
+                <div class="header-text">
+                    <h1>ATLAS Geoespacial de Milhã</h1>
+                    <p>Visualize dados territoriais, obras públicas e infraestrutura municipal de forma interativa</p>
+                </div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 # =====================================================
-# FUNÇÃO PARA OS CARDS DE ESTATÍSTICA
+# Funções utilitárias (mantidas do código original)
 # =====================================================
-def stat_card(icon: str, number: str, label: str):
-    html = f"""
-    <div class="stat-card fade-in">
-        <div class="feature-icon">{icon}</div>
-        <div class="stat-number">{number}</div>
-        <div class="stat-label">{label}</div>
-    </div>
-    """
-    st.markdown(html, unsafe_allow_html=True)
+def show_top_banner():
+    st.markdown(
+        '<img src="https://i.ibb.co/v4d32PvX/banner.jpg" alt="Banner topo" style="width:100%; border-radius:12px; margin-bottom:2rem;" />',
+        unsafe_allow_html=True,
+    )
+
+def show_footer_banner():
+    st.markdown(
+        '<img src="https://i.ibb.co/8nQQp8pS/barra-inferrior.png" alt="Banner rodapé" style="width:100%; border-radius:12px; margin-top:2rem;" />',
+        unsafe_allow_html=True,
+    )
+
+def autodetect_coords(df: pd.DataFrame):
+    candidates_lat = [c for c in df.columns if re.search(r"(?:^|\b)(lat|latitude|y)(?:\b|$)", c, re.I)]
+    candidates_lon = [c for c in df.columns if re.search(r"(?:^|\b)(lon|long|longitude|x)(?:\b|$)", c, re.I)]
+    if candidates_lat and candidates_lon:
+        return candidates_lat[0], candidates_lon[0]
+    for c in df.columns:
+        if re.search(r"coord|coordenad", c, re.I):
+            try:
+                tmp = df[c].astype(str).str.extract(r"(-?\d+[\.,]?\d*)\s*[,;]\s*(-?\d+[\.,]?\d*)")
+                tmp.columns = ["LATITUDE", "LONGITUDE"]
+                tmp["LATITUDE"] = tmp["LATITUDE"].str.replace(",", ".", regex=False).astype(float)
+                tmp["LONGITUDE"] = tmp["LONGITUDE"].str.replace(",", ".", regex=False).astype(float)
+                df["__LAT__"], df["__LON__"] = tmp["LATITUDE"], tmp["LONGITUDE"]
+                return "__LAT__", "__LON__"
+            except Exception:
+                return None
+    return None
+
+def add_base_tiles(m: folium.Map):
+    tiles = [
+        ("Open Street Map", "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", "© OpenStreetMap contributors"),
+        ("CartoDB Positron", "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", "© OpenStreetMap, © CARTO"),
+        ("CartoDB Dark", "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", "© OpenStreetMap, © CARTO"),
+        ("Esri Satellite", "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", "Tiles © Esri")
+    ]
+    for name, url, attr in tiles:
+        folium.TileLayer(tiles=url, name=name, attr=attr).add_to(m)
+
+def load_geojson_any(path_candidates):
+    for p in path_candidates:
+        if p and os.path.exists(p):
+            try:
+                with open(p, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            except Exception as e:
+                st.warning(f"Erro ao ler {p}: {e}")
+    return None
+
+def br_money(x):
+    try:
+        s = str(x).replace("R$", "").strip()
+        if "," in s and s.count(".") >= 1:
+            s = s.replace(".", "")
+        v = float(s.replace(",", "."))
+        return f"R$ {v:,.2f}".replace(",", "_").replace(".", ",").replace("_", ".")
+    except Exception:
+        return str(x)
+
+def pick(colnames, *options):
+    cols = list(colnames)
+    for o in options:
+        if o in cols:
+            return o
+    lower = {c.lower(): c for c in cols}
+    for o in options:
+        if o.lower() in lower:
+            return lower[o.lower()]
+    return None
+
+def sniff_read_csv(path: str) -> pd.DataFrame:
+    try:
+        with open(path, "r", encoding="utf-8-sig") as f:
+            sample = f.read(4096); f.seek(0)
+            sep = ";" if sample.count(";") > sample.count(",") else ","
+            return pd.read_csv(f, sep=sep)
+    except Exception as e:
+        st.error(f"Falha ao ler CSV em '{path}': {e}")
+        return pd.DataFrame()
+
+def to_float_series(s: pd.Series) -> pd.Series:
+    def _conv(v):
+        if pd.isna(v): return None
+        txt = str(v)
+        m = re.search(r"-?\d+[.,]?\d*", txt)
+        if not m: return None
+        try: return float(m.group(0).replace(",", "."))
+        except Exception: return None
+    return s.apply(_conv)
+
+def norm_col(c: str) -> str:
+    s = unicodedata.normalize("NFKD", str(c))
+    s = "".join(ch for ch in s if not unicodedata.combining(ch))
+    s = s.strip().lower()
+    s = re.sub(r"[^a-z0-9]+", "_", s)
+    return s.strip("_")
+
+def geojson_bounds(gj: dict):
+    if not gj:
+        return None
+    lats, lons = [], []
+
+    def _ingest_coords(coords):
+        if isinstance(coords, (list, tuple)):
+            if len(coords) == 2 and isinstance(coords[0], (int, float)) and isinstance(coords[1], (int, float)):
+                lon, lat = coords[0], coords[1]
+                lons.append(lon); lats.append(lat)
+            else:
+                for c in coords:
+                    _ingest_coords(c)
+
+    def _walk_feature(f):
+        geom = f.get("geometry", {})
+        coords = geom.get("coordinates", [])
+        _ingest_coords(coords)
+
+    t = gj.get("type")
+    if t == "FeatureCollection":
+        for f in gj.get("features", []):
+            _walk_feature(f)
+    elif t == "Feature":
+        _walk_feature(gj)
+    else:
+        _ingest_coords(gj.get("coordinates", []))
+
+    if not lats or not lons:
+        return None
+    return (min(lats), min(lons)), (max(lats), max(lons))
 
 # =====================================================
-# LAYOUT PRINCIPAL (mantido igual ao seu)
+# Layout Principal
 # =====================================================
-# Importante: css_global deve ser chamado antes de exibir as abas
 css_global()
+create_header()
 
-# --- Se já existir função create_header() no seu app, ela será usada normalmente ---
-try:
-    create_header()
-except:
-    pass  # apenas evita erro se ela estiver definida em outro módulo
-
-# Abas principais (mantidas exatamente como estavam)
+# Abas principais
 aba1, aba2, aba3 = st.tabs(["🏠 Página Inicial", "🏗️ Painel de Obras", "🗺️ Milhã em Mapas"])
 
 # =====================================================
-# 1) Página Inicial - Atualizada (sem alterar estrutura)
+# 1) Página Inicial - Atualizada
 # =====================================================
 with aba1:
-    st.title("🏛️ ATLAS Geoespacial de Milhã")
-
     col1, col2, col3 = st.columns(3)
+    
+    # 👉 Cada card em UM bloco (corrige o “efeito” não acompanhar o texto)
     with col1:
-        stat_card("📊", "100+", "Dados Geoespaciais")
+        st.markdown(
+            """
+            <div class="stat-card fade-in">
+                <div class="feature-icon">📊</div>
+                <div class="stat-number">100+</div>
+                <div class="stat-label">Dados Geoespaciais</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    
     with col2:
-        stat_card("🏗️", "50+", "Obras Monitoradas")
+        st.markdown(
+            """
+            <div class="stat-card fade-in">
+                <div class="feature-icon">🏗️</div>
+                <div class="stat-number">50+</div>
+                <div class="stat-label">Obras Monitoradas</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    
     with col3:
-        stat_card("💧", "30+", "Recursos Hídricos")
-
-    # ======= Card principal de boas-vindas =======
-    st.markdown("""
-    <div class="modern-card fade-in">
-        <h2>🌟 Bem-vindo ao ATLAS Geoespacial de Milhã</h2>
-        <p>
-            Esta plataforma integra <strong>dados geoespaciais</strong> do município para apoiar a tomada de decisões públicas,
-            qualificar projetos urbanos e aproximar a gestão municipal dos cidadãos.
-        </p>
-        <h3>🎯 Objetivos Principais:</h3>
-        <ul>
-            <li><strong>Transparência</strong>: Disponibilizar informações públicas de forma acessível</li>
-            <li><strong>Planejamento</strong>: Auxiliar no planejamento urbano e territorial</li>
-            <li><strong>Monitoramento</strong>: Acompanhar obras e projetos em tempo real</li>
-            <li><strong>Participação</strong>: Engajar a comunidade no desenvolvimento municipal</li>
-        </ul>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # ======= Cards informativos laterais =======
+        st.markdown(
+            """
+            <div class="stat-card fade-in">
+                <div class="feature-icon">💧</div>
+                <div class="stat-number">30+</div>
+                <div class="stat-label">Recursos Hídricos</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    
+    # 👉 modern-card em UM bloco só
+    st.markdown(
+        """
+        <div class="modern-card fade-in">
+            <h2>🌟 Bem-vindo ao ATLAS Geoespacial de Milhã</h2>
+            <p>
+                Esta plataforma integra <strong>dados geoespaciais</strong> do município para apoiar a tomada de decisões públicas, 
+                qualificar projetos urbanos e aproximar a gestão municipal dos cidadãos. 
+            </p>
+            <h3>🎯 Objetivos Principais:</h3>
+            <ul>
+                <li><strong>Transparência</strong>: Disponibilizar informações públicas de forma acessível</li>
+                <li><strong>Planejamento</strong>: Auxiliar no planejamento urbano e territorial</li>
+                <li><strong>Monitoramento</strong>: Acompanhar obras e projetos em tempo real</li>
+                <li><strong>Participação</strong>: Engajar a comunidade no desenvolvimento municipal</li>
+            </ul>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    
     colA, colB = st.columns(2)
+    
     with colA:
-        st.markdown("""
-        <div class="modern-card fade-in">
-            <h3>🗺️ Explore o Território</h3>
-            <ul>
-                <li>Divisões territoriais (Distritos e Localidades)</li>
-                <li>Infraestrutura pública (Escolas e Unidades de Saúde)</li>
-                <li>Recursos hídricos (Poços e Tecnologias Sociais)</li>
-                <li>Camadas interativas e ferramentas de medição</li>
-            </ul>
-        </div>
-        """, unsafe_allow_html=True)
-
+        st.markdown(
+            """
+            <div class="modern-card fade-in">
+                <h3>🗺️ Explore o Território</h3>
+                <p>Na aba <strong>'Milhã em Mapas'</strong> você encontra:</p>
+                <ul>
+                    <li>Divisões territoriais (Distritos e Localidades)</li>
+                    <li>Infraestrutura pública (Escolas e Unidades de Saúde)</li>
+                    <li>Recursos hídricos (Poços e Tecnologias Sociais)</li>
+                    <li>Camadas interativas e ferramentas de medição</li>
+                </ul>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    
     with colB:
-        st.markdown("""
-        <div class="modern-card fade-in">
-            <h3>🏗️ Acompanhe as Obras</h3>
-            <ul>
-                <li>Status atual de cada projeto municipal</li>
-                <li>Localização precisa no mapa</li>
-                <li>Investimentos e prazos</li>
-                <li>Empresas responsáveis</li>
-                <li>Histórico de andamento</li>
-            </ul>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown(
+            """
+            <div class="modern-card fade-in">
+                <h3>🏗️ Acompanhe as Obras</h3>
+                <p>No <strong>Painel de Obras</strong> monitore:</p>
+                <ul>
+                    <li>Status atual de cada projeto municipal</li>
+                    <li>Localização precisa no mapa</li>
+                    <li>Investimentos e prazos</li>
+                    <li>Empresas responsáveis</li>
+                    <li>Histórico de andamento</li>
+                </ul>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
 # =====================================================
 # 2) Painel de Obras - COM MAPAS FUNCIONAIS
