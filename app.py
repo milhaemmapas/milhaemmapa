@@ -168,7 +168,7 @@ with aba1:
             """
             ### O que você encontra aqui
             - Painel de obras com localização e detalhes principais.
-            - Camadas temáticas do território: distritos, localidades e domicílios.
+            - Camadas do território: distritos e localidades.
             - Infraestrutura essencial: escolas e unidades de saúde.
             - Recursos hídricos: tecnologias sociais e poços.
             """
@@ -334,7 +334,6 @@ with aba3:
     )
 
     # Botão com ícone para exibir/ocultar
-    # Se o painel estiver oculto, usamos um wrapper com id "toggle-panel-pulse" para aplicar a animação
     show_now = st.session_state["show_layer_panel"]
     wrapper_id = "toggle-panel" if show_now else "toggle-panel-pulse"
 
@@ -357,8 +356,6 @@ with aba3:
         "Distritos": "milha_dist_polig.geojson",
         "Sede Distritos": "Distritos_pontos.geojson",
         "Localidades": "Localidades.geojson",
-        "Domicílios Cidade": "domicilios_cidade.geojson",
-        "Domicílios Rural": "domicilios_rural_mil.geojson",
         "Escolas": "Escolas_publicas.geojson",
         "Unidades de Saúde": "Unidades_saude.geojson",
         "Tecnologias Sociais": "teclogias_sociais.geojson",
@@ -385,9 +382,6 @@ with aba3:
                 show_distritos = st.checkbox("Distritos", value=True, key="lyr_distritos")
                 show_sede_distritos = st.checkbox("Sede Distritos", value=True, key="lyr_sede")
                 show_localidades = st.checkbox("Localidades", value=True, key="lyr_local")
-                st.markdown("**Domicílios**")
-                show_dom_cidade = st.checkbox("Domicílios Cidade", value=False, key="lyr_dom_cid")
-                show_dom_rural = st.checkbox("Domicílios Rural", value=False, key="lyr_dom_rur")
 
             with st.expander("2) Infraestrutura", expanded=False):
                 show_escolas = st.checkbox("Escolas", value=False, key="lyr_escolas")
@@ -406,8 +400,6 @@ with aba3:
         show_distritos      = st.session_state.get("lyr_distritos", True)
         show_sede_distritos = st.session_state.get("lyr_sede", True)
         show_localidades    = st.session_state.get("lyr_local", True)
-        show_dom_cidade     = st.session_state.get("lyr_dom_cid", False)
-        show_dom_rural      = st.session_state.get("lyr_dom_rur", False)
         show_escolas        = st.session_state.get("lyr_escolas", False)
         show_unidades       = st.session_state.get("lyr_unid", False)
         show_tecnologias    = st.session_state.get("lyr_tec", False)
@@ -449,20 +441,6 @@ with aba3:
                 popup = f"<b>Localidade:</b> {nome}<br><b>Distrito:</b> {distrito}"
                 folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="purple", icon="flag")).add_to(layer_loc)
             layer_loc.add_to(m3)
-
-        if show_dom_cidade and data_geo.get("Domicílios Cidade"):
-            folium.GeoJson(
-                data_geo["Domicílios Cidade"],
-                name="Domicílios Cidade",
-                style_function=lambda x: {"fillColor": "#0ea5e9", "fillOpacity": 0.3, "color": "#0369a1", "weight": 1},
-            ).add_to(m3)
-
-        if show_dom_rural and data_geo.get("Domicílios Rural"):
-            folium.GeoJson(
-                data_geo["Domicílios Rural"],
-                name="Domicílios Rural",
-                style_function=lambda x: {"fillColor": "#86efac", "fillOpacity": 0.25, "color": "#16a34a", "weight": 1},
-            ).add_to(m3)
 
         # 2. Infraestrutura
         if show_escolas and data_geo.get("Escolas"):
@@ -541,8 +519,6 @@ with aba3:
 
         folium.LayerControl(collapsed=True).add_to(m3)
         folium_static(m3, width=1200, height=700)
-
-
 
 # Rodapé comum
 show_footer_banner()
