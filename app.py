@@ -734,36 +734,45 @@ with aba2:
         st.error(f"❌ Não foi possível carregar o CSV de obras em: {CSV_OBRAS}")
 
 # =====================================================
-# 3) Milhã em Mapas — VIEWPORT COMPLETAMENTE ESTÁTICO
+# 3) Milhã em Mapas — SEM TRANSIÇÃO / VIEWPORT FIXO
 # =====================================================
 with aba3:
+    # Import robusto (local) para capturar viewport quando possível
+    try:
+        from streamlit_folium import st_folium as _st_folium
+        _HAS_ST_FOLIUM = True
+    except Exception:
+        _HAS_ST_FOLIUM = False
+
     render_card(
         "<h2>🗺️ Milhã em Mapas</h2>",
         "<p>Explore as camadas territoriais, de infraestrutura e recursos hídricos do município</p>",
     )
 
-    # Estados da UI - Viewport totalmente controlado
+    # Estados da UI
     if "show_layer_panel" not in st.session_state:
         st.session_state["show_layer_panel"] = True
-    if "m3_center" not in st.session_state:
-        st.session_state["m3_center"] = [-5.680, -39.200]
-    if "m3_zoom" not in st.session_state:
-        st.session_state["m3_zoom"] = 10
-    if "map_key" not in st.session_state:
-        st.session_state["map_key"] = 0  # Força rerender quando necessário
+    if "m3_view" not in st.session_state:
+        # centro/zoom padrão apenas na primeira carga
+        st.session_state["m3_view"] = {"center": [-5.680, -39.200], "zoom": 10}
+    if "m3_should_fit" not in st.session_state:
+        st.session_state["m3_should_fit"] = True  # primeiro render ou ao clicar no botão
 
-    # Botão para mostrar/ocultar painel
+    # Botões (mostrar/ocultar painel e centralizar)
     show_now = st.session_state["show_layer_panel"]
     wrapper_id = "toggle-panel" if show_now else "toggle-panel-pulse"
 
-    col_btn, _ = st.columns([1, 6])
-    with col_btn:
+    col_btnL, col_btnR = st.columns([1, 6])
+    with col_btnL:
         st.markdown(f"<div id='{wrapper_id}'>", unsafe_allow_html=True)
         label = ("🙈 Ocultar painel de camadas" if show_now else "👁️ Exibir painel de camadas")
         if st.button(label, use_container_width=True, key="toggle_panel_btn"):
             st.session_state["show_layer_panel"] = not st.session_state["show_layer_panel"]
             st.rerun()
         st.markdown("</div>", unsafe_allow_html=True)
+    with col_btnR:
+        if st.button("📍 Centralizar em Milhã", use_container_width=True, key="btn_center_milha"):
+            st.session_state["m3_should_fit"] = True
 
     show_panel = st.session_state["show_layer_panel"]
 
@@ -790,32 +799,27 @@ with aba3:
     else:
         col_map, = st.columns([1])
 
-    # Painel de camadas - usando callbacks para evitar rerender
+    # Painel de camadas
     if show_panel:
         with col_panel:
             st.markdown('<div class="sticky-panel">', unsafe_allow_html=True)
             st.markdown('<div class="panel-title">🎯 Camadas do Mapa</div>', unsafe_allow_html=True)
             st.markdown('<div class="panel-subtitle">Selecione o que deseja visualizar</div>', unsafe_allow_html=True)
 
-            # Função callback para manter viewport
-            def on_layer_change():
-                # Não faz nada - apenas previne o rerender automático
-                pass
-
             with st.expander("🗾 Território", expanded=True):
-                show_distritos = st.checkbox("Distritos", value=True, key="lyr_distritos", on_change=on_layer_change)
-                show_sede_distritos = st.checkbox("Sede Distritos", value=True, key="lyr_sede", on_change=on_layer_change)
-                show_localidades = st.checkbox("Localidades", value=True, key="lyr_local", on_change=on_layer_change)
+                show_distritos = st.checkbox("Distritos", value=True, key="lyr_distritos")
+                show_sede_distritos = st.checkbox("Sede Distritos", value=True, key="lyr_sede")
+                show_localidades = st.checkbox("Localidades", value=True, key="lyr_local")
 
             with st.expander("🏥 Infraestrutura", expanded=False):
-                show_escolas = st.checkbox("Escolas", value=False, key="lyr_escolas", on_change=on_layer_change)
-                show_unidades = st.checkbox("Unidades de Saúde", value=False, key="lyr_unid", on_change=on_layer_change)
+                show_escolas = st.checkbox("Escolas", value=False, key="lyr_escolas")
+                show_unidades = st.checkbox("Unidades de Saúde", value=False, key="lyr_unid")
 
             with st.expander("💧 Recursos Hídricos", expanded=False):
-                show_tecnologias = st.checkbox("Tecnologias Sociais", value=False, key="lyr_tec", on_change=on_layer_change)
+                show_tecnologias = st.checkbox("Tecnologias Sociais", value=False, key="lyr_tec")
                 st.markdown("**Poços**")
-                show_pocos_cidade = st.checkbox("Poços Cidade", value=False, key="lyr_pc", on_change=on_layer_change)
-                show_pocos_rural = st.checkbox("Poços Zona Rural", value=False, key="lyr_pr", on_change=on_layer_change)
+                show_pocos_cidade = st.checkbox("Poços Cidade", value=False, key="lyr_pc")
+                show_pocos_rural = st.checkbox("Poços Zona Rural", value=False, key="lyr_pr")
 
             st.markdown('</div>', unsafe_allow_html=True)
     else:
@@ -830,31 +834,28 @@ with aba3:
         show_pocos_rural    = st.session_state.get("lyr_pr", False)
 
     # =======================
-    # MAPA COM VIEWPORT FIXO
+    # MAPA (viewport fixo)
     # =======================
     with col_map:
         st.markdown("### 🗺️ Mapa Interativo")
 
-        # Viewport controlado manualmente - SEM auto-ajuste
-        center = st.session_state["m3_center"]
-        zoom = st.session_state["m3_zoom"]
+        # Usa SEMPRE o último centro/zoom salvo
+        center = st.session_state["m3_view"]["center"]
+        zoom   = st.session_state["m3_view"]["zoom"]
 
-        # Cria o mapa com viewport fixo
-        m3 = folium.Map(
-            location=center,
-            zoom_start=zoom,
-            tiles=None,
-            zoom_control=True,
-            scrollWheelZoom=True,
-            dragging=True
-        )
-        
+        m3 = folium.Map(location=center, zoom_start=zoom, tiles=None)
         add_base_tiles(m3)
         Fullscreen(position='topright', title='Tela Cheia', title_cancel='Sair', force_separate_button=True).add_to(m3)
         m3.add_child(MeasureControl(primary_length_unit="meters", secondary_length_unit="kilometers", primary_area_unit="hectares"))
         MousePosition().add_to(m3)
 
-        # IMPORTANTE: NUNCA chamar fit_bounds() ou qualquer função que altere o viewport
+        # Fit somente quando solicitado (primeira carga ou clique no botão)
+        if st.session_state["m3_should_fit"] and data_geo.get("Distritos"):
+            b = geojson_bounds(data_geo["Distritos"])
+            if b:
+                (min_lat, min_lon), (max_lat, max_lon) = b
+                m3.fit_bounds([[min_lat, min_lon], [max_lat, max_lon]])
+            st.session_state["m3_should_fit"] = False  # trava o auto-fit
 
         # --- Camadas (não alteram viewport) ---
         if show_distritos and data_geo.get("Distritos"):
@@ -961,29 +962,27 @@ with aba3:
 
         folium.LayerControl(collapsed=True).add_to(m3)
 
-        # Usar st_folium com return_type para capturar interações SEM alterar viewport
-        try:
-            from streamlit_folium import st_folium
-            
-            # Renderiza o mapa e captura interações
-            map_data = st_folium(
-                m3,
-                width=1200,
-                height=700,
-                key=f"milha_map_{st.session_state.map_key}",
-                returned_objects=["last_clicked", "last_active_drawing"],
-                use_container_width=False
-            )
-            
-            # Atualiza viewport APENAS se o usuário interagiu manualmente
-            if map_data and map_data.get("zoom") is not None:
-                st.session_state["m3_zoom"] = map_data["zoom"]
-            if map_data and map_data.get("center"):
-                st.session_state["m3_center"] = [map_data["center"]["lat"], map_data["center"]["lng"]]
-                
-        except Exception as e:
-            # Fallback seguro
+        # Render preservando viewport quando possível
+        if _HAS_ST_FOLIUM:
+            try:
+                out = _st_folium(m3, width=1200, height=700)
+            except TypeError:
+                out = _st_folium(m3)  # compat com versões antigas
+            # Atualiza centro/zoom se a lib fornecer
+            if isinstance(out, dict):
+                last_center = out.get("last_center") or out.get("center")
+                zoom_val = out.get("zoom") or out.get("last_zoom")
+                if last_center and ("lat" in last_center and "lng" in last_center):
+                    st.session_state["m3_view"]["center"] = [last_center["lat"], last_center["lng"]]
+                if zoom_val is not None:
+                    try:
+                        st.session_state["m3_view"]["zoom"] = int(zoom_val)
+                    except Exception:
+                        pass
+        else:
+            # Fallback: sem captura de viewport (ainda assim sem transição porque não há fit automático)
             folium_static(m3, width=1200, height=700)
+
 
 
 
