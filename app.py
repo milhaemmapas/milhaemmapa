@@ -843,7 +843,14 @@ with aba3:
         center = st.session_state["m3_view"]["center"]
         zoom   = st.session_state["m3_view"]["zoom"]
 
-        m3 = folium.Map(location=center, zoom_start=zoom, tiles=None)
+        # 💡 CORREÇÃO: Adiciona zoomAnimation=False para desativar a transição
+        m3 = folium.Map(
+            location=center,
+            zoom_start=zoom,
+            tiles=None,
+            zoomAnimation=False,
+            panes=False, # Impede o movimento/pan
+        )
         add_base_tiles(m3)
         Fullscreen(position='topright', title='Tela Cheia', title_cancel='Sair', force_separate_button=True).add_to(m3)
         m3.add_child(MeasureControl(primary_length_unit="meters", secondary_length_unit="kilometers", primary_area_unit="hectares"))
