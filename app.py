@@ -6,6 +6,7 @@ from folium.plugins import MeasureControl, Fullscreen, Draw, MousePosition
 import json
 import re
 import os
+import unicodedata
 
 # =====================================================
 # Configuração inicial
@@ -60,14 +61,14 @@ def show_footer_banner():
     )
 
 def autodetect_coords(df: pd.DataFrame):
-    candidates_lat = [c for c in df.columns if re.search(r"(?:^|\\b)(lat|latitude|y)(?:\\b|$)", c, re.I)]
-    candidates_lon = [c for c in df.columns if re.search(r"(?:^|\\b)(lon|long|longitude|x)(?:\\b|$)", c, re.I)]
+    candidates_lat = [c for c in df.columns if re.search(r"(?:^|\b)(lat|latitude|y)(?:\b|$)", c, re.I)]
+    candidates_lon = [c for c in df.columns if re.search(r"(?:^|\b)(lon|long|longitude|x)(?:\b|$)", c, re.I)]
     if candidates_lat and candidates_lon:
         return candidates_lat[0], candidates_lon[0]
     for c in df.columns:
         if re.search(r"coord|coordenad", c, re.I):
             try:
-                tmp = df[c].astype(str).str.extract(r"(-?\\d+[\\.,]?\\d*)\\s*[,;]\\s*(-?\\d+[\\.,]?\\d*)")
+                tmp = df[c].astype(str).str.extract(r"(-?\d+[\.,]?\d*)\s*[,;]\s*(-?\d+[\.,]?\d*)")
                 tmp.columns = ["LATITUDE", "LONGITUDE"]
                 tmp["LATITUDE"] = tmp["LATITUDE"].str.replace(",", ".", regex=False).astype(float)
                 tmp["LONGITUDE"] = tmp["LONGITUDE"].str.replace(",", ".", regex=False).astype(float)
@@ -97,7 +98,6 @@ def load_geojson_any(path_candidates):
                 st.warning(f"Erro ao ler {p}: {e}")
     return None
 
-# Utils Painel de Obras
 def br_money(x):
     try:
         s = str(x).replace("R$", "").strip()
@@ -133,11 +133,56 @@ def to_float_series(s: pd.Series) -> pd.Series:
     def _conv(v):
         if pd.isna(v): return None
         txt = str(v)
-        m = re.search(r"-?\\d+[.,]?\\d*", txt)
+        m = re.search(r"-?\d+[.,]?\d*", txt)
         if not m: return None
         try: return float(m.group(0).replace(",", "."))
         except Exception: return None
     return s.apply(_conv)
+
+def norm_col(c: str) -> str:
+    s = unicodedata.normalize("NFKD", str(c))
+    s = "".join(ch for ch in s if not unicodedata.combining(ch))  # remove acentos
+    s = s.strip().lower()
+    s = re.sub(r"[^a-z0-9]+", "_", s)  # troca espaços/símbolos por _
+    return s.strip("_")
+
+def geojson_bounds(gj: dict):
+    """
+    Retorna ((min_lat, min_lon), (max_lat, max_lon)) da geometria GeoJSON.
+    Funciona para FeatureCollection/Feature/Geometry.
+    """
+    if not gj:
+        return None
+    lats, lons = [], []
+
+    def _ingest_coords(coords):
+        # coords pode ter profundidades diferentes (MultiPolygon, Polygon, LineString, Point)
+        if isinstance(coords, (list, tuple)):
+            if len(coords) == 2 and isinstance(coords[0], (int, float)) and isinstance(coords[1], (int, float)):
+                lon, lat = coords[0], coords[1]
+                lons.append(lon); lats.append(lat)
+            else:
+                for c in coords:
+                    _ingest_coords(c)
+
+    def _walk_feature(f):
+        geom = f.get("geometry", {})
+        coords = geom.get("coordinates", [])
+        _ingest_coords(coords)
+
+    t = gj.get("type")
+    if t == "FeatureCollection":
+        for f in gj.get("features", []):
+            _walk_feature(f)
+    elif t == "Feature":
+        _walk_feature(gj)
+    else:
+        # GeoJSON geometry pura
+        _ingest_coords(gj.get("coordinates", []))
+
+    if not lats or not lons:
+        return None
+    return (min(lats), min(lons)), (max(lats), max(lons))
 
 # =====================================================
 # Layout comum
@@ -187,61 +232,32 @@ with aba2:
     df_obras_raw = sniff_read_csv(CSV_OBRAS)
 
     if not df_obras_raw.empty:
-        import unicodedata
-
-        # ---------- Normalização de nomes de colunas ----------
-        def _norm_col(c: str) -> str:
-            s = unicodedata.normalize("NFKD", str(c))
-            s = "".join(ch for ch in s if not unicodedata.combining(ch))  # remove acentos
-            s = s.strip().lower()
-            s = re.sub(r"[^a-z0-9]+", "_", s)  # troca espaços/simbolos por _
-            return s.strip("_")
-
-        colmap = {c: _norm_col(c) for c in df_obras_raw.columns}
+        # Normaliza colunas
+        colmap = {c: norm_col(c) for c in df_obras_raw.columns}
         df_obras = df_obras_raw.rename(columns=colmap).copy()
 
-        # ---------- Descoberta das colunas lat/lon ----------
-        # aceita latitude, lat; longitude, long, lon
+        # Detecta lat/lon
         lat_col = next((c for c in df_obras.columns if c in {"latitude","lat"}), None)
         lon_col = next((c for c in df_obras.columns if c in {"longitude","long","lon"}), None)
-
-        # fallback: tentar por padrão da função antiga (coord única)
         if not lat_col or not lon_col:
-            coords = autodetect_coords(df_obras_raw.copy())  # usa a função util existente
+            coords = autodetect_coords(df_obras_raw.copy())  # fallback na planilha bruta
             if coords:
                 lat_col, lon_col = coords
-
-        # ---------- Conversão robusta para float ----------
-        def _to_float_series(s: pd.Series) -> pd.Series:
-            def _conv(v):
-                if pd.isna(v): return None
-                txt = str(v).strip()
-                # extrai primeiro número (com vírgula/ponto e sinal)
-                m = re.search(r"-?\d+(?:[.,]\d+)?", txt)
-                if not m: return None
-                num = m.group(0).replace(",", ".")
-                try:
-                    return float(num)
-                except Exception:
-                    return None
-            return s.apply(_conv)
 
         if not lat_col or not lon_col:
             st.error("Não foi possível localizar colunas de latitude/longitude (mesmo após normalização).")
             st.stop()
 
-        # Gera colunas numéricas internas
-        df_obras["__LAT__"] = _to_float_series(df_obras[lat_col])
-        df_obras["__LON__"] = _to_float_series(df_obras[lon_col])
+        df_obras["__LAT__"] = to_float_series(df_obras[lat_col])
+        df_obras["__LON__"] = to_float_series(df_obras[lon_col])
 
-        # ---------- Heurística para corrigir inversão e sinal ----------
+        # Heurística para corrigir inversão e sinal
         lat_s = pd.to_numeric(df_obras["__LAT__"], errors="coerce")
         lon_s = pd.to_numeric(df_obras["__LON__"], errors="coerce")
 
         def _pct_inside(a, b):
-            # janela ampla: NE do Brasil (~Milhã-CE: lat -5.x, lon -39.x)
             try:
-                m = (a.between(-6.5, -4.5)) & (b.between(-40.5, -38.0))
+                m = (a.between(-6.5, -4.5)) & (b.between(-40.5, -38.0))  # região CE
                 return float(m.mean())
             except Exception:
                 return 0.0
@@ -256,22 +272,12 @@ with aba2:
         if best[0] != "orig" and best[3] >= cands[0][3]:
             df_obras["__LAT__"], df_obras["__LON__"] = best[1], best[2]
 
-        # ---------- Filtra apenas geolocalizadas ----------
         df_map = df_obras.dropna(subset=["__LAT__", "__LON__"]).copy()
 
-        # ---------- Diagnóstico (útil para checar) ----------
-        with st.expander("🔎 Diagnóstico (ajuda rápida)"):
-            st.write("Arquivo:", os.path.basename(CSV_OBRAS))
-            st.write("Colunas originais:", list(df_obras_raw.columns))
-            st.write("Colunas normalizadas:", list(df_obras.columns))
-            st.write("Detectado como latitude:", lat_col, " | longitude:", lon_col)
-            st.write("Total linhas:", len(df_obras_raw), " | Geolocalizadas:", len(df_map))
-            st.dataframe(df_obras.head(5), use_container_width=True)
-
-        # ---------- Campos para popup/tabela ----------
+        # Campos para popup/tabela
         cols = list(df_obras.columns)
         def pick_norm(*options):
-            return next((c for c in cols if c in [ _norm_col(o) for o in options ]), None)
+            return next((c for c in cols if c in [norm_col(o) for o in options]), None)
 
         c_obra    = pick_norm("Obra", "Nome", "Projeto", "Descrição")
         c_status  = pick_norm("Status", "Situação")
@@ -283,68 +289,167 @@ with aba2:
 
         st.success(f"{len(df_map)} obra(s) com coordenadas válidas. (Arquivo: {os.path.basename(CSV_OBRAS)})")
 
+        # Painel lateral (Obras / Distritos / Sede)
+        base_dir_candidates = ["dados", "/mnt/data"]
+        gj_distritos = load_geojson_any([os.path.join(b, "milha_dist_polig.geojson") for b in base_dir_candidates])
+        gj_sede      = load_geojson_any([os.path.join(b, "Distritos_pontos.geojson") for b in base_dir_candidates])
+
+        if "show_layer_panel_obras" not in st.session_state:
+            st.session_state["show_layer_panel_obras"] = True
+        show_now = st.session_state["show_layer_panel_obras"]
+        wrapper_id = "toggle-lyr-obras" if show_now else "toggle-lyr-obras-pulse"
+
+        st.markdown(
+            """
+            <style>
+            @keyframes pulseObras {
+                0%   { transform: scale(1);   box-shadow: 0 0 0 0 rgba(2, 132, 199, 0.35); }
+                70%  { transform: scale(1.03); box-shadow: 0 0 0 12px rgba(2, 132, 199, 0); }
+                100% { transform: scale(1);   box-shadow: 0 0 0 0 rgba(2, 132, 199, 0); }
+            }
+            #toggle-lyr-obras-pulse button {
+                animation: pulseObras 1.1s ease-in-out 0s 2;
+                border-color: #0284c7 !important;
+            }
+            .sticky-panel { position: sticky; top: 8px; border: 1px solid #dbe2ea; border-radius: 10px; background: #fff; padding: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+            .panel-title { font-weight: 700; margin-bottom: 6px; color: #0f172a; }
+            .panel-subtitle { font-size: .9rem; color: #475569; margin-bottom: 8px; }
+            </style>
+            """,
+            unsafe_allow_html=True
+        )
+
+        col_btn, _ = st.columns([1, 6])
+        with col_btn:
+            st.markdown(f"<div id='{wrapper_id}'>", unsafe_allow_html=True)
+            label = ("🙈 Ocultar painel de camadas"
+                     if show_now else
+                     "👁️ Exibir painel de camadas")
+            if st.button(label, use_container_width=True, key="toggle_panel_btn_obras"):
+                st.session_state["show_layer_panel_obras"] = not st.session_state["show_layer_panel_obras"]
+                st.rerun()
+            st.markdown("</div>", unsafe_allow_html=True)
+
+        show_panel = st.session_state["show_layer_panel_obras"]
+
+        # Layout: com painel ou sem painel
+        if show_panel:
+            col_map, col_panel = st.columns([5, 2], gap="large")
+        else:
+            col_map, = st.columns([1])
+
+        # Painel lateral (checkboxes)
+        if show_panel:
+            with col_panel:
+                st.markdown('<div class="sticky-panel">', unsafe_allow_html=True)
+                st.markdown('<div class="panel-title">Camadas</div>', unsafe_allow_html=True)
+                st.markdown('<div class="panel-subtitle">Ative/desative as camadas do mapa</div>', unsafe_allow_html=True)
+
+                show_obras      = st.checkbox("Obras (marcadores)", value=True, key="obras_markers")
+                show_distritos  = st.checkbox("Distritos (polígonos)", value=True, key="obras_distritos")
+                show_sede       = st.checkbox("Sede de Distritos (pontos)", value=True, key="obras_sede")
+
+                st.markdown('</div>', unsafe_allow_html=True)
+        else:
+            show_obras     = st.session_state.get("obras_markers", True)
+            show_distritos = st.session_state.get("obras_distritos", True)
+            show_sede      = st.session_state.get("obras_sede", True)
+
         # ---------- Mapa ----------
-        center = [-5.680, -39.200]
-        if not df_map.empty:
-            center = [df_map["__LAT__"].mean(), df_map["__LON__"].mean()]
+        with col_map:
+            default_center = [-5.680, -39.200]
+            default_zoom = 12
 
-        m2 = folium.Map(location=center, zoom_start=12, tiles=None)
-        add_base_tiles(m2)
-        Fullscreen(position='topright', title='Tela Cheia', title_cancel='Sair', force_separate_button=True).add_to(m2)
-        m2.add_child(MeasureControl(primary_length_unit="meters", secondary_length_unit="kilometers", primary_area_unit="hectares"))
-        MousePosition().add_to(m2)
-        Draw(export=True).add_to(m2)
+            m2 = folium.Map(location=default_center, zoom_start=default_zoom, tiles=None)
+            add_base_tiles(m2)
+            Fullscreen(position='topright', title='Tela Cheia', title_cancel='Sair', force_separate_button=True).add_to(m2)
+            m2.add_child(MeasureControl(primary_length_unit="meters", secondary_length_unit="kilometers", primary_area_unit="hectares"))
+            MousePosition().add_to(m2)
+            Draw(export=True).add_to(m2)
 
-        def status_icon_color(status_val: str):
-            s = (str(status_val) if status_val is not None else "").strip().lower()
-            if any(k in s for k in ["conclu", "finaliz"]):     return "green"
-            if any(k in s for k in ["execu", "andamento"]):    return "orange"
-            if any(k in s for k in ["paralis", "suspens"]):    return "red"
-            if any(k in s for k in ["planej", "licita", "proj"]): return "blue"
-            return "gray"
+            # Centraliza pela camada Distritos se existir
+            if gj_distritos:
+                b = geojson_bounds(gj_distritos)
+                if b:
+                    (min_lat, min_lon), (max_lat, max_lon) = b
+                    m2.fit_bounds([[min_lat, min_lon], [max_lat, max_lon]])
+            elif not df_map.empty:
+                # fallback p/ pontos de obras
+                m2.fit_bounds([[df_map["__LAT__"].min(), df_map["__LON__"].min()],
+                               [df_map["__LAT__"].max(), df_map["__LON__"].max()]])
 
-        ignore_cols = {"__LAT__", "__LON__"}
-        for _, r in df_map.iterrows():
-            nome   = str(r.get(c_obra, "Obra")) if c_obra else "Obra"
-            status = str(r.get(c_status, "-")) if c_status else "-"
-            empresa= str(r.get(c_empresa, "-")) if c_empresa else "-"
-            valor  = br_money(r.get(c_valor)) if c_valor else "-"
-            bairro = str(r.get(c_bairro, "-")) if c_bairro else "-"
-            dtini  = str(r.get(c_dtini, "-")) if c_dtini else "-"
-            dtfim  = str(r.get(c_dtfim, "-")) if c_dtfim else "-"
+            def status_icon_color(status_val: str):
+                s = (str(status_val) if status_val is not None else "").strip().lower()
+                if any(k in s for k in ["conclu", "finaliz"]):     return "green"
+                if any(k in s for k in ["execu", "andamento"]):    return "orange"
+                if any(k in s for k in ["paralis", "suspens"]):    return "red"
+                if any(k in s for k in ["planej", "licita", "proj"]): return "blue"
+                return "gray"
 
-            extra_rows = []
-            for c in df_obras.columns:
-                if c in ignore_cols or c in {c_obra, c_status, c_empresa, c_valor, c_bairro, c_dtini, c_dtfim}:
-                    continue
-                val = r.get(c, "")
-                if pd.notna(val) and str(val).strip() != "":
-                    extra_rows.append(f"<tr><td><b>{c}</b></td><td>{val}</td></tr>")
-            extra_html = "".join(extra_rows)
+            # Distritos
+            if show_distritos and gj_distritos:
+                folium.GeoJson(
+                    gj_distritos,
+                    name="Distritos",
+                    style_function=lambda x: {"fillColor": "#9fe2fc", "fillOpacity": 0.2, "color": "#000000", "weight": 1},
+                ).add_to(m2)
 
-            popup_html = (
-                "<div style='font-family:Arial; font-size:13px'>"
-                f"<h4 style='margin:4px 0 8px 0'>🧱 {nome}</h4>"
-                f"<p style='margin:0 0 6px'><b>Status:</b> {status}</p>"
-                f"<p style='margin:0 0 6px'><b>Empresa:</b> {empresa}</p>"
-                f"<p style='margin:0 0 6px'><b>Valor:</b> {valor}</p>"
-                f"<p style='margin:0 0 6px'><b>Bairro/Localidade:</b> {bairro}</p>"
-                f"<p style='margin:0 0 6px'><b>Início:</b> {dtini} &nbsp; <b>Término:</b> {dtfim}</p>"
-                + (f"<table border='1' cellpadding='4' cellspacing='0' style='border-collapse:collapse; margin-top:6px'>{extra_html}</table>" if extra_html else "")
-                + "</div>"
-            )
+            # Sede de Distritos
+            if show_sede and gj_sede:
+                lyr_sede = folium.FeatureGroup(name="Sede de Distritos")
+                for f in gj_sede.get("features", []):
+                    x, y = f["geometry"]["coordinates"]
+                    nome = f.get("properties", {}).get("Name", "Sede")
+                    folium.Marker([y, x], tooltip=nome, icon=folium.Icon(color="darkgreen", icon="home")).add_to(lyr_sede)
+                lyr_sede.add_to(m2)
 
-            folium.Marker(
-                location=[r["__LAT__"], r["__LON__"]],
-                tooltip=nome,
-                popup=folium.Popup(popup_html, max_width=420),
-                icon=folium.Icon(color=status_icon_color(status), icon="info-sign")
-            ).add_to(m2)
+            # Obras
+            if show_obras and not df_map.empty:
+                lyr_obras = folium.FeatureGroup(name="Obras")
+                ignore_cols = {"__LAT__", "__LON__"}
+                for _, r in df_map.iterrows():
+                    nome   = str(r.get(c_obra, "Obra")) if c_obra else "Obra"
+                    status = str(r.get(c_status, "-")) if c_status else "-"
+                    empresa= str(r.get(c_empresa, "-")) if c_empresa else "-"
+                    valor  = br_money(r.get(c_valor)) if c_valor else "-"
+                    bairro = str(r.get(c_bairro, "-")) if c_bairro else "-"
+                    dtini  = str(r.get(c_dtini, "-")) if c_dtini else "-"
+                    dtfim  = str(r.get(c_dtfim, "-")) if c_dtfim else "-"
 
-        folium.LayerControl(collapsed=True).add_to(m2)
-        folium_static(m2, width=1200, height=700)
+                    extra_rows = []
+                    for c in df_obras.columns:
+                        if c in ignore_cols or c in {c_obra, c_status, c_empresa, c_valor, c_bairro, c_dtini, c_dtfim}:
+                            continue
+                        val = r.get(c, "")
+                        if pd.notna(val) and str(val).strip() != "":
+                            extra_rows.append(f"<tr><td><b>{c}</b></td><td>{val}</td></tr>")
+                    extra_html = "".join(extra_rows)
 
-        # ---------- Tabela ----------
+                    popup_html = (
+                        "<div style='font-family:Arial; font-size:13px'>"
+                        f"<h4 style='margin:4px 0 8px 0'>🧱 {nome}</h4>"
+                        f"<p style='margin:0 0 6px'><b>Status:</b> {status}</p>"
+                        f"<p style='margin:0 0 6px'><b>Empresa:</b> {empresa}</p>"
+                        f"<p style='margin:0 0 6px'><b>Valor:</b> {valor}</p>"
+                        f"<p style='margin:0 0 6px'><b>Bairro/Localidade:</b> {bairro}</p>"
+                        f"<p style='margin:0 0 6px'><b>Início:</b> {dtini} &nbsp; <b>Término:</b> {dtfim}</p>"
+                        + (f"<table border='1' cellpadding='4' cellspacing='0' style='border-collapse:collapse; margin-top:6px'>{extra_html}</table>" if extra_html else "")
+                        + "</div>"
+                    )
+
+                    folium.Marker(
+                        location=[r["__LAT__"], r["__LON__"]],
+                        tooltip=nome,
+                        popup=folium.Popup(popup_html, max_width=420),
+                        icon=folium.Icon(color=status_icon_color(status), icon="info-sign")
+                    ).add_to(lyr_obras)
+
+                lyr_obras.add_to(m2)
+
+            folium.LayerControl(collapsed=True).add_to(m2)
+            folium_static(m2, width=1200, height=700)
+
+        # Tabela
         st.markdown("### Tabela de Obras")
         priority = [c_obra, c_status, c_empresa, c_valor, c_bairro, c_dtini, c_dtfim]
         ordered = [c for c in priority if c and c in df_obras.columns]
@@ -353,9 +458,8 @@ with aba2:
     else:
         st.error(f"Não foi possível carregar o CSV de obras em: {CSV_OBRAS}")
 
-
 # =====================================================
-# 3) Milhã em Mapas — painel interno com botão (com ícones + animação)
+# 3) Milhã em Mapas — painel interno com botão (sem Domicílios)
 # =====================================================
 with aba3:
     st.subheader("Camadas do Território, Infraestrutura e Recursos Hídricos")
@@ -373,9 +477,8 @@ with aba3:
             70%  { transform: scale(1.03); box-shadow: 0 0 0 12px rgba(15, 118, 110, 0); }
             100% { transform: scale(1);   box-shadow: 0 0 0 0 rgba(15, 118, 110, 0); }
         }
-        /* quando o painel estiver oculto, usamos um wrapper com este id */
         #toggle-panel-pulse button {
-            animation: pulse 1.1s ease-in-out 0s 2; /* 2 pulsos suaves */
+            animation: pulse 1.1s ease-in-out 0s 2;
             border-color: #0f766e !important;
         }
         </style>
@@ -463,6 +566,13 @@ with aba3:
         Fullscreen(position='topright', title='Tela Cheia', title_cancel='Sair', force_separate_button=True).add_to(m3)
         m3.add_child(MeasureControl(primary_length_unit="meters", secondary_length_unit="kilometers", primary_area_unit="hectares"))
         MousePosition().add_to(m3)
+
+        # Centraliza por Distritos se disponível
+        if data_geo.get("Distritos"):
+            b = geojson_bounds(data_geo["Distritos"])
+            if b:
+                (min_lat, min_lon), (max_lat, max_lon) = b
+                m3.fit_bounds([[min_lat, min_lon], [max_lat, max_lon]])
 
         # 1. Território
         if show_distritos and data_geo.get("Distritos"):
