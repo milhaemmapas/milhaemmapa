@@ -421,7 +421,7 @@ aba1, aba2, aba3 = st.tabs(["🏠 Página Inicial", "🏗️ Painel de Obras", "
 with aba1:
     col1, col2, col3 = st.columns(3)
     
-    # 👉 Cada card em UM bloco (corrige o “efeito” não acompanhar o texto)
+    # 👉 Cada card em UM bloco (corrige o "efeito" não acompanhar o texto)
     with col1:
         st.markdown(
             """
@@ -612,7 +612,7 @@ with aba2:
         if show_panel:
             with col_panel:
                 st.markdown('<div class="sticky-panel">', unsafe_allow_html=True)
-                st.markdown('<div class="panel-title">🎛️ Camadas do Mapa</div>', unsafe_allow_html=True)  # Corrigido o acento
+                st.markdown('<div class="panel-title">🎛️ Camadas do Mapa</div>', unsafe_allow_html=True)  # CORRIGIDO
                 st.markdown('<div class="panel-subtitle">Controle a visualização</div>', unsafe_allow_html=True)
 
                 # ORGANIZAÇÃO NO PADRÃO DA ABA MILHÃ - COM EXPANDERS
@@ -787,7 +787,7 @@ with aba3:
     if show_panel:
         with col_panel:
             st.markdown('<div class="sticky-panel">', unsafe_allow_html=True)
-            st.markdown('<div class="panel-title">🎯 Camadas do Mapa</div>', unsafe_allow_html=True)
+            st.markdown('<div class="panel-title">🎯 Camadas do Mapa</div>', unsafe_allow_html=True)  # CORRIGIDO
             st.markdown('<div class="panel-subtitle">Selecione o que deseja visualizar</div>', unsafe_allow_html=True)
 
             with st.expander("🗾 Território", expanded=True):
