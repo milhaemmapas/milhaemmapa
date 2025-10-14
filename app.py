@@ -30,7 +30,7 @@ def css_global():
             .hero img { height: 90px; }
             .hero h2 { margin: 0; font-size: 1.6rem; color: #0f172a; }
 
-            /* Painel lateral interno da aba (parece flutuante e gruda no topo ao rolar) */
+            /* Painel lateral interno da aba (gruda no topo ao rolar) */
             .sticky-panel {
                 position: sticky;
                 top: 8px;
@@ -40,20 +40,8 @@ def css_global():
                 padding: 12px;
                 box-shadow: 0 1px 4px rgba(0,0,0,0.05);
             }
-            .panel-title {
-                font-weight: 700; 
-                margin-bottom: 6px; 
-                color: #0f172a;
-            }
-            .panel-subtitle {
-                font-size: 0.9rem; 
-                color: #475569; 
-                margin-bottom: 8px;
-            }
-            .exp-title {
-                font-weight: 600; 
-                color: #0f172a;
-            }
+            .panel-title { font-weight: 700; margin-bottom: 6px; color: #0f172a; }
+            .panel-subtitle { font-size: 0.9rem; color: #475569; margin-bottom: 8px; }
         </style>
         """,
         unsafe_allow_html=True,
@@ -72,12 +60,10 @@ def show_footer_banner():
     )
 
 def autodetect_coords(df: pd.DataFrame):
-    # Pares latitude/longitude
     candidates_lat = [c for c in df.columns if re.search(r"(?:^|\\b)(lat|latitude|y)(?:\\b|$)", c, re.I)]
     candidates_lon = [c for c in df.columns if re.search(r"(?:^|\\b)(lon|long|longitude|x)(?:\\b|$)", c, re.I)]
     if candidates_lat and candidates_lon:
         return candidates_lat[0], candidates_lon[0]
-    # Coluna única "-5.123, -39.456"
     for c in df.columns:
         if re.search(r"coord|coordenad", c, re.I):
             try:
@@ -189,7 +175,7 @@ with aba1:
         )
 
 # =====================================================
-# 2) Painel de Obras  (base: CSV em dados/milha_obras.csv)
+# 2) Painel de Obras (CSV: dados/milha_obras.csv)
 # =====================================================
 with aba2:
     st.subheader("Mapa das Obras")
@@ -319,62 +305,87 @@ with aba2:
         st.error(f"Não foi possível carregar o CSV de obras em: {CSV_OBRAS}")
 
 # =====================================================
-# 3) Milhã em Mapas — com painel interno
+# 3) Milhã em Mapas — painel interno com opção de recolher
 # =====================================================
 with aba3:
     st.subheader("Camadas do Território, Infraestrutura e Recursos Hídricos")
 
-    # Layout: mapa grande + painel lateral interno
-    col_map, col_panel = st.columns([5, 2], gap="large")
+    # Toggle para mostrar/ocultar painel
+    show_panel = st.checkbox(
+        "Exibir painel de camadas",
+        value=st.session_state.get("show_layer_panel", True),
+        key="show_layer_panel"
+    )
 
-    with col_panel:
-        st.markdown('<div class="sticky-panel">', unsafe_allow_html=True)
-        st.markdown('<div class="panel-title">Camadas</div>', unsafe_allow_html=True)
-        st.markdown('<div class="panel-subtitle">Ative/desative as camadas do mapa</div>', unsafe_allow_html=True)
+    # Carregar dados GeoJSON (pasta dados ou /mnt/data)
+    base_dir_candidates = ["dados", "/mnt/data"]
+    files = {
+        "Distritos": "milha_dist_polig.geojson",
+        "Sede Distritos": "Distritos_pontos.geojson",
+        "Localidades": "Localidades.geojson",
+        "Domicílios Cidade": "domicilios_cidade.geojson",
+        "Domicílios Rural": "domicilios_rural_mil.geojson",
+        "Escolas": "Escolas_publicas.geojson",
+        "Unidades de Saúde": "Unidades_saude.geojson",
+        "Tecnologias Sociais": "teclogias_sociais.geojson",
+        "Poços Cidade": "pocos_cidade_mil.geojson",
+        "Poços Zona Rural": "pocos_rural_mil.geojson",
+    }
+    data_geo = {name: load_geojson_any([os.path.join(b, fname) for b in base_dir_candidates])
+                for name, fname in files.items()}
 
-        with st.expander("1) Território", expanded=True):
-            show_distritos = st.checkbox("Distritos", value=True, key="lyr_distritos")
-            show_sede_distritos = st.checkbox("Sede Distritos", value=True, key="lyr_sede")
-            show_localidades = st.checkbox("Localidades", value=True, key="lyr_local")
-            st.markdown("**Domicílios**")
-            show_dom_cidade = st.checkbox("Domicílios Cidade", value=False, key="lyr_dom_cid")
-            show_dom_rural = st.checkbox("Domicílios Rural", value=False, key="lyr_dom_rur")
+    # Layout responsivo: com painel (mapa+painel) ou sem painel (mapa full)
+    if show_panel:
+        col_map, col_panel = st.columns([5, 2], gap="large")
+    else:
+        col_map, = st.columns([1])
 
-        with st.expander("2) Infraestrutura", expanded=False):
-            show_escolas = st.checkbox("Escolas", value=False, key="lyr_escolas")
-            show_unidades = st.checkbox("Unidades de Saúde", value=False, key="lyr_unid")
+    # ----- Painel de camadas (renderiza apenas se habilitado) -----
+    if show_panel:
+        with col_panel:
+            st.markdown('<div class="sticky-panel">', unsafe_allow_html=True)
+            st.markdown('<div class="panel-title">Camadas</div>', unsafe_allow_html=True)
+            st.markdown('<div class="panel-subtitle">Ative/desative as camadas do mapa</div>', unsafe_allow_html=True)
 
-        with st.expander("3) Recursos Hídricos", expanded=False):
-            show_tecnologias = st.checkbox("Tecnologias Sociais", value=False, key="lyr_tec")
-            st.markdown("**Poços**")
-            show_pocos_cidade = st.checkbox("Poços Cidade", value=False, key="lyr_pc")
-            show_pocos_rural = st.checkbox("Poços Zona Rural", value=False, key="lyr_pr")
+            with st.expander("1) Território", expanded=True):
+                show_distritos = st.checkbox("Distritos", value=True, key="lyr_distritos")
+                show_sede_distritos = st.checkbox("Sede Distritos", value=True, key="lyr_sede")
+                show_localidades = st.checkbox("Localidades", value=True, key="lyr_local")
+                st.markdown("**Domicílios**")
+                show_dom_cidade = st.checkbox("Domicílios Cidade", value=False, key="lyr_dom_cid")
+                show_dom_rural = st.checkbox("Domicílios Rural", value=False, key="lyr_dom_rur")
 
-        st.markdown('</div>', unsafe_allow_html=True)
+            with st.expander("2) Infraestrutura", expanded=False):
+                show_escolas = st.checkbox("Escolas", value=False, key="lyr_escolas")
+                show_unidades = st.checkbox("Unidades de Saúde", value=False, key="lyr_unid")
 
+            with st.expander("3) Recursos Hídricos", expanded=False):
+                show_tecnologias = st.checkbox("Tecnologias Sociais", value=False, key="lyr_tec")
+                st.markdown("**Poços**")
+                show_pocos_cidade = st.checkbox("Poços Cidade", value=False, key="lyr_pc")
+                show_pocos_rural = st.checkbox("Poços Zona Rural", value=False, key="lyr_pr")
+
+            # Botão para recolher rapidamente o painel
+            if st.button("Recolher painel", use_container_width=True):
+                st.session_state["show_layer_panel"] = False
+                st.rerun()
+
+            st.markdown('</div>', unsafe_allow_html=True)
+    else:
+        # quando o painel está oculto, recuperar valores padrão/atuais dos toggles
+        show_distritos      = st.session_state.get("lyr_distritos", True)
+        show_sede_distritos = st.session_state.get("lyr_sede", True)
+        show_localidades    = st.session_state.get("lyr_local", True)
+        show_dom_cidade     = st.session_state.get("lyr_dom_cid", False)
+        show_dom_rural      = st.session_state.get("lyr_dom_rur", False)
+        show_escolas        = st.session_state.get("lyr_escolas", False)
+        show_unidades       = st.session_state.get("lyr_unid", False)
+        show_tecnologias    = st.session_state.get("lyr_tec", False)
+        show_pocos_cidade   = st.session_state.get("lyr_pc", False)
+        show_pocos_rural    = st.session_state.get("lyr_pr", False)
+
+    # ----- Mapa -----
     with col_map:
-        # Carregamento dos arquivos (pasta dados)
-        base_dir_candidates = ["dados", "/mnt/data"]
-        files = {
-            # Território
-            "Distritos": "milha_dist_polig.geojson",
-            "Sede Distritos": "Distritos_pontos.geojson",
-            "Localidades": "Localidades.geojson",
-            "Domicílios Cidade": "domicilios_cidade.geojson",
-            "Domicílios Rural": "domicilios_rural_mil.geojson",
-            # Infraestrutura
-            "Escolas": "Escolas_publicas.geojson",
-            "Unidades de Saúde": "Unidades_saude.geojson",
-            # Recursos Hídricos
-            "Tecnologias Sociais": "teclogias_sociais.geojson",
-            "Poços Cidade": "pocos_cidade_mil.geojson",
-            "Poços Zona Rural": "pocos_rural_mil.geojson",
-        }
-        data_geo = {}
-        for name, fname in files.items():
-            candidates = [os.path.join(b, fname) for b in base_dir_candidates]
-            data_geo[name] = load_geojson_any(candidates)
-
         m3 = folium.Map(location=[-5.680, -39.200], zoom_start=10, tiles=None)
         add_base_tiles(m3)
         Fullscreen(position='topright', title='Tela Cheia', title_cancel='Sair', force_separate_button=True).add_to(m3)
