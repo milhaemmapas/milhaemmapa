@@ -734,24 +734,31 @@ with aba2:
         st.error(f"❌ Não foi possível carregar o CSV de obras em: {CSV_OBRAS}")
 
 # =====================================================
-# 3) Milhã em Mapas - SEM TRANSIÇÃO / VIEWPORT FIXO
+# 3) Milhã em Mapas — SEM TRANSIÇÃO / VIEWPORT FIXO
 # =====================================================
 with aba3:
+    # Import robusto (local) para capturar viewport quando possível
+    try:
+        from streamlit_folium import st_folium as _st_folium
+        _HAS_ST_FOLIUM = True
+    except Exception:
+        _HAS_ST_FOLIUM = False
+
     render_card(
         "<h2>🗺️ Milhã em Mapas</h2>",
         "<p>Explore as camadas territoriais, de infraestrutura e recursos hídricos do município</p>",
     )
 
-    # Estados
+    # Estados da UI
     if "show_layer_panel" not in st.session_state:
         st.session_state["show_layer_panel"] = True
     if "m3_view" not in st.session_state:
-        # primeira carga: centro default
+        # centro/zoom padrão apenas na primeira carga
         st.session_state["m3_view"] = {"center": [-5.680, -39.200], "zoom": 10}
     if "m3_should_fit" not in st.session_state:
-        st.session_state["m3_should_fit"] = True  # apenas na 1ª carga ou ao clicar no botão
+        st.session_state["m3_should_fit"] = True  # primeiro render ou ao clicar no botão
 
-    # Botões
+    # Botões (mostrar/ocultar painel e centralizar)
     show_now = st.session_state["show_layer_panel"]
     wrapper_id = "toggle-panel" if show_now else "toggle-panel-pulse"
 
@@ -769,7 +776,7 @@ with aba3:
 
     show_panel = st.session_state["show_layer_panel"]
 
-    # GeoJSON
+    # Carregar dados GeoJSON
     base_dir_candidates = ["dados", "/mnt/data"]
     files = {
         "Distritos": "milha_dist_polig.geojson",
@@ -781,16 +788,18 @@ with aba3:
         "Poços Cidade": "pocos_cidade_mil.geojson",
         "Poços Zona Rural": "pocos_rural_mil.geojson",
     }
-    data_geo = {name: load_geojson_any([os.path.join(b, fname) for b in base_dir_candidates])
-                for name, fname in files.items()}
+    data_geo = {
+        name: load_geojson_any([os.path.join(b, fname) for b in base_dir_candidates])
+        for name, fname in files.items()
+    }
 
-    # Layout
+    # Layout do mapa/painel
     if show_panel:
         col_map, col_panel = st.columns([5, 2], gap="large")
     else:
         col_map, = st.columns([1])
 
-    # Painel
+    # Painel de camadas
     if show_panel:
         with col_panel:
             st.markdown('<div class="sticky-panel">', unsafe_allow_html=True)
@@ -814,6 +823,7 @@ with aba3:
 
             st.markdown('</div>', unsafe_allow_html=True)
     else:
+        # painel oculto → usa valores atuais/padrão
         show_distritos      = st.session_state.get("lyr_distritos", True)
         show_sede_distritos = st.session_state.get("lyr_sede", True)
         show_localidades    = st.session_state.get("lyr_local", True)
@@ -823,11 +833,13 @@ with aba3:
         show_pocos_cidade   = st.session_state.get("lyr_pc", False)
         show_pocos_rural    = st.session_state.get("lyr_pr", False)
 
-    # MAPA (viewport preservado)
+    # =======================
+    # MAPA (viewport fixo)
+    # =======================
     with col_map:
         st.markdown("### 🗺️ Mapa Interativo")
 
-        # Use SEMPRE o último centro/zoom salvo
+        # Usa SEMPRE o último centro/zoom salvo
         center = st.session_state["m3_view"]["center"]
         zoom   = st.session_state["m3_view"]["zoom"]
 
@@ -837,15 +849,15 @@ with aba3:
         m3.add_child(MeasureControl(primary_length_unit="meters", secondary_length_unit="kilometers", primary_area_unit="hectares"))
         MousePosition().add_to(m3)
 
-        # Apenas quando solicitado (primeira carga ou botão), fazemos um fit nos Distritos
+        # Fit somente quando solicitado (primeira carga ou clique no botão)
         if st.session_state["m3_should_fit"] and data_geo.get("Distritos"):
             b = geojson_bounds(data_geo["Distritos"])
             if b:
                 (min_lat, min_lon), (max_lat, max_lon) = b
                 m3.fit_bounds([[min_lat, min_lon], [max_lat, max_lon]])
-            st.session_state["m3_should_fit"] = False
+            st.session_state["m3_should_fit"] = False  # trava o auto-fit
 
-        # ---- Camadas ----
+        # --- Camadas (não alteram viewport) ---
         if show_distritos and data_geo.get("Distritos"):
             folium.GeoJson(
                 data_geo["Distritos"],
@@ -873,6 +885,7 @@ with aba3:
                 folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="purple", icon="flag")).add_to(layer_loc)
             layer_loc.add_to(m3)
 
+        # Infraestrutura
         if show_escolas and data_geo.get("Escolas"):
             layer_esc = folium.FeatureGroup(name="Escolas")
             for ftr in data_geo["Escolas"]["features"]:
@@ -904,6 +917,7 @@ with aba3:
                 folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="green", icon="plus-sign")).add_to(layer_saude)
             layer_saude.add_to(m3)
 
+        # Recursos Hídricos
         if show_tecnologias and data_geo.get("Tecnologias Sociais"):
             layer_tec = folium.FeatureGroup(name="Tecnologias Sociais")
             for ftr in data_geo["Tecnologias Sociais"]["features"]:
@@ -948,14 +962,27 @@ with aba3:
 
         folium.LayerControl(collapsed=True).add_to(m3)
 
-        # Render que CAPTURA a viewport atual
-        out = st_folium(m3, width=1200, height=700, returned_objects=["last_center", "zoom"])
-        # Guarda o centro/zoom após o render (permanece idêntico nas próximas marcações)
-        if out and out.get("last_center") and out.get("zoom") is not None:
-            st.session_state["m3_view"] = {
-                "center": [out["last_center"]["lat"], out["last_center"]["lng"]],
-                "zoom": int(out["zoom"]),
-            }
+        # Render preservando viewport quando possível
+        if _HAS_ST_FOLIUM:
+            try:
+                out = _st_folium(m3, width=1200, height=700)
+            except TypeError:
+                out = _st_folium(m3)  # compat com versões antigas
+            # Atualiza centro/zoom se a lib fornecer
+            if isinstance(out, dict):
+                last_center = out.get("last_center") or out.get("center")
+                zoom_val = out.get("zoom") or out.get("last_zoom")
+                if last_center and ("lat" in last_center and "lng" in last_center):
+                    st.session_state["m3_view"]["center"] = [last_center["lat"], last_center["lng"]]
+                if zoom_val is not None:
+                    try:
+                        st.session_state["m3_view"]["zoom"] = int(zoom_val)
+                    except Exception:
+                        pass
+        else:
+            # Fallback: sem captura de viewport (ainda assim sem transição porque não há fit automático)
+            folium_static(m3, width=1200, height=700)
+
 
 
 # =====================================================
