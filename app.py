@@ -260,6 +260,20 @@ def create_header():
     )
 
 # =====================================================
+# Helpers para cards (1 chamada = 1 card completo)
+# =====================================================
+def render_card(title_html: str, body_html: str):
+    st.markdown(
+        f"""
+        <div class="modern-card fade-in">
+            {title_html}
+            {body_html}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+# =====================================================
 # Funções utilitárias (mantidas do código original)
 # =====================================================
 def show_top_banner():
@@ -445,70 +459,63 @@ with aba1:
         )
     
     # 👉 modern-card em UM bloco só
-    st.markdown(
+    render_card(
+        "<h2>🌟 Bem-vindo ao ATLAS Geoespacial de Milhã</h2>",
         """
-        <div class="modern-card fade-in">
-            <h2>🌟 Bem-vindo ao ATLAS Geoespacial de Milhã</h2>
-            <p>
-                Esta plataforma integra <strong>dados geoespaciais</strong> do município para apoiar a tomada de decisões públicas, 
-                qualificar projetos urbanos e aproximar a gestão municipal dos cidadãos. 
-            </p>
-            <h3>🎯 Objetivos Principais:</h3>
-            <ul>
-                <li><strong>Transparência</strong>: Disponibilizar informações públicas de forma acessível</li>
-                <li><strong>Planejamento</strong>: Auxiliar no planejamento urbano e territorial</li>
-                <li><strong>Monitoramento</strong>: Acompanhar obras e projetos em tempo real</li>
-                <li><strong>Participação</strong>: Engajar a comunidade no desenvolvimento municipal</li>
-            </ul>
-        </div>
-        """,
-        unsafe_allow_html=True,
+        <p>
+            Esta plataforma integra <strong>dados geoespaciais</strong> do município para apoiar a tomada de decisões públicas, 
+            qualificar projetos urbanos e aproximar a gestão municipal dos cidadãos. 
+        </p>
+        <h3>🎯 Objetivos Principais:</h3>
+        <ul>
+            <li><strong>Transparência</strong>: Disponibilizar informações públicas de forma acessível</li>
+            <li><strong>Planejamento</strong>: Auxiliar no planejamento urbano e territorial</li>
+            <li><strong>Monitoramento</strong>: Acompanhar obras e projetos em tempo real</li>
+            <li><strong>Participação</strong>: Engajar a comunidade no desenvolvimento municipal</li>
+        </ul>
+        """
     )
     
     colA, colB = st.columns(2)
     
     with colA:
-        st.markdown(
+        render_card(
+            "<h3>🗺️ Explore o Território</h3>",
             """
-            <div class="modern-card fade-in">
-                <h3>🗺️ Explore o Território</h3>
-                <p>Na aba <strong>'Milhã em Mapas'</strong> você encontra:</p>
-                <ul>
-                    <li>Divisões territoriais (Distritos e Localidades)</li>
-                    <li>Infraestrutura pública (Escolas e Unidades de Saúde)</li>
-                    <li>Recursos hídricos (Poços e Tecnologias Sociais)</li>
-                    <li>Camadas interativas e ferramentas de medição</li>
-                </ul>
-            </div>
-            """,
-            unsafe_allow_html=True,
+            <p>Na aba <strong>'Milhã em Mapas'</strong> você encontra:</p>
+            <ul>
+                <li>Divisões territoriais (Distritos e Localidades)</li>
+                <li>Infraestrutura pública (Escolas e Unidades de Saúde)</li>
+                <li>Recursos hídricos (Poços e Tecnologias Sociais)</li>
+                <li>Camadas interativas e ferramentas de medição</li>
+            </ul>
+            """
         )
     
     with colB:
-        st.markdown(
+        render_card(
+            "<h3>🏗️ Acompanhe as Obras</h3>",
             """
-            <div class="modern-card fade-in">
-                <h3>🏗️ Acompanhe as Obras</h3>
-                <p>No <strong>Painel de Obras</strong> monitore:</p>
-                <ul>
-                    <li>Status atual de cada projeto municipal</li>
-                    <li>Localização precisa no mapa</li>
-                    <li>Investimentos e prazos</li>
-                    <li>Empresas responsáveis</li>
-                    <li>Histórico de andamento</li>
-                </ul>
-            </div>
-            """,
-            unsafe_allow_html=True,
+            <p>No <strong>Painel de Obras</strong> monitore:</p>
+            <ul>
+                <li>Status atual de cada projeto municipal</li>
+                <li>Localização precisa no mapa</li>
+                <li>Investimentos e prazos</li>
+                <li>Empresas responsáveis</li>
+                <li>Histórico de andamento</li>
+            </ul>
+            """
         )
 
 # =====================================================
 # 2) Painel de Obras - COM MAPAS FUNCIONAIS
 # =====================================================
 with aba2:
-    st.markdown('<div class="modern-card">', unsafe_allow_html=True)
-    st.markdown("## 🏗️ Painel de Obras Municipais")
-    st.markdown("Visualize e acompanhe o andamento das obras públicas em Milhã")
+    # Cabeçalho em card consolidado (um único bloco)
+    render_card(
+        "<h2>🏗️ Painel de Obras Municipais</h2>",
+        "<p>Visualize e acompanhe o andamento das obras públicas em Milhã</p>",
+    )
 
     CSV_OBRAS_CANDIDATES = ["dados/milha_obras.csv", "/mnt/data/milha_obras.csv"]
     CSV_OBRAS = next((p for p in CSV_OBRAS_CANDIDATES if os.path.exists(p)), CSV_OBRAS_CANDIDATES[0])
@@ -530,7 +537,6 @@ with aba2:
 
         if not lat_col or not lon_col:
             st.error("Não foi possível localizar colunas de latitude/longitude.")
-            st.markdown('</div>', unsafe_allow_html=True)
             st.stop()
 
         df_obras["__LAT__"] = to_float_series(df_obras[lat_col])
@@ -722,16 +728,16 @@ with aba2:
         st.dataframe(df_obras[ordered + rest] if ordered else df_obras, use_container_width=True)
     else:
         st.error(f"❌ Não foi possível carregar o CSV de obras em: {CSV_OBRAS}")
-    
-    st.markdown('</div>', unsafe_allow_html=True)
 
 # =====================================================
 # 3) Milhã em Mapas - COM MAPAS FUNCIONAIS
 # =====================================================
 with aba3:
-    st.markdown('<div class="modern-card">', unsafe_allow_html=True)
-    st.markdown("## 🗺️ Milhã em Mapas")
-    st.markdown("Explore as camadas territoriais, de infraestrutura e recursos hídricos do município")
+    # Cabeçalho em card consolidado (um único bloco)
+    render_card(
+        "<h2>🗺️ Milhã em Mapas</h2>",
+        "<p>Explore as camadas territoriais, de infraestrutura e recursos hídricos do município</p>",
+    )
 
     # estado inicial do painel
     if "show_layer_panel" not in st.session_state:
@@ -930,8 +936,6 @@ with aba3:
 
         folium.LayerControl(collapsed=True).add_to(m3)
         folium_static(m3, width=1200, height=700)
-    
-    st.markdown('</div>', unsafe_allow_html=True)
 
 # =====================================================
 # Rodapé
