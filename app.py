@@ -32,85 +32,59 @@ COLORS = {
     "error": "#EF4444"         # Vermelho erro
 }
 
-# =====================================================
-# CSS Global (cards e efeitos)
-# =====================================================
-st.markdown("""
-<style>
-/* ======= Cards de estatísticas ======= */
-.stat-card {
-  background: linear-gradient(90deg, #e9eefb, #e6f5f0);
-  border-radius: 12px;
-  padding: 16px 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-  transition: transform .15s ease, box-shadow .15s ease;
-  min-height: 130px;
-}
-.stat-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 18px rgba(0,0,0,0.08);
-}
-.feature-icon {
-  font-size: 36px;
-  line-height: 1;
-  margin-bottom: 8px;
-}
-.stat-number {
-  font-weight: 800;
-  font-size: 28px;
-  color: #1E3A8A;
-}
-.stat-label {
-  font-size: 14px;
-  color: #4B5563;
-}
+# =======================================
+# CSS GLOBAL
+# =======================================
+def css_global():
+    st.markdown("""
+    <style>
+    /* ======= Cards de estatísticas ======= */
+    .stat-card {
+      background: linear-gradient(90deg, #e9eefb, #e6f5f0);
+      border-radius: 12px;
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      transition: transform .15s ease, box-shadow .15s ease;
+      min-height: 130px;
+    }
+    .stat-card:hover { transform: translateY(-3px); box-shadow: 0 8px 18px rgba(0,0,0,0.08); }
+    .feature-icon { font-size: 36px; line-height: 1; margin-bottom: 8px; }
+    .stat-number { font-weight: 800; font-size: 28px; color: #1E3A8A; }
+    .stat-label { font-size: 14px; color: #4B5563; }
 
-/* ======= Cards modernos ======= */
-.modern-card {
-  background: #fff;
-  border-radius: 14px;
-  padding: 22px;
-  margin-top: 20px;
-  box-shadow: 0 6px 24px rgba(0,0,0,.06);
-  transition: transform .15s ease, box-shadow .15s ease;
-}
-.modern-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 28px rgba(0,0,0,.08);
-}
-.fade-in {
-  animation: fadeIn 0.7s ease-in;
-}
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-</style>
-""", unsafe_allow_html=True)
+    /* ======= Cards modernos ======= */
+    .modern-card {
+      background: #fff; border-radius: 14px; padding: 22px; margin-top: 20px;
+      box-shadow: 0 6px 24px rgba(0,0,0,.06);
+      transition: transform .15s ease, box-shadow .15s ease;
+    }
+    .modern-card:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(0,0,0,.08); }
+    .fade-in { animation: fadeIn 0.7s ease-in; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px);} to { opacity: 1; transform: translateY(0);} }
+    </style>
+    """, unsafe_allow_html=True)
 
-# =====================================================
-# Funções auxiliares
-# =====================================================
+# =======================================
+# HELPERS VISUAIS
+# =======================================
 def stat_card(icon: str, number: str, label: str):
     html = f"""
     <div class="stat-card fade-in">
-        <div class="feature-icon">{icon}</div>
-        <div class="stat-number">{number}</div>
-        <div class="stat-label">{label}</div>
+      <div class="feature-icon">{icon}</div>
+      <div class="stat-number">{number}</div>
+      <div class="stat-label">{label}</div>
     </div>
     """
     st.markdown(html, unsafe_allow_html=True)
-# =====================================================
-# Funções utilitárias (mantidas do código original)
-# =====================================================
+
 def show_top_banner():
     st.markdown(
-        '<img src="https://i.ibb.co/v4d32PvX/banner.jpg" alt="Banner topo" style="width:100%; border-radius:12px; margin-bottom:2rem;" />',
+        '<img src="https://i.ibb.co/v4d32PvX/banner.jpg" alt="Banner topo" style="width:100%; border-radius:12px; margin-bottom:1rem;" />',
         unsafe_allow_html=True,
     )
 
@@ -120,6 +94,13 @@ def show_footer_banner():
         unsafe_allow_html=True,
     )
 
+def create_header():
+    # Ajuste conforme seu layout (pode incluir logo, título, etc.)
+    show_top_banner()
+
+# =======================================
+# UTILITÁRIOS (mantidos)
+# =======================================
 def autodetect_coords(df: pd.DataFrame):
     candidates_lat = [c for c in df.columns if re.search(r"(?:^|\b)(lat|latitude|y)(?:\b|$)", c, re.I)]
     candidates_lon = [c for c in df.columns if re.search(r"(?:^|\b)(lon|long|longitude|x)(?:\b|$)", c, re.I)]
@@ -161,8 +142,7 @@ def load_geojson_any(path_candidates):
 def br_money(x):
     try:
         s = str(x).replace("R$", "").strip()
-        if "," in s and s.count(".") >= 1:
-            s = s.replace(".", "")
+        if "," in s and s.count(".") >= 1: s = s.replace(".", "")
         v = float(s.replace(",", "."))
         return f"R$ {v:,.2f}".replace(",", "_").replace(".", ",").replace("_", ".")
     except Exception:
@@ -171,12 +151,10 @@ def br_money(x):
 def pick(colnames, *options):
     cols = list(colnames)
     for o in options:
-        if o in cols:
-            return o
+        if o in cols: return o
     lower = {c.lower(): c for c in cols}
     for o in options:
-        if o.lower() in lower:
-            return lower[o.lower()]
+        if o.lower() in lower: return lower[o.lower()]
     return None
 
 def sniff_read_csv(path: str) -> pd.DataFrame:
@@ -207,18 +185,16 @@ def norm_col(c: str) -> str:
     return s.strip("_")
 
 def geojson_bounds(gj: dict):
-    if not gj:
-        return None
+    if not gj: return None
     lats, lons = [], []
 
     def _ingest_coords(coords):
         if isinstance(coords, (list, tuple)):
-            if len(coords) == 2 and isinstance(coords[0], (int, float)) and isinstance(coords[1], (int, float)):
+            if len(coords) == 2 and all(isinstance(x, (int, float)) for x in coords):
                 lon, lat = coords[0], coords[1]
                 lons.append(lon); lats.append(lat)
             else:
-                for c in coords:
-                    _ingest_coords(c)
+                for c in coords: _ingest_coords(c)
 
     def _walk_feature(f):
         geom = f.get("geometry", {})
@@ -227,86 +203,78 @@ def geojson_bounds(gj: dict):
 
     t = gj.get("type")
     if t == "FeatureCollection":
-        for f in gj.get("features", []):
-            _walk_feature(f)
+        for f in gj.get("features", []): _walk_feature(f)
     elif t == "Feature":
         _walk_feature(gj)
     else:
         _ingest_coords(gj.get("coordinates", []))
 
-    if not lats or not lons:
-        return None
+    if not lats or not lons: return None
     return (min(lats), min(lons)), (max(lats), max(lons))
 
-# =====================================================
-# Layout Principal
-# =====================================================
+# =======================================
+# LAYOUT PRINCIPAL
+# =======================================
 css_global()
 create_header()
 
-# Abas principais
 aba1, aba2, aba3 = st.tabs(["🏠 Página Inicial", "🏗️ Painel de Obras", "🗺️ Milhã em Mapas"])
 
-# =====================================================
-# 1) Página Inicial - Atualizada
-# =====================================================
-st.title("🏛️ ATLAS Geoespacial de Milhã")
+# =======================================
+# 1) PÁGINA INICIAL
+# =======================================
+with aba1:
+    st.title("🏛️ ATLAS Geoespacial de Milhã")
 
-col1, col2, col3 = st.columns(3)
-with col1:
-    stat_card("📊", "100+", "Dados Geoespaciais")
-with col2:
-    stat_card("🏗️", "50+", "Obras Monitoradas")
-with col3:
-    stat_card("💧", "30+", "Recursos Hídricos")
+    c1, c2, c3 = st.columns(3)
+    with c1: stat_card("📊", "100+", "Dados Geoespaciais")
+    with c2: stat_card("🏗️", "50+", "Obras Monitoradas")
+    with c3: stat_card("💧", "30+", "Recursos Hídricos")
 
-# ======= Card principal de boas-vindas =======
-st.markdown("""
-<div class="modern-card fade-in">
-    <h2>🌟 Bem-vindo ao ATLAS Geoespacial de Milhã</h2>
-    <p>
-        Esta plataforma integra <strong>dados geoespaciais</strong> do município para apoiar a tomada de decisões públicas,
-        qualificar projetos urbanos e aproximar a gestão municipal dos cidadãos.
-    </p>
-    <h3>🎯 Objetivos Principais:</h3>
-    <ul>
-        <li><strong>Transparência</strong>: Disponibilizar informações públicas de forma acessível</li>
-        <li><strong>Planejamento</strong>: Auxiliar no planejamento urbano e territorial</li>
-        <li><strong>Monitoramento</strong>: Acompanhar obras e projetos em tempo real</li>
-        <li><strong>Participação</strong>: Engajar a comunidade no desenvolvimento municipal</li>
-    </ul>
-</div>
-""", unsafe_allow_html=True)
-
-# ======= Cards informativos laterais =======
-colA, colB = st.columns(2)
-
-with colA:
     st.markdown("""
     <div class="modern-card fade-in">
-        <h3>🗺️ Explore o Território</h3>
+        <h2>🌟 Bem-vindo ao ATLAS Geoespacial de Milhã</h2>
+        <p>
+            Esta plataforma integra <strong>dados geoespaciais</strong> do município para apoiar a tomada de decisões públicas,
+            qualificar projetos urbanos e aproximar a gestão municipal dos cidadãos.
+        </p>
+        <h3>🎯 Objetivos Principais:</h3>
         <ul>
-            <li>Divisões territoriais (Distritos e Localidades)</li>
-            <li>Infraestrutura pública (Escolas e Unidades de Saúde)</li>
-            <li>Recursos hídricos (Poços e Tecnologias Sociais)</li>
-            <li>Camadas interativas e ferramentas de medição</li>
+            <li><strong>Transparência</strong>: Disponibilizar informações públicas de forma acessível</li>
+            <li><strong>Planejamento</strong>: Auxiliar no planejamento urbano e territorial</li>
+            <li><strong>Monitoramento</strong>: Acompanhar obras e projetos em tempo real</li>
+            <li><strong>Participação</strong>: Engajar a comunidade no desenvolvimento municipal</li>
         </ul>
     </div>
     """, unsafe_allow_html=True)
 
-with colB:
-    st.markdown("""
-    <div class="modern-card fade-in">
-        <h3>🏗️ Acompanhe as Obras</h3>
-        <ul>
-            <li>Status atual de cada projeto municipal</li>
-            <li>Localização precisa no mapa</li>
-            <li>Investimentos e prazos</li>
-            <li>Empresas responsáveis</li>
-            <li>Histórico de andamento</li>
-        </ul>
-    </div>
-    """, unsafe_allow_html=True)
+    a, b = st.columns(2)
+    with a:
+        st.markdown("""
+        <div class="modern-card fade-in">
+            <h3>🗺️ Explore o Território</h3>
+            <ul>
+                <li>Divisões territoriais (Distritos e Localidades)</li>
+                <li>Infraestrutura pública (Escolas e Unidades de Saúde)</li>
+                <li>Recursos hídricos (Poços e Tecnologias Sociais)</li>
+                <li>Camadas interativas e ferramentas de medição</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with b:
+        st.markdown("""
+        <div class="modern-card fade-in">
+            <h3>🏗️ Acompanhe as Obras</h3>
+            <ul>
+                <li>Status atual de cada projeto municipal</li>
+                <li>Localização precisa no mapa</li>
+                <li>Investimentos e prazos</li>
+                <li>Empresas responsáveis</li>
+                <li>Histórico de andamento</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
 
 # =====================================================
 # 2) Painel de Obras - COM MAPAS FUNCIONAIS
