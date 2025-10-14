@@ -608,16 +608,20 @@ with aba2:
         else:
             col_map, = st.columns([1])
 
-        # Painel lateral (checkboxes)
+        # Painel lateral (checkboxes) - CORREÇÃO APLICADA AQUI
         if show_panel:
             with col_panel:
                 st.markdown('<div class="sticky-panel">', unsafe_allow_html=True)
-                st.markdown('<div class="panel-title">🎛️ Camadas do Mapa</div>', unsafe_allow_html=True)
+                st.markdown('<div class="panel-title">🎛️ Camadas do Mapa</div>', unsafe_allow_html=True)  # Corrigido o acento
                 st.markdown('<div class="panel-subtitle">Controle a visualização</div>', unsafe_allow_html=True)
 
-                show_obras      = st.checkbox("🚧 Obras", value=True, key="obras_markers")
-                show_distritos  = st.checkbox("🗺️ Distritos", value=True, key="obras_distritos")
-                show_sede       = st.checkbox("🏠 Sede Distritos", value=True, key="obras_sede")
+                # ORGANIZAÇÃO NO PADRÃO DA ABA MILHÃ - COM EXPANDERS
+                with st.expander("🏗️ Obras", expanded=True):
+                    show_obras = st.checkbox("Obras Municipais", value=True, key="obras_markers")
+
+                with st.expander("🗾 Território", expanded=False):
+                    show_distritos = st.checkbox("Distritos", value=True, key="obras_distritos")
+                    show_sede = st.checkbox("Sede Distritos", value=True, key="obras_sede")
 
                 st.markdown('</div>', unsafe_allow_html=True)
         else:
