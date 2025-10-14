@@ -57,7 +57,6 @@ def css_global():
                 margin-bottom: 2rem;
                 box-shadow: 0 4px 20px rgba(0,0,0,0.1);
             }}
-            
             .header-content {{
                 display: flex;
                 align-items: center;
@@ -65,27 +64,13 @@ def css_global():
                 max-width: 1200px;
                 margin: 0 auto;
             }}
-            
             .header-text h1 {{
-                font-size: 2.5rem;
-                font-weight: 700;
-                margin-bottom: 0.5rem;
-                color: white;
+                font-size: 2.5rem; font-weight: 700; margin-bottom: 0.5rem; color: white;
             }}
-            
-            .header-text p {{
-                font-size: 1.1rem;
-                opacity: 0.9;
-                margin-bottom: 0;
-            }}
-            
+            .header-text p {{ font-size: 1.1rem; opacity: 0.9; margin-bottom: 0; }}
             .header-logo {{
-                width: 120px;
-                height: 120px;
-                border-radius: 50%;
-                border: 4px solid rgba(255,255,255,0.2);
-                padding: 8px;
-                background: rgba(255,255,255,0.1);
+                width: 120px; height: 120px; border-radius: 50%;
+                border: 4px solid rgba(255,255,255,0.2); padding: 8px; background: rgba(255,255,255,0.1);
             }}
             
             /* Cards modernos */
@@ -98,146 +83,80 @@ def css_global():
                 margin-bottom: 1.5rem;
                 transition: transform 0.2s ease, box-shadow 0.2s ease;
             }}
-            
-            .modern-card:hover {{
-                transform: translateY(-2px);
-                box-shadow: 0 8px 30px rgba(0,0,0,0.12);
-            }}
+            .modern-card:hover {{ transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,0.12); }}
             
             /* Abas estilizadas */
-            .stTabs [data-baseweb="tab-list"] {{
-                gap: 8px;
-                background: transparent;
-            }}
-            
+            .stTabs [data-baseweb="tab-list"] {{ gap: 8px; background: transparent; }}
             .stTabs [data-baseweb="tab"] {{
-                background: {COLORS["card_bg"]};
-                border: 1px solid {COLORS["border"]};
-                border-radius: 12px 12px 0 0;
-                padding: 1rem 2rem;
-                font-weight: 600;
-                color: {COLORS["text_light"]};
-                transition: all 0.3s ease;
+                background: {COLORS["card_bg"]}; border: 1px solid {COLORS["border"]};
+                border-radius: 12px 12px 0 0; padding: 1rem 2rem; font-weight: 600;
+                color: {COLORS["text_light"]}; transition: all 0.3s ease;
             }}
-            
             .stTabs [aria-selected="true"] {{
-                background: {COLORS["primary"]} !important;
-                color: white !important;
+                background: {COLORS["primary"]} !important; color: white !important;
                 border-color: {COLORS["primary"]} !important;
             }}
             
             /* Botões modernos */
             .stButton button {{
                 background: linear-gradient(135deg, {COLORS["primary"]} 0%, {COLORS["secondary"]} 100%);
-                color: white;
-                border: none;
-                border-radius: 10px;
-                padding: 0.5rem 1.5rem;
-                font-weight: 600;
-                transition: all 0.3s ease;
+                color: white; border: none; border-radius: 10px; padding: 0.5rem 1.5rem;
+                font-weight: 600; transition: all 0.3s ease;
             }}
+            .stButton button:hover {{ transform: translateY(-2px); box-shadow: 0 6px 20px rgba(30, 58, 138, 0.3); }}
             
-            .stButton button:hover {{
-                transform: translateY(-2px);
-                box-shadow: 0 6px 20px rgba(30, 58, 138, 0.3);
+            /* Títulos/subtítulos do painel */
+            .panel-title {{
+                color: {COLORS["primary"]}; font-size: 1.25rem; font-weight: 700; margin: 0 0 .25rem 0;
+                display: flex; align-items: center; gap: .5rem;
             }}
-            
-            /* Painel lateral sticky */
-            .sticky-panel {{
-                position: sticky;
-                top: 20px;
+            .panel-subtitle {{
+                color: {COLORS["text_light"]}; font-size: .9rem; margin: 0 0 .75rem 0;
+                border-bottom: 1px solid {COLORS["border"]}; padding-bottom: .5rem;
+            }}
+
+            /* ===== Painel "box + sticky" sem abrir <div> =====
+               .panel-anchor é um marcador vazio.
+               Estilizamos o container Streamlit que vem logo DEPOIS dele. */
+            .panel-anchor + div[data-testid="stVerticalBlock"] {{
                 background: {COLORS["card_bg"]};
                 border: 1px solid {COLORS["border"]};
                 border-radius: 16px;
-                padding: 1.5rem;
+                padding: 1.25rem 1.25rem 1rem 1.25rem;
                 box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+                position: sticky; top: 20px;
             }}
-            
-            .panel-title {{
-                color: {COLORS["primary"]};
-                font-size: 1.25rem;
-                font-weight: 700;
-                margin-bottom: 0.5rem;
-            }}
-            
-            .panel-subtitle {{
-                color: {COLORS["text_light"]};
-                font-size: 0.9rem;
-                margin-bottom: 1rem;
-                border-bottom: 1px solid {COLORS["border"]};
-                padding-bottom: 0.5rem;
-            }}
-            
-            /* Ícones e badges */
-            .feature-icon {{
-                font-size: 2rem;
-                margin-bottom: 1rem;
-                color: {COLORS["primary"]};
-            }}
-            
+
+            /* Ícones e badges (cards de estatística) */
+            .feature-icon {{ font-size: 2rem; margin-bottom: 1rem; color: {COLORS["primary"]}; }}
             .stat-card {{
                 background: linear-gradient(135deg, {COLORS["primary"]}15, {COLORS["secondary"]}15);
-                border-radius: 12px;
-                padding: 1.5rem;
-                text-align: center;
-                border: 1px solid {COLORS["border"]};
+                border-radius: 12px; padding: 1.5rem; text-align: center; border: 1px solid {COLORS["border"]};
             }}
-            
-            .stat-number {{
-                font-size: 2rem;
-                font-weight: 700;
-                color: {COLORS["primary"]};
-                margin-bottom: 0.5rem;
-            }}
-            
-            .stat-label {{
-                color: {COLORS["text_light"]};
-                font-size: 0.9rem;
-            }}
-            
+            .stat-number {{ font-size: 2rem; font-weight: 700; color: {COLORS["primary"]}; margin-bottom: .5rem; }}
+            .stat-label {{ color: {COLORS["text_light"]}; font-size: .9rem; }}
+
             /* Animações */
-            @keyframes fadeIn {{
-                from {{ opacity: 0; transform: translateY(20px); }}
-                to {{ opacity: 1; transform: translateY(0); }}
-            }}
-            
-            .fade-in {{
-                animation: fadeIn 0.6s ease-out;
-            }}
-            
-            /* Estilos originais preservados para os mapas */
-            .top-banner, .footer-banner {{ 
-                width: 100%; 
-                height: auto; 
-                border-radius: 8px; 
-                margin-bottom: 20px; 
-            }}
-            
+            @keyframes fadeIn {{ from {{ opacity: 0; transform: translateY(20px); }}
+                                 to   {{ opacity: 1; transform: translateY(0); }} }}
+            .fade-in {{ animation: fadeIn .6s ease-out; }}
+
             /* Botão de toggle aprimorado */
             #toggle-lyr-obras-pulse button, #toggle-panel-pulse button {{
                  background-color: {COLORS["accent"]} !important;
                  border-color: {COLORS["accent"]} !important;
-                 color: white !important;
-                 font-weight: 600;
-                 border-radius: 6px;
+                 color: white !important; font-weight: 600; border-radius: 6px;
             }}
             #toggle-lyr-obras button, #toggle-panel button {{
-                 background-color: #ffffff !important;
-                 border-color: {COLORS["border"]} !important;
-                 color: {COLORS["text_light"]} !important;
-                 font-weight: 500;
-                 border-radius: 6px;
+                 background-color: #ffffff !important; border-color: {COLORS["border"]} !important;
+                 color: {COLORS["text_light"]} !important; font-weight: 500; border-radius: 6px;
             }}
-            
             @keyframes pulseObras {{
-                0%    {{ transform: scale(1);    box-shadow: 0 0 0 0 {COLORS["accent"]}40; }} 
+                0%   {{ transform: scale(1);    box-shadow: 0 0 0 0 {COLORS["accent"]}40; }} 
                 70%  {{ transform: scale(1.03); box-shadow: 0 0 0 12px {COLORS["accent"]}00; }}
                 100% {{ transform: scale(1);    box-shadow: 0 0 0 0 {COLORS["accent"]}00; }}
             }}
-            #toggle-lyr-obras-pulse button {{
-                animation: pulseObras 1.1s ease-in-out 0s 2;
-                border-color: {COLORS["accent"]} !important;
-            }}
+            #toggle-lyr-obras-pulse button {{ animation: pulseObras 1.1s ease-in-out 0s 2; border-color: {COLORS["accent"]} !important; }}
         </style>
         """,
         unsafe_allow_html=True,
@@ -260,7 +179,7 @@ def create_header():
     )
 
 # =====================================================
-# Helpers para cards (1 chamada = 1 card completo)
+# Helpers para cards/painel
 # =====================================================
 def render_card(title_html: str, body_html: str):
     st.markdown(
@@ -273,8 +192,17 @@ def render_card(title_html: str, body_html: str):
         unsafe_allow_html=True,
     )
 
+def panel_header(title: str, subtitle: str):
+    st.markdown(
+        f"""
+        <div class="panel-title">{title}</div>
+        <div class="panel-subtitle">{subtitle}</div>
+        """,
+        unsafe_allow_html=True,
+    )
+
 # =====================================================
-# Funções utilitárias (mantidas do código original)
+# Funções utilitárias (mantidas)
 # =====================================================
 def show_top_banner():
     st.markdown(
@@ -378,32 +306,23 @@ def geojson_bounds(gj: dict):
     if not gj:
         return None
     lats, lons = [], []
-
     def _ingest_coords(coords):
         if isinstance(coords, (list, tuple)):
             if len(coords) == 2 and isinstance(coords[0], (int, float)) and isinstance(coords[1], (int, float)):
                 lon, lat = coords[0], coords[1]
                 lons.append(lon); lats.append(lat)
             else:
-                for c in coords:
-                    _ingest_coords(c)
-
+                for c in coords: _ingest_coords(c)
     def _walk_feature(f):
-        geom = f.get("geometry", {})
-        coords = geom.get("coordinates", [])
-        _ingest_coords(coords)
-
+        geom = f.get("geometry", {}); coords = geom.get("coordinates", []); _ingest_coords(coords)
     t = gj.get("type")
     if t == "FeatureCollection":
-        for f in gj.get("features", []):
-            _walk_feature(f)
+        for f in gj.get("features", []): _walk_feature(f)
     elif t == "Feature":
         _walk_feature(gj)
     else:
         _ingest_coords(gj.get("coordinates", []))
-
-    if not lats or not lons:
-        return None
+    if not lats or not lons: return None
     return (min(lats), min(lons)), (max(lats), max(lons))
 
 # =====================================================
@@ -420,8 +339,6 @@ aba1, aba2, aba3 = st.tabs(["🏠 Página Inicial", "🏗️ Painel de Obras", "
 # =====================================================
 with aba1:
     col1, col2, col3 = st.columns(3)
-    
-    # 👉 Cada card em UM bloco (corrige o “efeito” não acompanhar o texto)
     with col1:
         st.markdown(
             """
@@ -430,10 +347,7 @@ with aba1:
                 <div class="stat-number">100+</div>
                 <div class="stat-label">Dados Geoespaciais</div>
             </div>
-            """,
-            unsafe_allow_html=True,
-        )
-    
+            """, unsafe_allow_html=True)
     with col2:
         st.markdown(
             """
@@ -442,10 +356,7 @@ with aba1:
                 <div class="stat-number">50+</div>
                 <div class="stat-label">Obras Monitoradas</div>
             </div>
-            """,
-            unsafe_allow_html=True,
-        )
-    
+            """, unsafe_allow_html=True)
     with col3:
         st.markdown(
             """
@@ -454,18 +365,13 @@ with aba1:
                 <div class="stat-number">30+</div>
                 <div class="stat-label">Recursos Hídricos</div>
             </div>
-            """,
-            unsafe_allow_html=True,
-        )
-    
-    # 👉 modern-card em UM bloco só
+            """, unsafe_allow_html=True)
+
     render_card(
         "<h2>🌟 Bem-vindo ao ATLAS Geoespacial de Milhã</h2>",
         """
-        <p>
-            Esta plataforma integra <strong>dados geoespaciais</strong> do município para apoiar a tomada de decisões públicas, 
-            qualificar projetos urbanos e aproximar a gestão municipal dos cidadãos. 
-        </p>
+        <p>Esta plataforma integra <strong>dados geoespaciais</strong> do município para apoiar a tomada de decisões públicas,
+        qualificar projetos urbanos e aproximar a gestão municipal dos cidadãos.</p>
         <h3>🎯 Objetivos Principais:</h3>
         <ul>
             <li><strong>Transparência</strong>: Disponibilizar informações públicas de forma acessível</li>
@@ -475,9 +381,8 @@ with aba1:
         </ul>
         """
     )
-    
+
     colA, colB = st.columns(2)
-    
     with colA:
         render_card(
             "<h3>🗺️ Explore o Território</h3>",
@@ -491,7 +396,6 @@ with aba1:
             </ul>
             """
         )
-    
     with colB:
         render_card(
             "<h3>🏗️ Acompanhe as Obras</h3>",
@@ -511,7 +415,6 @@ with aba1:
 # 2) Painel de Obras - COM MAPAS FUNCIONAIS
 # =====================================================
 with aba2:
-    # Cabeçalho em card consolidado (um único bloco)
     render_card(
         "<h2>🏗️ Painel de Obras Municipais</h2>",
         "<p>Visualize e acompanhe o andamento das obras públicas em Milhã</p>",
@@ -519,22 +422,17 @@ with aba2:
 
     CSV_OBRAS_CANDIDATES = ["dados/milha_obras.csv", "/mnt/data/milha_obras.csv"]
     CSV_OBRAS = next((p for p in CSV_OBRAS_CANDIDATES if os.path.exists(p)), CSV_OBRAS_CANDIDATES[0])
-
     df_obras_raw = sniff_read_csv(CSV_OBRAS)
 
     if not df_obras_raw.empty:
-        # Normaliza colunas
         colmap = {c: norm_col(c) for c in df_obras_raw.columns}
         df_obras = df_obras_raw.rename(columns=colmap).copy()
 
-        # Detecta lat/lon
         lat_col = next((c for c in df_obras.columns if c in {"latitude","lat"}), None)
         lon_col = next((c for c in df_obras.columns if c in {"longitude","long","lon"}), None)
         if not lat_col or not lon_col:
             coords = autodetect_coords(df_obras_raw.copy())
-            if coords:
-                lat_col, lon_col = coords
-
+            if coords: lat_col, lon_col = coords
         if not lat_col or not lon_col:
             st.error("Não foi possível localizar colunas de latitude/longitude.")
             st.stop()
@@ -542,7 +440,6 @@ with aba2:
         df_obras["__LAT__"] = to_float_series(df_obras[lat_col])
         df_obras["__LON__"] = to_float_series(df_obras[lon_col])
 
-        # Heurística para corrigir inversão e sinal
         lat_s = pd.to_numeric(df_obras["__LAT__"], errors="coerce")
         lon_s = pd.to_numeric(df_obras["__LON__"], errors="coerce")
 
@@ -565,7 +462,6 @@ with aba2:
 
         df_map = df_obras.dropna(subset=["__LAT__", "__LON__"]).copy()
 
-        # Campos para popup/tabela
         cols = list(df_obras.columns)
         def pick_norm(*options):
             return next((c for c in cols if c in [norm_col(o) for o in options]), None)
@@ -580,7 +476,6 @@ with aba2:
 
         st.success(f"✅ **{len(df_map)} obra(s)** com coordenadas válidas encontradas")
 
-        # Painel lateral
         base_dir_candidates = ["dados", "/mnt/data"]
         gj_distritos = load_geojson_any([os.path.join(b, "milha_dist_polig.geojson") for b in base_dir_candidates])
         gj_sede      = load_geojson_any([os.path.join(b, "Distritos_pontos.geojson") for b in base_dir_candidates])
@@ -602,36 +497,29 @@ with aba2:
 
         show_panel = st.session_state["show_layer_panel_obras"]
 
-        # Layout: com painel ou sem painel
         if show_panel:
             col_map, col_panel = st.columns([5, 2], gap="large")
         else:
             col_map, = st.columns([1])
 
-        # Painel lateral (checkboxes)
         if show_panel:
             with col_panel:
-                st.markdown('<div class="sticky-panel">', unsafe_allow_html=True)
-                st.markdown('<div class="panel-title">🎛️ Camadas do Mapa</div>', unsafe_allow_html=True)
-                st.markdown('<div class="panel-subtitle">Controle a visualização</div>', unsafe_allow_html=True)
-
-                show_obras      = st.checkbox("🚧 Obras", value=True, key="obras_markers")
-                show_distritos  = st.checkbox("🗺️ Distritos", value=True, key="obras_distritos")
-                show_sede       = st.checkbox("🏠 Sede Distritos", value=True, key="obras_sede")
-
-                st.markdown('</div>', unsafe_allow_html=True)
+                # Marcador + container (o CSS estiliza este container como box sticky)
+                st.markdown('<div class="panel-anchor"></div>', unsafe_allow_html=True)
+                with st.container():
+                    panel_header("🎛️ Camadas do Mapa", "Controle a visualização")
+                    show_obras      = st.checkbox("🚧 Obras", value=True, key="obras_markers")
+                    show_distritos  = st.checkbox("🗺️ Distritos", value=True, key="obras_distritos")
+                    show_sede       = st.checkbox("🏠 Sede Distritos", value=True, key="obras_sede")
         else:
             show_obras     = st.session_state.get("obras_markers", True)
             show_distritos = st.session_state.get("obras_distritos", True)
             show_sede      = st.session_state.get("obras_sede", True)
 
-        # ---------- MAPA FUNCIONAL ----------
         with col_map:
             st.markdown("### 🗺️ Mapa Interativo")
-            
             default_center = [-5.680, -39.200]
             default_zoom = 12
-
             m2 = folium.Map(location=default_center, zoom_start=default_zoom, tiles=None)
             add_base_tiles(m2)
             Fullscreen(position='topright', title='Tela Cheia', title_cancel='Sair', force_separate_button=True).add_to(m2)
@@ -639,12 +527,9 @@ with aba2:
             MousePosition().add_to(m2)
             Draw(export=True).add_to(m2)
 
-            # Centraliza pela camada Distritos se existir
             if gj_distritos:
                 b = geojson_bounds(gj_distritos)
-                if b:
-                    (min_lat, min_lon), (max_lat, max_lon) = b
-                    m2.fit_bounds([[min_lat, min_lon], [max_lat, max_lon]])
+                if b: (min_lat, min_lon), (max_lat, max_lon) = b; m2.fit_bounds([[min_lat, min_lon],[max_lat, max_lon]])
             elif not df_map.empty:
                 m2.fit_bounds([[df_map["__LAT__"].min(), df_map["__LON__"].min()],
                                [df_map["__LAT__"].max(), df_map["__LON__"].max()]])
@@ -657,24 +542,15 @@ with aba2:
                 if any(k in s for k in ["planej", "licita", "proj"]): return "blue"
                 return "gray"
 
-            # Distritos
             if show_distritos and gj_distritos:
-                folium.GeoJson(
-                    gj_distritos,
-                    name="Distritos",
-                    style_function=lambda x: {"fillColor": "#9fe2fc", "fillOpacity": 0.2, "color": "#000000", "weight": 1},
-                ).add_to(m2)
-
-            # Sede de Distritos
+                folium.GeoJson(gj_distritos, name="Distritos",
+                               style_function=lambda x: {"fillColor":"#9fe2fc","fillOpacity":0.2,"color":"#000","weight":1}).add_to(m2)
             if show_sede and gj_sede:
                 lyr_sede = folium.FeatureGroup(name="Sede de Distritos")
                 for f in gj_sede.get("features", []):
-                    x, y = f["geometry"]["coordinates"]
-                    nome = f.get("properties", {}).get("Name", "Sede")
+                    x, y = f["geometry"]["coordinates"]; nome = f.get("properties", {}).get("Name", "Sede")
                     folium.Marker([y, x], tooltip=nome, icon=folium.Icon(color="darkgreen", icon="home")).add_to(lyr_sede)
                 lyr_sede.add_to(m2)
-
-            # Obras
             if show_obras and not df_map.empty:
                 lyr_obras = folium.FeatureGroup(name="Obras")
                 ignore_cols = {"__LAT__", "__LON__"}
@@ -689,11 +565,9 @@ with aba2:
 
                     extra_rows = []
                     for c in df_obras.columns:
-                        if c in ignore_cols or c in {c_obra, c_status, c_empresa, c_valor, c_bairro, c_dtini, c_dtfim}:
-                            continue
+                        if c in ignore_cols or c in {c_obra, c_status, c_empresa, c_valor, c_bairro, c_dtini, c_dtfim}: continue
                         val = r.get(c, "")
-                        if pd.notna(val) and str(val).strip() != "":
-                            extra_rows.append(f"<tr><td><b>{c}</b></td><td>{val}</td></tr>")
+                        if pd.notna(val) and str(val).strip() != "": extra_rows.append(f"<tr><td><b>{c}</b></td><td>{val}</td></tr>")
                     extra_html = "".join(extra_rows)
 
                     popup_html = (
@@ -707,20 +581,14 @@ with aba2:
                         + (f"<table border='1' cellpadding='4' cellspacing='0' style='border-collapse:collapse; margin-top:6px'>{extra_html}</table>" if extra_html else "")
                         + "</div>"
                     )
-
-                    folium.Marker(
-                        location=[r["__LAT__"], r["__LON__"]],
-                        tooltip=nome,
-                        popup=folium.Popup(popup_html, max_width=420),
-                        icon=folium.Icon(color=status_icon_color(status), icon="info-sign")
-                    ).add_to(lyr_obras)
-
+                    folium.Marker([r["__LAT__"], r["__LON__"]], tooltip=nome,
+                                  popup=folium.Popup(popup_html, max_width=420),
+                                  icon=folium.Icon(color=status_icon_color(status), icon="info-sign")).add_to(lyr_obras)
                 lyr_obras.add_to(m2)
 
             folium.LayerControl(collapsed=True).add_to(m2)
             folium_static(m2, width=1200, height=700)
 
-        # Tabela
         st.markdown("### 📋 Tabela de Obras")
         priority = [c_obra, c_status, c_empresa, c_valor, c_bairro, c_dtini, c_dtfim]
         ordered = [c for c in priority if c and c in df_obras.columns]
