@@ -180,7 +180,7 @@ with aba1:
 # =====================================================
 with aba2:
     st.subheader("Mapa das Obras")
-    st.caption("Fonte: Google Sheets informado")
+    st.caption("Fonte: base pública fornecida pela gestão municipal")
 
     # ===== Helpers específicos do painel =====
     def br_money(x):
@@ -214,12 +214,40 @@ with aba2:
             return "blue"
         return "gray"
 
-    url_planilha = st.text_input(
-        "URL da planilha de Obras (Google Sheets)",
-        value="https://docs.google.com/spreadsheets/d/1rZvNp7di3fcjh_lao-ryqLYgP1aYJ4M8t6ZGmrdhj8k/edit?gid=0#gid=0",
-    )
+    # Campo removido da UI: a fonte de dados fica oculta (CSV local ou fallback CSV público)
+url_planilha = ""
 
-    df_obras = read_public_sheet(url_planilha)
+    import csv as _csv
+import re as _re
+
+# Leitura prioritária do CSV local; fallback silencioso para CSV público do Sheets
+
+def _sniff_read_csv(path: str) -> pd.DataFrame:
+    try:
+        with open(path, "r", encoding="utf-8-sig") as f:
+            sample = f.read(4096)
+            f.seek(0)
+            sep = ";" if ";" in sample and sample.count(",") < sample.count(";") else ","
+            return pd.read_csv(f, sep=sep)
+    except Exception:
+        return pd.DataFrame()
+
+
+def _to_float_series(s: pd.Series) -> pd.Series:
+    def _conv(v):
+        if pd.isna(v):
+            return None
+        txt = str(v)
+        m = _re.search(r"-?\d+[.,]?\d*", txt)
+        if not m:
+            return None
+        try:
+            return float(m.group(0).replace(",", "."))
+        except Exception:
+            return None
+    return s.apply(_conv)
+
+df_obras = read_public_sheet(url_planilha)
     if not df_obras.empty:
         # Detecta coordenadas
         coords = autodetect_coords(df_obras)
@@ -227,16 +255,12 @@ with aba2:
             st.error("Não foi possível identificar as colunas de latitude/longitude. Ajuste os cabeçalhos ou inclua uma coluna 'COORDENADAS' no formato 'lat,lon'.")
         else:
             lat_col, lon_col = coords
-            # Normaliza números (vírgula para ponto) e converte
-            for c in [lat_col, lon_col]:
-                df_obras[c] = (
-                    df_obras[c]
-                    .astype(str)
-                    .str.replace(",", ".", regex=False)
-                )
-            df_obras["__LAT__"] = pd.to_numeric(df_obras[lat_col], errors="coerce")
-            df_obras["__LON__"] = pd.to_numeric(df_obras[lon_col], errors="coerce")
-            df_map = df_obras.dropna(subset=["__LAT__", "__LON__"]).copy()
+            # Conversão robusta de coordenadas (aceita vírgula/ponto e valores mistos)
+df_obras["__LAT__"] = _to_float_series(df_obras[lat_col])
+df_obras["__LON__"] = _to_float_series(df_obras[lon_col])
+
+# Filtra somente coordenadas válidas
+df_map = df_obras.dropna(subset=["__LAT__", "__LON__"]).copy()
 
             # Colunas prioritárias
             cols = list(df_map.columns)
