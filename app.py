@@ -734,23 +734,24 @@ with aba2:
         st.error(f"❌ Não foi possível carregar o CSV de obras em: {CSV_OBRAS}")
 
 # =====================================================
-# 3) Milhã em Mapas - COM MAPAS FUNCIONAIS (corrigido)
+# 3) Milhã em Mapas - SEM TRANSIÇÃO / VIEWPORT FIXO
 # =====================================================
 with aba3:
-    # Cabeçalho em card consolidado (um único bloco)
     render_card(
         "<h2>🗺️ Milhã em Mapas</h2>",
         "<p>Explore as camadas territoriais, de infraestrutura e recursos hídricos do município</p>",
     )
 
-    # Estado inicial do painel e da centralização do mapa
+    # Estados
     if "show_layer_panel" not in st.session_state:
         st.session_state["show_layer_panel"] = True
+    if "m3_view" not in st.session_state:
+        # primeira carga: centro default
+        st.session_state["m3_view"] = {"center": [-5.680, -39.200], "zoom": 10}
     if "m3_should_fit" not in st.session_state:
-        # Centraliza apenas na primeira carga
-        st.session_state["m3_should_fit"] = True
+        st.session_state["m3_should_fit"] = True  # apenas na 1ª carga ou ao clicar no botão
 
-    # Botão com ícone para exibir/ocultar painel
+    # Botões
     show_now = st.session_state["show_layer_panel"]
     wrapper_id = "toggle-panel" if show_now else "toggle-panel-pulse"
 
@@ -763,13 +764,12 @@ with aba3:
             st.rerun()
         st.markdown("</div>", unsafe_allow_html=True)
     with col_btnR:
-        # Botão explícito para recentralizar quando quiser
         if st.button("📍 Centralizar em Milhã", use_container_width=True, key="btn_center_milha"):
-            st.session_state["m3_should_fit"] = True   # permite um novo fit_bounds
+            st.session_state["m3_should_fit"] = True
 
     show_panel = st.session_state["show_layer_panel"]
 
-    # Carregar dados GeoJSON
+    # GeoJSON
     base_dir_candidates = ["dados", "/mnt/data"]
     files = {
         "Distritos": "milha_dist_polig.geojson",
@@ -784,13 +784,13 @@ with aba3:
     data_geo = {name: load_geojson_any([os.path.join(b, fname) for b in base_dir_candidates])
                 for name, fname in files.items()}
 
-    # Layout: com painel (mapa + painel) ou sem painel (mapa full)
+    # Layout
     if show_panel:
         col_map, col_panel = st.columns([5, 2], gap="large")
     else:
         col_map, = st.columns([1])
 
-    # ----- Painel de camadas -----
+    # Painel
     if show_panel:
         with col_panel:
             st.markdown('<div class="sticky-panel">', unsafe_allow_html=True)
@@ -814,7 +814,6 @@ with aba3:
 
             st.markdown('</div>', unsafe_allow_html=True)
     else:
-        # painel oculto → usa valores atuais/padrão
         show_distritos      = st.session_state.get("lyr_distritos", True)
         show_sede_distritos = st.session_state.get("lyr_sede", True)
         show_localidades    = st.session_state.get("lyr_local", True)
@@ -824,29 +823,29 @@ with aba3:
         show_pocos_cidade   = st.session_state.get("lyr_pc", False)
         show_pocos_rural    = st.session_state.get("lyr_pr", False)
 
-    # ----- MAPA FUNCIONAL -----
+    # MAPA (viewport preservado)
     with col_map:
         st.markdown("### 🗺️ Mapa Interativo")
 
-        # Local/zoom default (usados apenas se não houver fit_bounds)
-        default_center = [-5.680, -39.200]
-        default_zoom = 10
+        # Use SEMPRE o último centro/zoom salvo
+        center = st.session_state["m3_view"]["center"]
+        zoom   = st.session_state["m3_view"]["zoom"]
 
-        m3 = folium.Map(location=default_center, zoom_start=default_zoom, tiles=None)
+        m3 = folium.Map(location=center, zoom_start=zoom, tiles=None)
         add_base_tiles(m3)
         Fullscreen(position='topright', title='Tela Cheia', title_cancel='Sair', force_separate_button=True).add_to(m3)
         m3.add_child(MeasureControl(primary_length_unit="meters", secondary_length_unit="kilometers", primary_area_unit="hectares"))
         MousePosition().add_to(m3)
 
-        # >>> Centraliza APENAS quando permitido (primeira carga ou após clicar no botão)
+        # Apenas quando solicitado (primeira carga ou botão), fazemos um fit nos Distritos
         if st.session_state["m3_should_fit"] and data_geo.get("Distritos"):
             b = geojson_bounds(data_geo["Distritos"])
             if b:
                 (min_lat, min_lon), (max_lat, max_lon) = b
                 m3.fit_bounds([[min_lat, min_lon], [max_lat, max_lon]])
-            st.session_state["m3_should_fit"] = False   # trava para não re-fitar a cada rerun
+            st.session_state["m3_should_fit"] = False
 
-        # 1. Território
+        # ---- Camadas ----
         if show_distritos and data_geo.get("Distritos"):
             folium.GeoJson(
                 data_geo["Distritos"],
@@ -874,7 +873,6 @@ with aba3:
                 folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="purple", icon="flag")).add_to(layer_loc)
             layer_loc.add_to(m3)
 
-        # 2. Infraestrutura
         if show_escolas and data_geo.get("Escolas"):
             layer_esc = folium.FeatureGroup(name="Escolas")
             for ftr in data_geo["Escolas"]["features"]:
@@ -906,7 +904,6 @@ with aba3:
                 folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="green", icon="plus-sign")).add_to(layer_saude)
             layer_saude.add_to(m3)
 
-        # 3. Recursos Hídricos
         if show_tecnologias and data_geo.get("Tecnologias Sociais"):
             layer_tec = folium.FeatureGroup(name="Tecnologias Sociais")
             for ftr in data_geo["Tecnologias Sociais"]["features"]:
@@ -950,7 +947,15 @@ with aba3:
             layer_pr.add_to(m3)
 
         folium.LayerControl(collapsed=True).add_to(m3)
-        folium_static(m3, width=1200, height=700)
+
+        # Render que CAPTURA a viewport atual
+        out = st_folium(m3, width=1200, height=700, returned_objects=["last_center", "zoom"])
+        # Guarda o centro/zoom após o render (permanece idêntico nas próximas marcações)
+        if out and out.get("last_center") and out.get("zoom") is not None:
+            st.session_state["m3_view"] = {
+                "center": [out["last_center"]["lat"], out["last_center"]["lng"]],
+                "zoom": int(out["zoom"]),
+            }
 
 
 # =====================================================
