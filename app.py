@@ -175,107 +175,43 @@ with aba1:
         )
 
 # =====================================================
-# 2) Painel de Obras  (CSV + KPIs + filtros + camadas)
+# 2) Painel de Obras (CSV: dados/milha_obras.csv)
 # =====================================================
 with aba2:
-    st.subheader("Painel de Obras")
+    st.subheader("Mapa das Obras")
     st.caption("Fonte: CSV oficial (pasta dados)")
 
-    # --- Caminhos
     CSV_OBRAS_CANDIDATES = ["dados/milha_obras.csv", "/mnt/data/milha_obras.csv"]
     CSV_OBRAS = next((p for p in CSV_OBRAS_CANDIDATES if os.path.exists(p)), CSV_OBRAS_CANDIDATES[0])
 
-    # GeoJSONs locais (Distritos e Sede)
-    base_dir_candidates = ["dados", "/mnt/data"]
-    gj_distritos = load_geojson_any([os.path.join(b, "milha_dist_polig.geojson") for b in base_dir_candidates])
-    gj_sede      = load_geojson_any([os.path.join(b, "Distritos_pontos.geojson") for b in base_dir_candidates])
-
-    # --- Leitura do CSV
     df_obras = sniff_read_csv(CSV_OBRAS)
 
     if not df_obras.empty:
-        # -------------------------------------------------
-        # Identificação de colunas (inicialização segura)
-        # -------------------------------------------------
-        c_obra = c_status = c_empresa = c_valor = c_bairro = c_dtini = c_dtfim = None
-
-        cols = list(df_obras.columns)
-        c_status = pick(cols, "Status", "STATUS", "Situação", "SITUAÇÃO", "SITUACAO")
-        c_valor  = pick(cols, "Valor", "VALOR", "Valor Total", "VALOR_TOTAL", "Custo", "CUSTO")
-        c_obra   = pick(cols, "Obra", "OBRA", "Nome", "NOME", "Projeto", "Descrição")
-        c_bairro = pick(cols, "Bairro", "BAIRRO", "Localidade", "LOCALIDADE")
-        c_dtini  = pick(cols, "Início", "DATA_INICIO", "Data Início", "DATA INICIO", "Inicio")
-        c_dtfim  = pick(cols, "Término", "DATA_FIM", "Data Fim", "DATA FIM", "Termino")
-
-        # --------------------------
-        # Filtros (Status / Bairro)
-        # --------------------------
-        status_opts = sorted([str(x) for x in df_obras[c_status].dropna().unique()]) if c_status else []
-        bairro_opts = sorted([str(x) for x in df_obras[c_bairro].dropna().unique()]) if c_bairro else []
-
-        f1, f2, f3 = st.columns([2, 2, 1])
-        with f1:
-            sel_status = st.multiselect("Filtrar por Status", options=status_opts, default=status_opts) if status_opts else []
-        with f2:
-            sel_bairro = st.multiselect("Filtrar por Bairro/Localidade", options=bairro_opts, default=bairro_opts) if bairro_opts else []
-        with f3:
-            if st.button("Limpar filtros", use_container_width=True):
-                st.experimental_rerun()
-
-        # aplica filtros
-        df_filt = df_obras.copy()
-        if c_status and sel_status:
-            df_filt = df_filt[df_filt[c_status].astype(str).isin(sel_status)]
-        if c_bairro and sel_bairro:
-            df_filt = df_filt[df_filt[c_bairro].astype(str).isin(sel_bairro)]
-
-        # ------------------------------------------
-        # KPIs (baseados no DF filtrado)
-        # ------------------------------------------
-        def money_to_float_series(s: pd.Series) -> pd.Series:
-            def _m(v):
-                if pd.isna(v): return 0.0
-                txt = str(v).replace("R$", "").strip()
-                if "," in txt and txt.count(".") >= 1:
-                    txt = txt.replace(".", "")
-                try:
-                    return float(txt.replace(",", "."))
-                except Exception:
-                    m = re.search(r"-?\d+[.,]?\d*", str(v))
-                    return float(m.group(0).replace(",", ".")) if m else 0.0
-            return s.apply(_m)
-
-        total_obras = len(df_filt)
-        total_invest = money_to_float_series(df_filt[c_valor]).sum() if c_valor else 0.0
-
-        # geolocalização (descobre coords no DF filtrado)
-        coords = autodetect_coords(df_filt)
+        coords = autodetect_coords(df_obras)
         if coords is None:
-            lat = pick(df_filt.columns, "LAT", "Latitude", "LATITUDE", "lat")
-            lon = pick(df_filt.columns, "LON", "Longitude", "LONGITUDE", "lon", "long")
+            lat = pick(df_obras.columns, "LAT", "Latitude", "LATITUDE", "lat")
+            lon = pick(df_obras.columns, "LON", "Longitude", "LONGITUDE", "lon", "long")
             if lat and lon:
-                df_filt["__LAT__"] = to_float_series(df_filt[lat])
-                df_filt["__LON__"] = to_float_series(df_filt[lon])
+                df_obras["__LAT__"] = to_float_series(df_obras[lat])
+                df_obras["__LON__"] = to_float_series(df_obras[lon])
             else:
-                df_filt["__LAT__"] = None
-                df_filt["__LON__"] = None
+                st.error("Não foi possível identificar colunas de latitude/longitude nem 'COORDENADAS'.")
+                df_map = pd.DataFrame()
         else:
             lat_col, lon_col = coords
-            df_filt["__LAT__"] = to_float_series(df_filt[lat_col])
-            df_filt["__LON__"] = to_float_series(df_filt[lon_col])
+            df_obras["__LAT__"] = to_float_series(df_obras[lat_col])
+            df_obras["__LON__"] = to_float_series(df_obras[lon_col])
 
-        # heurística p/ Milhã-CE (corrige inversão/sinal de long)
-        if "__LAT__" in df_filt.columns and "__LON__" in df_filt.columns:
-            lat_s = pd.to_numeric(df_filt["__LAT__"], errors="coerce")
-            lon_s = pd.to_numeric(df_filt["__LON__"], errors="coerce")
-
+        # Heurística p/ Milhã-CE (lat/lon invertidos e/ou long positiva)
+        if "__LAT__" in df_obras.columns and "__LON__" in df_obras.columns:
+            lat_s = pd.to_numeric(df_obras["__LAT__"], errors="coerce")
+            lon_s = pd.to_numeric(df_obras["__LON__"], errors="coerce")
             def _pct_inside(a, b):
                 try:
                     m = (a.between(-6.5, -4.5)) & (b.between(-40.5, -38.0))
                     return float(m.mean())
                 except Exception:
                     return 0.0
-
             cands = [
                 ("orig",     lat_s,            lon_s,            _pct_inside(lat_s,            lon_s)),
                 ("swap",     lon_s,            lat_s,            _pct_inside(lon_s,            lat_s)),
@@ -284,41 +220,24 @@ with aba2:
             ]
             best = max(cands, key=lambda x: x[3])
             if best[0] != "orig" and best[3] > cands[0][3]:
-                df_filt["__LAT__"], df_filt["__LON__"] = best[1], best[2]
+                df_obras["__LAT__"], df_obras["__LON__"] = best[1], best[2]
 
-        df_geo_ok = df_filt.dropna(subset=["__LAT__", "__LON__"])
-        pct_geo = (len(df_geo_ok) / total_obras * 100.0) if total_obras > 0 else 0.0
+        df_map = df_obras.dropna(subset=["__LAT__", "__LON__"]).copy()
 
-        # Status agregados (no filtrado)
-        def _has(pattern):
-            if not c_status: return 0
-            return df_filt[c_status].astype(str).str.contains(pattern, case=False, na=False).sum()
-        n_conc = _has("conclu|finaliz")
-        n_and  = _has("execu|andamento")
+        cols = list(df_obras.columns)
+        c_obra    = pick(cols, "Obra", "OBRA", "Nome", "NOME", "Projeto", "Descrição")
+        c_status  = pick(cols, "Status", "STATUS", "Situação", "SITUACAO", "SITUAÇÃO")
+        c_empresa = pick(cols, "Empresa", "EMPRESA", "Contratada", "CONTRATADA")
+        c_valor   = pick(cols, "Valor", "VALOR", "Valor Total", "VALOR_TOTAL", "Custo", "CUSTO")
+        c_bairro  = pick(cols, "Bairro", "BAIRRO", "Localidade", "LOCALIDADE")
+        c_dtini   = pick(cols, "Início", "DATA_INICIO", "Data Início", "DATA INICIO", "Inicio")
+        c_dtfim   = pick(cols, "Término", "DATA_FIM", "Data Fim", "DATA FIM", "Termino")
 
-        # Render KPIs
-        k1, k2, k3, k4, k5 = st.columns(5)
-        with k1: st.metric("Obras (total)", f"{total_obras}")
-        with k2: st.metric("Investimento total", br_money(total_invest))
-        with k3: st.metric("Concluídas", f"{n_conc}")
-        with k4: st.metric("Em andamento", f"{n_and}")
-        with k5: st.metric("% geolocalizadas", f"{pct_geo:,.1f}%".replace(",", "X").replace(".", ",").replace("X", "."))
+        st.success(f"{len(df_map)} obra(s) com coordenadas válidas. (Arquivo: {os.path.basename(CSV_OBRAS)})")
 
-        # -------------------------------------------------
-        # Camadas do painel (somente deste mapa)
-        # -------------------------------------------------
-        with st.expander("Camadas do painel", expanded=True):
-            show_obras      = st.checkbox("Obras (marcadores)", value=True, key="obras_marcadores")
-            show_distritos  = st.checkbox("Distritos (polígonos)", value=True, key="obras_distritos")
-            show_sede       = st.checkbox("Sede de Distritos (pontos)", value=True, key="obras_sede")
-
-        # -------------------------------------------------
-        # Mapa
-        # -------------------------------------------------
-        # centro
         center = [-5.680, -39.200]
-        if not df_geo_ok.empty:
-            center = [df_geo_ok["__LAT__"].mean(), df_geo_ok["__LON__"].mean()]
+        if not df_map.empty:
+            center = [df_map["__LAT__"].mean(), df_map["__LON__"].mean()]
 
         m2 = folium.Map(location=center, zoom_start=12, tiles=None)
         add_base_tiles(m2)
@@ -335,81 +254,55 @@ with aba2:
             if any(k in s for k in ["planej", "licita", "proj"]): return "blue"
             return "gray"
 
-        # --- Camada Distritos
-        if show_distritos and gj_distritos:
-            folium.GeoJson(
-                gj_distritos,
-                name="Distritos",
-                style_function=lambda x: {"fillColor": "#9fe2fc", "fillOpacity": 0.2, "color": "#000000", "weight": 1},
+        ignore_cols = {"__LAT__", "__LON__"}
+        for _, r in df_map.iterrows():
+            nome   = str(r.get(c_obra, "Obra")) if c_obra else "Obra"
+            status = str(r.get(c_status, "-")) if c_status else "-"
+            empresa= str(r.get(c_empresa, "-")) if c_empresa else "-"
+            valor  = br_money(r.get(c_valor)) if c_valor else "-"
+            bairro = str(r.get(c_bairro, "-")) if c_bairro else "-"
+            dtini  = str(r.get(c_dtini, "-")) if c_dtini else "-"
+            dtfim  = str(r.get(c_dtfim, "-")) if c_dtfim else "-"
+
+            extra_rows = []
+            for c in df_obras.columns:
+                if c in ignore_cols or c in {c_obra, c_status, c_empresa, c_valor, c_bairro, c_dtini, c_dtfim}:
+                    continue
+                val = r.get(c, "")
+                if pd.notna(val) and str(val).strip() != "":
+                    extra_rows.append(f"<tr><td><b>{c}</b></td><td>{val}</td></tr>")
+            extra_html = "".join(extra_rows)
+
+            popup_html = (
+                "<div style='font-family:Arial; font-size:13px'>"
+                f"<h4 style='margin:4px 0 8px 0'>🧱 {nome}</h4>"
+                f"<p style='margin:0 0 6px'><b>Status:</b> {status}</p>"
+                f"<p style='margin:0 0 6px'><b>Empresa:</b> {empresa}</p>"
+                f"<p style='margin:0 0 6px'><b>Valor:</b> {valor}</p>"
+                f"<p style='margin:0 0 6px'><b>Bairro/Localidade:</b> {bairro}</p>"
+                f"<p style='margin:0 0 6px'><b>Início:</b> {dtini} &nbsp; <b>Término:</b> {dtfim}</p>"
+                + (f"<table border='1' cellpadding='4' cellspacing='0' style='border-collapse:collapse; margin-top:6px'>{extra_html}</table>" if extra_html else "")
+                + "</div>"
+            )
+
+            folium.Marker(
+                location=[r["__LAT__"], r["__LON__"]],
+                tooltip=nome,
+                popup=folium.Popup(popup_html, max_width=420),
+                icon=folium.Icon(color=status_icon_color(status), icon="info-sign")
             ).add_to(m2)
-
-        # --- Camada Sede de Distritos
-        if show_sede and gj_sede:
-            lyr_sede = folium.FeatureGroup(name="Sede de Distritos")
-            for f in gj_sede.get("features", []):
-                x, y = f["geometry"]["coordinates"]
-                nome = f.get("properties", {}).get("Name", "Sede")
-                folium.Marker([y, x], tooltip=nome, icon=folium.Icon(color="darkgreen", icon="home")).add_to(lyr_sede)
-            lyr_sede.add_to(m2)
-
-        # --- Camada Obras (filtradas)
-        if show_obras and not df_geo_ok.empty:
-            lyr_obras = folium.FeatureGroup(name="Obras")
-            ignore_cols = {"__LAT__", "__LON__"}
-            for _, r in df_geo_ok.iterrows():
-                nome   = str(r.get(c_obra, "Obra")) if c_obra else "Obra"
-                status = str(r.get(c_status, "-")) if c_status else "-"
-                empresa= str(r.get(c_empresa, "-")) if c_empresa else "-"
-                valor  = br_money(r.get(c_valor)) if c_valor else "-"
-                bairro = str(r.get(c_bairro, "-")) if c_bairro else "-"
-                dtini  = str(r.get(c_dtini, "-")) if c_dtini else "-"
-                dtfim  = str(r.get(c_dtfim, "-")) if c_dtfim else "-"
-
-                extra_rows = []
-                for c in df_filt.columns:
-                    if c in ignore_cols or c in {c_obra, c_status, c_empresa, c_valor, c_bairro, c_dtini, c_dtfim}:
-                        continue
-                    val = r.get(c, "")
-                    if pd.notna(val) and str(val).strip() != "":
-                        extra_rows.append(f"<tr><td><b>{c}</b></td><td>{val}</td></tr>")
-                extra_html = "".join(extra_rows)
-
-                popup_html = (
-                    "<div style='font-family:Arial; font-size:13px'>"
-                    f"<h4 style='margin:4px 0 8px 0'>🧱 {nome}</h4>"
-                    f"<p style='margin:0 0 6px'><b>Status:</b> {status}</p>"
-                    f"<p style='margin:0 0 6px'><b>Empresa:</b> {empresa}</p>"
-                    f"<p style='margin:0 0 6px'><b>Valor:</b> {valor}</p>"
-                    f"<p style='margin:0 0 6px'><b>Bairro/Localidade:</b> {bairro}</p>"
-                    f"<p style='margin:0 0 6px'><b>Início:</b> {dtini} &nbsp; <b>Término:</b> {dtfim}</p>"
-                    + (f"<table border='1' cellpadding='4' cellspacing='0' style='border-collapse:collapse; margin-top:6px'>{extra_html}</table>" if extra_html else "")
-                    + "</div>"
-                )
-
-                folium.Marker(
-                    location=[r["__LAT__"], r["__LON__"]],
-                    tooltip=nome,
-                    popup=folium.Popup(popup_html, max_width=420),
-                    icon=folium.Icon(color=status_icon_color(status), icon="info-sign")
-                ).add_to(lyr_obras)
-
-            lyr_obras.add_to(m2)
 
         folium.LayerControl(collapsed=True).add_to(m2)
         folium_static(m2, width=1200, height=700)
-
-        # --------------------------
-        # Tabela (após filtros)
-        # --------------------------
-        st.markdown("### Tabela de Obras (após filtros)")
-        priority = [c_obra, c_status, c_empresa, c_valor, c_bairro, c_dtini, c_dtfim]
-        ordered = [c for c in priority if c and c in df_filt.columns]
-        rest = [c for c in df_filt.columns if c not in ordered]
-        st.dataframe(df_filt[ordered + rest] if ordered else df_filt, use_container_width=True)
+        st.markdown("### Tabela de Obras")
+        ordered = []
+        for c in [c_obra, c_status, c_empresa, c_valor, c_bairro, c_dtini, c_dtfim]:
+            if c and c not in ordered:
+                ordered.append(c)
+        rest = [c for c in df_obras.columns if c not in ordered]
+        st.dataframe(df_obras[ordered + rest] if ordered else df_obras, use_container_width=True)
     else:
         st.error(f"Não foi possível carregar o CSV de obras em: {CSV_OBRAS}")
-
-
 
 # =====================================================
 # 3) Milhã em Mapas — painel interno com botão (com ícones + animação)
