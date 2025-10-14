@@ -12,91 +12,232 @@ import unicodedata
 # Configuração inicial com tema personalizado
 # =====================================================
 st.set_page_config(
-    page_title="ATLAS • Milhã",
+    page_title="ATLAS • Milhã", 
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-# Paleta de cores
+# Paleta de cores baseada na imagem (tons de azul, verde e laranja)
 COLORS = {
-    "primary": "#1E3A8A",
-    "secondary": "#059669",
-    "accent": "#EA580C",
-    "light_bg": "#F0F9FF",
-    "card_bg": "#FFFFFF",
-    "text_dark": "#1E293B",
-    "text_light": "#64748B",
-    "border": "#E2E8F0",
-    "success": "#10B981",
-    "warning": "#F59E0B",
-    "error": "#EF4444"
+    "primary": "#1E3A8A",      # Azul escuro principal
+    "secondary": "#059669",    # Verde esmeralda
+    "accent": "#EA580C",       # Laranja vibrante
+    "light_bg": "#F0F9FF",     # Azul claro de fundo
+    "card_bg": "#FFFFFF",      # Branco para cards
+    "text_dark": "#1E293B",    # Texto escuro
+    "text_light": "#64748B",   # Texto claro
+    "border": "#E2E8F0",       # Borda suave
+    "success": "#10B981",      # Verde sucesso
+    "warning": "#F59E0B",      # Amarelo alerta
+    "error": "#EF4444"         # Vermelho erro
 }
 
 # =====================================================
-# CSS Global
+# CSS Global Atualizado
 # =====================================================
 def css_global():
     st.markdown(
         f"""
         <style>
-            .main {{ background-color: {COLORS["light_bg"]}; }}
-            .block-container {{ padding-top: 1rem; padding-bottom: 1rem; }}
-
+            /* Configurações gerais */
+            .main {{
+                background-color: {COLORS["light_bg"]};
+            }}
+            .block-container {{
+                padding-top: 1rem;
+                padding-bottom: 1rem;
+            }}
+            
+            /* Header moderno */
             .main-header {{
                 background: linear-gradient(135deg, {COLORS["primary"]} 0%, {COLORS["secondary"]} 100%);
-                color: white; padding: 2rem 1rem; border-radius: 0 0 20px 20px;
-                margin-bottom: 2rem; box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+                color: white;
+                padding: 2rem 1rem;
+                border-radius: 0 0 20px 20px;
+                margin-bottom: 2rem;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.1);
             }}
-            .header-content {{ display: flex; align-items: center; gap: 2rem; max-width: 1200px; margin: 0 auto; }}
-            .header-text h1 {{ font-size: 2.5rem; font-weight: 700; margin-bottom: .5rem; color: white; }}
-            .header-text p {{ font-size: 1.1rem; opacity: .9; margin-bottom: 0; }}
+            
+            .header-content {{
+                display: flex;
+                align-items: center;
+                gap: 2rem;
+                max-width: 1200px;
+                margin: 0 auto;
+            }}
+            
+            .header-text h1 {{
+                font-size: 2.5rem;
+                font-weight: 700;
+                margin-bottom: 0.5rem;
+                color: white;
+            }}
+            
+            .header-text p {{
+                font-size: 1.1rem;
+                opacity: 0.9;
+                margin-bottom: 0;
+            }}
+            
             .header-logo {{
-                width: 120px; height: 120px; border-radius: 50%; border: 4px solid rgba(255,255,255,0.2);
-                padding: 8px; background: rgba(255,255,255,0.1);
+                width: 120px;
+                height: 120px;
+                border-radius: 50%;
+                border: 4px solid rgba(255,255,255,0.2);
+                padding: 8px;
+                background: rgba(255,255,255,0.1);
             }}
-
+            
+            /* Cards modernos */
             .modern-card {{
-                background: {COLORS["card_bg"]}; border-radius: 16px; padding: 2rem;
-                box-shadow: 0 4px 20px rgba(0,0,0,0.08); border: 1px solid {COLORS["border"]};
-                margin-bottom: 1.5rem; transition: transform .2s ease, box-shadow .2s ease;
+                background: {COLORS["card_bg"]};
+                border-radius: 16px;
+                padding: 2rem;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+                border: 1px solid {COLORS["border"]};
+                margin-bottom: 1.5rem;
+                transition: transform 0.2s ease, box-shadow 0.2s ease;
             }}
-            .modern-card:hover {{ transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,0.12); }}
-
-            .stTabs [data-baseweb="tab-list"] {{ gap: 8px; background: transparent; }}
+            
+            .modern-card:hover {{
+                transform: translateY(-2px);
+                box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+            }}
+            
+            /* Abas estilizadas */
+            .stTabs [data-baseweb="tab-list"] {{
+                gap: 8px;
+                background: transparent;
+            }}
+            
             .stTabs [data-baseweb="tab"] {{
-                background: {COLORS["card_bg"]}; border: 1px solid {COLORS["border"]};
-                border-radius: 12px 12px 0 0; padding: 1rem 2rem; font-weight: 600;
-                color: {COLORS["text_light"]}; transition: all .3s ease;
+                background: {COLORS["card_bg"]};
+                border: 1px solid {COLORS["border"]};
+                border-radius: 12px 12px 0 0;
+                padding: 1rem 2rem;
+                font-weight: 600;
+                color: {COLORS["text_light"]};
+                transition: all 0.3s ease;
             }}
+            
             .stTabs [aria-selected="true"] {{
-                background: {COLORS["primary"]} !important; color: white !important; border-color: {COLORS["primary"]} !important;
+                background: {COLORS["primary"]} !important;
+                color: white !important;
+                border-color: {COLORS["primary"]} !important;
             }}
-
+            
+            /* Botões modernos */
             .stButton button {{
                 background: linear-gradient(135deg, {COLORS["primary"]} 0%, {COLORS["secondary"]} 100%);
-                color: white; border: none; border-radius: 10px; padding: .5rem 1.5rem; font-weight: 600;
-                transition: all .3s ease;
+                color: white;
+                border: none;
+                border-radius: 10px;
+                padding: 0.5rem 1.5rem;
+                font-weight: 600;
+                transition: all 0.3s ease;
             }}
-            .stButton button:hover {{ transform: translateY(-2px); box-shadow: 0 6px 20px rgba(30,58,138,.3); }}
-
+            
+            .stButton button:hover {{
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(30, 58, 138, 0.3);
+            }}
+            
+            /* Painel lateral sticky */
             .sticky-panel {{
-                position: sticky; top: 20px; background: {COLORS["card_bg"]};
-                border: 1px solid {COLORS["border"]}; border-radius: 16px; padding: 1.5rem;
+                position: sticky;
+                top: 20px;
+                background: {COLORS["card_bg"]};
+                border: 1px solid {COLORS["border"]};
+                border-radius: 16px;
+                padding: 1.5rem;
                 box-shadow: 0 4px 20px rgba(0,0,0,0.08);
             }}
-            .panel-title {{ color: {COLORS["primary"]}; font-size: 1.25rem; font-weight: 700; margin-bottom: .5rem; }}
-            .panel-subtitle {{ color: {COLORS["text_light"]}; font-size: .9rem; margin-bottom: 1rem; border-bottom: 1px solid {COLORS["border"]}; padding-bottom: .5rem; }}
-
-            .feature-icon {{ font-size: 2rem; margin-bottom: 1rem; color: {COLORS["primary"]}; }}
+            
+            .panel-title {{
+                color: {COLORS["primary"]};
+                font-size: 1.25rem;
+                font-weight: 700;
+                margin-bottom: 0.5rem;
+            }}
+            
+            .panel-subtitle {{
+                color: {COLORS["text_light"]};
+                font-size: 0.9rem;
+                margin-bottom: 1rem;
+                border-bottom: 1px solid {COLORS["border"]};
+                padding-bottom: 0.5rem;
+            }}
+            
+            /* Ícones e badges */
+            .feature-icon {{
+                font-size: 2rem;
+                margin-bottom: 1rem;
+                color: {COLORS["primary"]};
+            }}
+            
             .stat-card {{
                 background: linear-gradient(135deg, {COLORS["primary"]}15, {COLORS["secondary"]}15);
-                border-radius: 12px; padding: 1.5rem; text-align: center; border: 1px solid {COLORS["border"]};
+                border-radius: 12px;
+                padding: 1.5rem;
+                text-align: center;
+                border: 1px solid {COLORS["border"]};
             }}
-            .stat-number {{ font-size: 2rem; font-weight: 700; color: {COLORS["primary"]}; margin-bottom: .5rem; }}
-            .stat-label {{ color: {COLORS["text_light"]}; font-size: .9rem; }}
-
-            @keyframes fadeIn {{ from {{ opacity:0; transform: translateY(20px); }} to {{ opacity:1; transform: translateY(0); }} }}
-            .fade-in {{ animation: fadeIn .6s ease-out; }}
+            
+            .stat-number {{
+                font-size: 2rem;
+                font-weight: 700;
+                color: {COLORS["primary"]};
+                margin-bottom: 0.5rem;
+            }}
+            
+            .stat-label {{
+                color: {COLORS["text_light"]};
+                font-size: 0.9rem;
+            }}
+            
+            /* Animações */
+            @keyframes fadeIn {{
+                from {{ opacity: 0; transform: translateY(20px); }}
+                to {{ opacity: 1; transform: translateY(0); }}
+            }}
+            
+            .fade-in {{
+                animation: fadeIn 0.6s ease-out;
+            }}
+            
+            /* Estilos originais preservados para os mapas */
+            .top-banner, .footer-banner {{ 
+                width: 100%; 
+                height: auto; 
+                border-radius: 8px; 
+                margin-bottom: 20px; 
+            }}
+            
+            /* Botão de toggle aprimorado */
+            #toggle-lyr-obras-pulse button, #toggle-panel-pulse button {{
+                 background-color: {COLORS["accent"]} !important;
+                 border-color: {COLORS["accent"]} !important;
+                 color: white !important;
+                 font-weight: 600;
+                 border-radius: 6px;
+            }}
+            #toggle-lyr-obras button, #toggle-panel button {{
+                 background-color: #ffffff !important;
+                 border-color: {COLORS["border"]} !important;
+                 color: {COLORS["text_light"]} !important;
+                 font-weight: 500;
+                 border-radius: 6px;
+            }}
+            
+            @keyframes pulseObras {{
+                0%    {{ transform: scale(1);    box-shadow: 0 0 0 0 {COLORS["accent"]}40; }} 
+                70%  {{ transform: scale(1.03); box-shadow: 0 0 0 12px {COLORS["accent"]}00; }}
+                100% {{ transform: scale(1);    box-shadow: 0 0 0 0 {COLORS["accent"]}00; }}
+            }}
+            #toggle-lyr-obras-pulse button {{
+                animation: pulseObras 1.1s ease-in-out 0s 2;
+                border-color: {COLORS["accent"]} !important;
+            }}
         </style>
         """,
         unsafe_allow_html=True,
@@ -119,17 +260,29 @@ def create_header():
     )
 
 # =====================================================
-# Utilidades
+# Funções utilitárias (mantidas do código original)
 # =====================================================
+def show_top_banner():
+    st.markdown(
+        '<img src="https://i.ibb.co/v4d32PvX/banner.jpg" alt="Banner topo" style="width:100%; border-radius:12px; margin-bottom:2rem;" />',
+        unsafe_allow_html=True,
+    )
+
+def show_footer_banner():
+    st.markdown(
+        '<img src="https://i.ibb.co/8nQQp8pS/barra-inferrior.png" alt="Banner rodapé" style="width:100%; border-radius:12px; margin-top:2rem;" />',
+        unsafe_allow_html=True,
+    )
+
 def autodetect_coords(df: pd.DataFrame):
-    candidates_lat = [c for c in df.columns if re.search(r"(?:^|\\b)(lat|latitude|y)(?:\\b|$)", c, re.I)]
-    candidates_lon = [c for c in df.columns if re.search(r"(?:^|\\b)(lon|long|longitude|x)(?:\\b|$)", c, re.I)]
+    candidates_lat = [c for c in df.columns if re.search(r"(?:^|\b)(lat|latitude|y)(?:\b|$)", c, re.I)]
+    candidates_lon = [c for c in df.columns if re.search(r"(?:^|\b)(lon|long|longitude|x)(?:\b|$)", c, re.I)]
     if candidates_lat and candidates_lon:
         return candidates_lat[0], candidates_lon[0]
     for c in df.columns:
         if re.search(r"coord|coordenad", c, re.I):
             try:
-                tmp = df[c].astype(str).str.extract(r"(-?\\d+[\\.,]?\\d*)\\s*[,;]\\s*(-?\\d+[\\.,]?\\d*)")
+                tmp = df[c].astype(str).str.extract(r"(-?\d+[\.,]?\d*)\s*[,;]\s*(-?\d+[\.,]?\d*)")
                 tmp.columns = ["LATITUDE", "LONGITUDE"]
                 tmp["LATITUDE"] = tmp["LATITUDE"].str.replace(",", ".", regex=False).astype(float)
                 tmp["LONGITUDE"] = tmp["LONGITUDE"].str.replace(",", ".", regex=False).astype(float)
@@ -147,7 +300,7 @@ def add_base_tiles(m: folium.Map):
         ("Esri Satellite", "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", "Tiles © Esri")
     ]
     for name, url, attr in tiles:
-        folium.TileLayer(tiles=url, name=name, attr=attr, control=True).add_to(m)
+        folium.TileLayer(tiles=url, name=name, attr=attr).add_to(m)
 
 def load_geojson_any(path_candidates):
     for p in path_candidates:
@@ -158,6 +311,54 @@ def load_geojson_any(path_candidates):
             except Exception as e:
                 st.warning(f"Erro ao ler {p}: {e}")
     return None
+
+def br_money(x):
+    try:
+        s = str(x).replace("R$", "").strip()
+        if "," in s and s.count(".") >= 1:
+            s = s.replace(".", "")
+        v = float(s.replace(",", "."))
+        return f"R$ {v:,.2f}".replace(",", "_").replace(".", ",").replace("_", ".")
+    except Exception:
+        return str(x)
+
+def pick(colnames, *options):
+    cols = list(colnames)
+    for o in options:
+        if o in cols:
+            return o
+    lower = {c.lower(): c for c in cols}
+    for o in options:
+        if o.lower() in lower:
+            return lower[o.lower()]
+    return None
+
+def sniff_read_csv(path: str) -> pd.DataFrame:
+    try:
+        with open(path, "r", encoding="utf-8-sig") as f:
+            sample = f.read(4096); f.seek(0)
+            sep = ";" if sample.count(";") > sample.count(",") else ","
+            return pd.read_csv(f, sep=sep)
+    except Exception as e:
+        st.error(f"Falha ao ler CSV em '{path}': {e}")
+        return pd.DataFrame()
+
+def to_float_series(s: pd.Series) -> pd.Series:
+    def _conv(v):
+        if pd.isna(v): return None
+        txt = str(v)
+        m = re.search(r"-?\d+[.,]?\d*", txt)
+        if not m: return None
+        try: return float(m.group(0).replace(",", "."))
+        except Exception: return None
+    return s.apply(_conv)
+
+def norm_col(c: str) -> str:
+    s = unicodedata.normalize("NFKD", str(c))
+    s = "".join(ch for ch in s if not unicodedata.combining(ch))
+    s = s.strip().lower()
+    s = re.sub(r"[^a-z0-9]+", "_", s)
+    return s.strip("_")
 
 def geojson_bounds(gj: dict):
     if not gj:
@@ -191,75 +392,49 @@ def geojson_bounds(gj: dict):
         return None
     return (min(lats), min(lons)), (max(lats), max(lons))
 
-def sniff_read_csv(path: str) -> pd.DataFrame:
-    try:
-        with open(path, "r", encoding="utf-8-sig") as f:
-            sample = f.read(4096); f.seek(0)
-            sep = ";" if sample.count(";") > sample.count(",") else ","
-            return pd.read_csv(f, sep=sep)
-    except Exception as e:
-        st.error(f"Falha ao ler CSV em '{path}': {e}")
-        return pd.DataFrame()
-
-def to_float_series(s: pd.Series) -> pd.Series:
-    def _conv(v):
-        if pd.isna(v): return None
-        txt = str(v)
-        m = re.search(r"-?\\d+[.,]?\\d*", txt)
-        if not m: return None
-        try: return float(m.group(0).replace(",", "."))
-        except Exception: return None
-    return s.apply(_conv)
-
-def br_money(x):
-    try:
-        s = str(x).replace("R$", "").strip()
-        if "," in s and s.count(".") >= 1:
-            s = s.replace(".", "")
-        v = float(s.replace(",", "."))
-        return f"R$ {v:,.2f}".replace(",", "_").replace(".", ",").replace("_", ".")
-    except Exception:
-        return str(x)
-
-def pick(colnames, *options):
-    cols = list(colnames)
-    for o in options:
-        if o in cols:
-            return o
-    lower = {c.lower(): c for c in cols}
-    for o in options:
-        if o.lower() in lower:
-            return lower[o.lower()]
-    return None
-
 # =====================================================
 # Layout Principal
 # =====================================================
 css_global()
 create_header()
 
+# Abas principais
 aba1, aba2, aba3 = st.tabs(["🏠 Página Inicial", "🏗️ Painel de Obras", "🗺️ Milhã em Mapas"])
 
 # =====================================================
-# 1) Página Inicial
+# 1) Página Inicial - Atualizada
 # =====================================================
 with aba1:
     col1, col2, col3 = st.columns(3)
-    for icon, num, label in [("📊","100+","Dados Geoespaciais"),("🏗️","50+","Obras Monitoradas"),("💧","30+","Recursos Hídricos")]:
-        with (col1 if icon=="📊" else col2 if icon=="🏗️" else col3):
-            st.markdown('<div class="stat-card fade-in">', unsafe_allow_html=True)
-            st.markdown(f'<div class="feature-icon">{icon}</div>', unsafe_allow_html=True)
-            st.markdown(f'<div class="stat-number">{num}</div>', unsafe_allow_html=True)
-            st.markdown(f'<div class="stat-label">{label}</div>', unsafe_allow_html=True)
-            st.markdown('</div>', unsafe_allow_html=True)
-
+    
+    with col1:
+        st.markdown('<div class="stat-card fade-in">', unsafe_allow_html=True)
+        st.markdown('<div class="feature-icon">📊</div>', unsafe_allow_html=True)
+        st.markdown('<div class="stat-number">100+</div>', unsafe_allow_html=True)
+        st.markdown('<div class="stat-label">Dados Geoespaciais</div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+    
+    with col2:
+        st.markdown('<div class="stat-card fade-in">', unsafe_allow_html=True)
+        st.markdown('<div class="feature-icon">🏗️</div>', unsafe_allow_html=True)
+        st.markdown('<div class="stat-number">50+</div>', unsafe_allow_html=True)
+        st.markdown('<div class="stat-label">Obras Monitoradas</div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+    
+    with col3:
+        st.markdown('<div class="stat-card fade-in">', unsafe_allow_html=True)
+        st.markdown('<div class="feature-icon">💧</div>', unsafe_allow_html=True)
+        st.markdown('<div class="stat-number">30+</div>', unsafe_allow_html=True)
+        st.markdown('<div class="stat-label">Recursos Hídricos</div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+    
     st.markdown('<div class="modern-card fade-in">', unsafe_allow_html=True)
     st.markdown("## 🌟 Bem-vindo ao ATLAS Geoespacial de Milhã")
     st.markdown(
         """
-        Esta plataforma integra **dados geoespaciais** do município para apoiar a tomada de decisões públicas,
-        qualificar projetos urbanos e aproximar a gestão municipal dos cidadãos.
-
+        Esta plataforma integra **dados geoespaciais** do município para apoiar a tomada de decisões públicas, 
+        qualificar projetos urbanos e aproximar a gestão municipal dos cidadãos. 
+        
         ### 🎯 Objetivos Principais:
         - **Transparência**: Disponibilizar informações públicas de forma acessível
         - **Planejamento**: Auxiliar no planejamento urbano e territorial
@@ -268,9 +443,40 @@ with aba1:
         """
     )
     st.markdown('</div>', unsafe_allow_html=True)
+    
+    colA, colB = st.columns(2)
+    
+    with colA:
+        st.markdown('<div class="modern-card fade-in">', unsafe_allow_html=True)
+        st.markdown("### 🗺️ Explore o Território")
+        st.markdown(
+            """
+            Na aba **'Milhã em Mapas'** você encontra:
+            - Divisões territoriais (Distritos e Localidades)
+            - Infraestrutura pública (Escolas e Unidades de Saúde)
+            - Recursos hídricos (Poços e Tecnologias Sociais)
+            - Camadas interativas e ferramentas de medição
+            """
+        )
+        st.markdown('</div>', unsafe_allow_html=True)
+    
+    with colB:
+        st.markdown('<div class="modern-card fade-in">', unsafe_allow_html=True)
+        st.markdown("### 🏗️ Acompanhe as Obras")
+        st.markdown(
+            """
+            No **Painel de Obras** monitore:
+            - Status atual de cada projeto municipal
+            - Localização precisa no mapa
+            - Investimentos e prazos
+            - Empresas responsáveis
+            - Histórico de andamento
+            """
+        )
+        st.markdown('</div>', unsafe_allow_html=True)
 
 # =====================================================
-# 2) Painel de Obras (com mapa funcional)
+# 2) Painel de Obras - COM MAPAS FUNCIONAIS
 # =====================================================
 with aba2:
     st.markdown('<div class="modern-card">', unsafe_allow_html=True)
@@ -279,213 +485,425 @@ with aba2:
 
     CSV_OBRAS_CANDIDATES = ["dados/milha_obras.csv", "/mnt/data/milha_obras.csv"]
     CSV_OBRAS = next((p for p in CSV_OBRAS_CANDIDATES if os.path.exists(p)), CSV_OBRAS_CANDIDATES[0])
+
     df_obras_raw = sniff_read_csv(CSV_OBRAS)
 
-    if df_obras_raw.empty:
-        st.error("❌ Não foi possível carregar os dados das obras.")
-    else:
-        # Normaliza possíveis colunas relevantes
-        df = df_obras_raw.copy()
-        latlon = autodetect_coords(df)
-        if latlon:
-            lat_col, lon_col = latlon
-            df["_lat"] = to_float_series(df[lat_col])
-            df["_lon"] = to_float_series(df[lon_col])
-            df = df.dropna(subset=["_lat","_lon"])
-        else:
-            st.warning("Não foram detectadas colunas de coordenadas nas obras. Exibindo somente tabela.")
-            st.dataframe(df)
+    if not df_obras_raw.empty:
+        # Normaliza colunas
+        colmap = {c: norm_col(c) for c in df_obras_raw.columns}
+        df_obras = df_obras_raw.rename(columns=colmap).copy()
+
+        # Detecta lat/lon
+        lat_col = next((c for c in df_obras.columns if c in {"latitude","lat"}), None)
+        lon_col = next((c for c in df_obras.columns if c in {"longitude","long","lon"}), None)
+        if not lat_col or not lon_col:
+            coords = autodetect_coords(df_obras_raw.copy())
+            if coords:
+                lat_col, lon_col = coords
+
+        if not lat_col or not lon_col:
+            st.error("Não foi possível localizar colunas de latitude/longitude.")
             st.markdown('</div>', unsafe_allow_html=True)
-            # Sai da aba se não tem coordenadas
             st.stop()
 
-        # Mapa das obras
-        center = [df["_lat"].mean(), df["_lon"].mean()] if not df.empty else [-5.683, -39.187]
-        m = folium.Map(location=center, zoom_start=12, control_scale=True, prefer_canvas=True)
-        add_base_tiles(m)
-        m.add_child(MeasureControl(primary_length_unit="meters"))
-        Fullscreen().add_to(m)
-        MousePosition().add_to(m)
-        Draw(export=True).add_to(m)
+        df_obras["__LAT__"] = to_float_series(df_obras[lat_col])
+        df_obras["__LON__"] = to_float_series(df_obras[lon_col])
 
-        # Campos usuais
-        col_titulo = pick(df.columns, "obra", "titulo", "nome", "Projeto", "Empreendimento")
-        col_status = pick(df.columns, "status", "situacao", "situação")
-        col_valor  = pick(df.columns, "valor", "valor_total", "investimento")
-        col_end    = pick(df.columns, "endereco", "endereço", "local", "logradouro", "bairro")
+        # Heurística para corrigir inversão e sinal
+        lat_s = pd.to_numeric(df_obras["__LAT__"], errors="coerce")
+        lon_s = pd.to_numeric(df_obras["__LON__"], errors="coerce")
 
-        def status_color(s):
-            s = str(s).strip().lower()
-            if any(k in s for k in ["conclu", "final"]): return "green"
-            if any(k in s for k in ["em and", "andamento", "execu"]): return "orange"
-            if any(k in s for k in ["paral", "susp", "inter"]): return "red"
-            return "blue"
+        def _pct_inside(a, b):
+            try:
+                m = (a.between(-6.5, -4.5)) & (b.between(-40.5, -38.0))
+                return float(m.mean())
+            except Exception:
+                return 0.0
 
-        for _, r in df.iterrows():
-            nome = str(r.get(col_titulo) or "Obra")
-            sts  = str(r.get(col_status) or "—")
-            val  = br_money(r.get(col_valor)) if col_valor else "—"
-            endr = str(r.get(col_end) or "—")
-            html = f"""
-            <div style="font-family:Segoe UI; min-width:220px;">
-                <h4 style="margin:0 0 .5rem 0; color:{COLORS['primary']};">{nome}</h4>
-                <p style="margin:.25rem 0;"><b>Status:</b> {sts}</p>
-                <p style="margin:.25rem 0;"><b>Valor:</b> {val}</p>
-                <p style="margin:.25rem 0;"><b>Endereço:</b> {endr}</p>
-            </div>
-            """
-            folium.CircleMarker(
-                location=[r["_lat"], r["_lon"]],
-                radius=6,
-                color=status_color(sts),
-                weight=2,
-                fill=True,
-                fill_opacity=0.9,
-                popup=folium.Popup(html, max_width=320),
-                tooltip=nome
-            ).add_to(m)
+        cands = [
+            ("orig", lat_s, lon_s, _pct_inside(lat_s, lon_s)),
+            ("swap", lon_s, lat_s, _pct_inside(lon_s, lat_s)),
+            ("neg_lon", lat_s, lon_s.mul(-1.0), _pct_inside(lat_s, lon_s.mul(-1.0))),
+            ("swap_neg", lon_s, lat_s.mul(-1.0), _pct_inside(lon_s, lat_s.mul(-1.0))),
+        ]
+        best = max(cands, key=lambda x: x[3])
+        if best[0] != "orig" and best[3] >= cands[0][3]:
+            df_obras["__LAT__"], df_obras["__LON__"] = best[1], best[2]
 
-        folium.LayerControl(collapsed=False).add_to(m)
-        folium_static(m, height=650)
+        df_map = df_obras.dropna(subset=["__LAT__", "__LON__"]).copy()
 
-        st.success("✅ Dados carregados e mapa renderizado com sucesso!")
+        # Campos para popup/tabela
+        cols = list(df_obras.columns)
+        def pick_norm(*options):
+            return next((c for c in cols if c in [norm_col(o) for o in options]), None)
+
+        c_obra    = pick_norm("Obra", "Nome", "Projeto", "Descrição")
+        c_status  = pick_norm("Status", "Situação")
+        c_empresa = pick_norm("Empresa", "Contratada")
+        c_valor   = pick_norm("Valor", "Valor Total", "Custo")
+        c_bairro  = pick_norm("Bairro", "Localidade")
+        c_dtini   = pick_norm("Início", "Data Início", "Inicio")
+        c_dtfim   = pick_norm("Término", "Data Fim", "Termino")
+
+        st.success(f"✅ **{len(df_map)} obra(s)** com coordenadas válidas encontradas")
+
+        # Painel lateral
+        base_dir_candidates = ["dados", "/mnt/data"]
+        gj_distritos = load_geojson_any([os.path.join(b, "milha_dist_polig.geojson") for b in base_dir_candidates])
+        gj_sede      = load_geojson_any([os.path.join(b, "Distritos_pontos.geojson") for b in base_dir_candidates])
+
+        if "show_layer_panel_obras" not in st.session_state:
+            st.session_state["show_layer_panel_obras"] = True
+        
+        show_now = st.session_state["show_layer_panel_obras"]
+        wrapper_id = "toggle-lyr-obras" if show_now else "toggle-lyr-obras-pulse"
+
+        col_btn, _ = st.columns([1, 6])
+        with col_btn:
+            st.markdown(f"<div id='{wrapper_id}'>", unsafe_allow_html=True)
+            label = ("🙈 Ocultar painel de camadas" if show_now else "👁️ Exibir painel de camadas")
+            if st.button(label, use_container_width=True, key="toggle_panel_btn_obras"):
+                st.session_state["show_layer_panel_obras"] = not st.session_state["show_layer_panel_obras"]
+                st.rerun()
+            st.markdown("</div>", unsafe_allow_html=True)
+
+        show_panel = st.session_state["show_layer_panel_obras"]
+
+        # Layout: com painel ou sem painel
+        if show_panel:
+            col_map, col_panel = st.columns([5, 2], gap="large")
+        else:
+            col_map, = st.columns([1])
+
+        # Painel lateral (checkboxes)
+        if show_panel:
+            with col_panel:
+                st.markdown('<div class="sticky-panel">', unsafe_allow_html=True)
+                st.markdown('<div class="panel-title">🎛️ Camadas do Mapa</div>', unsafe_allow_html=True)
+                st.markdown('<div class="panel-subtitle">Controle a visualização</div>', unsafe_allow_html=True)
+
+                show_obras      = st.checkbox("🚧 Obras", value=True, key="obras_markers")
+                show_distritos  = st.checkbox("🗺️ Distritos", value=True, key="obras_distritos")
+                show_sede       = st.checkbox("🏠 Sede Distritos", value=True, key="obras_sede")
+
+                st.markdown('</div>', unsafe_allow_html=True)
+        else:
+            show_obras     = st.session_state.get("obras_markers", True)
+            show_distritos = st.session_state.get("obras_distritos", True)
+            show_sede      = st.session_state.get("obras_sede", True)
+
+        # ---------- MAPA FUNCIONAL ----------
+        with col_map:
+            st.markdown("### 🗺️ Mapa Interativo")
+            
+            default_center = [-5.680, -39.200]
+            default_zoom = 12
+
+            m2 = folium.Map(location=default_center, zoom_start=default_zoom, tiles=None)
+            add_base_tiles(m2)
+            Fullscreen(position='topright', title='Tela Cheia', title_cancel='Sair', force_separate_button=True).add_to(m2)
+            m2.add_child(MeasureControl(primary_length_unit="meters", secondary_length_unit="kilometers", primary_area_unit="hectares"))
+            MousePosition().add_to(m2)
+            Draw(export=True).add_to(m2)
+
+            # Centraliza pela camada Distritos se existir
+            if gj_distritos:
+                b = geojson_bounds(gj_distritos)
+                if b:
+                    (min_lat, min_lon), (max_lat, max_lon) = b
+                    m2.fit_bounds([[min_lat, min_lon], [max_lat, max_lon]])
+            elif not df_map.empty:
+                m2.fit_bounds([[df_map["__LAT__"].min(), df_map["__LON__"].min()],
+                               [df_map["__LAT__"].max(), df_map["__LON__"].max()]])
+
+            def status_icon_color(status_val: str):
+                s = (str(status_val) if status_val is not None else "").strip().lower()
+                if any(k in s for k in ["conclu", "finaliz"]):     return "green"
+                if any(k in s for k in ["execu", "andamento"]):    return "orange"
+                if any(k in s for k in ["paralis", "suspens"]):    return "red"
+                if any(k in s for k in ["planej", "licita", "proj"]): return "blue"
+                return "gray"
+
+            # Distritos
+            if show_distritos and gj_distritos:
+                folium.GeoJson(
+                    gj_distritos,
+                    name="Distritos",
+                    style_function=lambda x: {"fillColor": "#9fe2fc", "fillOpacity": 0.2, "color": "#000000", "weight": 1},
+                ).add_to(m2)
+
+            # Sede de Distritos
+            if show_sede and gj_sede:
+                lyr_sede = folium.FeatureGroup(name="Sede de Distritos")
+                for f in gj_sede.get("features", []):
+                    x, y = f["geometry"]["coordinates"]
+                    nome = f.get("properties", {}).get("Name", "Sede")
+                    folium.Marker([y, x], tooltip=nome, icon=folium.Icon(color="darkgreen", icon="home")).add_to(lyr_sede)
+                lyr_sede.add_to(m2)
+
+            # Obras
+            if show_obras and not df_map.empty:
+                lyr_obras = folium.FeatureGroup(name="Obras")
+                ignore_cols = {"__LAT__", "__LON__"}
+                for _, r in df_map.iterrows():
+                    nome   = str(r.get(c_obra, "Obra")) if c_obra else "Obra"
+                    status = str(r.get(c_status, "-")) if c_status else "-"
+                    empresa= str(r.get(c_empresa, "-")) if c_empresa else "-"
+                    valor  = br_money(r.get(c_valor)) if c_valor else "-"
+                    bairro = str(r.get(c_bairro, "-")) if c_bairro else "-"
+                    dtini  = str(r.get(c_dtini, "-")) if c_dtini else "-"
+                    dtfim  = str(r.get(c_dtfim, "-")) if c_dtfim else "-"
+
+                    extra_rows = []
+                    for c in df_obras.columns:
+                        if c in ignore_cols or c in {c_obra, c_status, c_empresa, c_valor, c_bairro, c_dtini, c_dtfim}:
+                            continue
+                        val = r.get(c, "")
+                        if pd.notna(val) and str(val).strip() != "":
+                            extra_rows.append(f"<tr><td><b>{c}</b></td><td>{val}</td></tr>")
+                    extra_html = "".join(extra_rows)
+
+                    popup_html = (
+                        "<div style='font-family:Arial; font-size:13px'>"
+                        f"<h4 style='margin:4px 0 8px 0'>🧱 {nome}</h4>"
+                        f"<p style='margin:0 0 6px'><b>Status:</b> {status}</p>"
+                        f"<p style='margin:0 0 6px'><b>Empresa:</b> {empresa}</p>"
+                        f"<p style='margin:0 0 6px'><b>Valor:</b> {valor}</p>"
+                        f"<p style='margin:0 0 6px'><b>Bairro/Localidade:</b> {bairro}</p>"
+                        f"<p style='margin:0 0 6px'><b>Início:</b> {dtini} &nbsp; <b>Término:</b> {dtfim}</p>"
+                        + (f"<table border='1' cellpadding='4' cellspacing='0' style='border-collapse:collapse; margin-top:6px'>{extra_html}</table>" if extra_html else "")
+                        + "</div>"
+                    )
+
+                    folium.Marker(
+                        location=[r["__LAT__"], r["__LON__"]],
+                        tooltip=nome,
+                        popup=folium.Popup(popup_html, max_width=420),
+                        icon=folium.Icon(color=status_icon_color(status), icon="info-sign")
+                    ).add_to(lyr_obras)
+
+                lyr_obras.add_to(m2)
+
+            folium.LayerControl(collapsed=True).add_to(m2)
+            folium_static(m2, width=1200, height=700)
+
+        # Tabela
+        st.markdown("### 📋 Tabela de Obras")
+        priority = [c_obra, c_status, c_empresa, c_valor, c_bairro, c_dtini, c_dtfim]
+        ordered = [c for c in priority if c and c in df_obras.columns]
+        rest = [c for c in df_obras.columns if c not in ordered]
+        st.dataframe(df_obras[ordered + rest] if ordered else df_obras, use_container_width=True)
+    else:
+        st.error(f"❌ Não foi possível carregar o CSV de obras em: {CSV_OBRAS}")
+    
     st.markdown('</div>', unsafe_allow_html=True)
 
 # =====================================================
-# 3) Milhã em Mapas (com camadas e GeoJSON)
+# 3) Milhã em Mapas - COM MAPAS FUNCIONAIS
 # =====================================================
 with aba3:
     st.markdown('<div class="modern-card">', unsafe_allow_html=True)
     st.markdown("## 🗺️ Milhã em Mapas")
     st.markdown("Explore as camadas territoriais, de infraestrutura e recursos hídricos do município")
 
-    col_map, col_control = st.columns([3, 1])
+    # estado inicial do painel
+    if "show_layer_panel" not in st.session_state:
+        st.session_state["show_layer_panel"] = True
 
-    with col_control:
-        st.markdown('<div class="sticky-panel">', unsafe_allow_html=True)
-        st.markdown('<div class="panel-title">🎯 Camadas do Mapa</div>', unsafe_allow_html=True)
-        st.markdown('<div class="panel-subtitle">Selecione o que deseja visualizar</div>', unsafe_allow_html=True)
+    # Botão com ícone para exibir/ocultar
+    show_now = st.session_state["show_layer_panel"]
+    wrapper_id = "toggle-panel" if show_now else "toggle-panel-pulse"
 
-        with st.expander("🗾 Território", expanded=True):
-            cb_distritos   = st.checkbox("Distritos", value=True, key="distritos")
-            cb_localidades = st.checkbox("Localidades", value=True, key="localidades")
+    col_btn, _ = st.columns([1, 6])
+    with col_btn:
+        st.markdown(f"<div id='{wrapper_id}'>", unsafe_allow_html=True)
+        label = ("🙈 Ocultar painel de camadas" if show_now else "👁️ Exibir painel de camadas")
+        if st.button(label, use_container_width=True, key="toggle_panel_btn"):
+            st.session_state["show_layer_panel"] = not st.session_state["show_layer_panel"]
+            st.rerun()
+        st.markdown("</div>", unsafe_allow_html=True)
 
-        with st.expander("🏥 Infraestrutura", expanded=True):
-            cb_escolas = st.checkbox("Escolas", value=True, key="escolas")
-            cb_saude   = st.checkbox("Unidades de Saúde", value=True, key="saude")
+    show_panel = st.session_state["show_layer_panel"]
 
-        with st.expander("💧 Recursos Hídricos", expanded=True):
-            cb_pu  = st.checkbox("Poços Urbanos", value=True, key="pocos_urbanos")
-            cb_pr  = st.checkbox("Poços Rurais", value=True, key="pocos_rurais")
-            cb_tec = st.checkbox("Tecnologias Sociais", value=True, key="tec_sociais")
+    # Carregar dados GeoJSON
+    base_dir_candidates = ["dados", "/mnt/data"]
+    files = {
+        "Distritos": "milha_dist_polig.geojson",
+        "Sede Distritos": "Distritos_pontos.geojson",
+        "Localidades": "Localidades.geojson",
+        "Escolas": "Escolas_publicas.geojson",
+        "Unidades de Saúde": "Unidades_saude.geojson",
+        "Tecnologias Sociais": "teclogias_sociais.geojson",
+        "Poços Cidade": "pocos_cidade_mil.geojson",
+        "Poços Zona Rural": "pocos_rural_mil.geojson",
+    }
+    data_geo = {name: load_geojson_any([os.path.join(b, fname) for b in base_dir_candidates])
+                for name, fname in files.items()}
 
-        st.markdown('</div>', unsafe_allow_html=True)
+    # Layout: com painel (mapa + painel) ou sem painel (mapa full)
+    if show_panel:
+        col_map, col_panel = st.columns([5, 2], gap="large")
+    else:
+        col_map, = st.columns([1])
 
+    # ----- Painel de camadas -----
+    if show_panel:
+        with col_panel:
+            st.markdown('<div class="sticky-panel">', unsafe_allow_html=True)
+            st.markdown('<div class="panel-title">🎯 Camadas do Mapa</div>', unsafe_allow_html=True)
+            st.markdown('<div class="panel-subtitle">Selecione o que deseja visualizar</div>', unsafe_allow_html=True)
+
+            with st.expander("🗾 Território", expanded=True):
+                show_distritos = st.checkbox("Distritos", value=True, key="lyr_distritos")
+                show_sede_distritos = st.checkbox("Sede Distritos", value=True, key="lyr_sede")
+                show_localidades = st.checkbox("Localidades", value=True, key="lyr_local")
+
+            with st.expander("🏥 Infraestrutura", expanded=False):
+                show_escolas = st.checkbox("Escolas", value=False, key="lyr_escolas")
+                show_unidades = st.checkbox("Unidades de Saúde", value=False, key="lyr_unid")
+
+            with st.expander("💧 Recursos Hídricos", expanded=False):
+                show_tecnologias = st.checkbox("Tecnologias Sociais", value=False, key="lyr_tec")
+                st.markdown("**Poços**")
+                show_pocos_cidade = st.checkbox("Poços Cidade", value=False, key="lyr_pc")
+                show_pocos_rural = st.checkbox("Poços Zona Rural", value=False, key="lyr_pr")
+
+            st.markdown('</div>', unsafe_allow_html=True)
+
+    else:
+        # painel oculto → usa valores atuais/padrão
+        show_distritos      = st.session_state.get("lyr_distritos", True)
+        show_sede_distritos = st.session_state.get("lyr_sede", True)
+        show_localidades    = st.session_state.get("lyr_local", True)
+        show_escolas        = st.session_state.get("lyr_escolas", False)
+        show_unidades       = st.session_state.get("lyr_unid", False)
+        show_tecnologias    = st.session_state.get("lyr_tec", False)
+        show_pocos_cidade   = st.session_state.get("lyr_pc", False)
+        show_pocos_rural    = st.session_state.get("lyr_pr", False)
+
+    # ----- MAPA FUNCIONAL -----
     with col_map:
-        # Centro padrão aproximado de Milhã-CE
-        center = [-5.683, -39.187]
-        m = folium.Map(location=center, zoom_start=11, control_scale=True, prefer_canvas=True)
-        add_base_tiles(m)
-        Fullscreen().add_to(m)
-        m.add_child(MeasureControl(primary_length_unit="meters"))
-        MousePosition().add_to(m)
-        Draw(export=True).add_to(m)
+        st.markdown("### 🗺️ Mapa Interativo")
+        
+        m3 = folium.Map(location=[-5.680, -39.200], zoom_start=10, tiles=None)
+        add_base_tiles(m3)
+        Fullscreen(position='topright', title='Tela Cheia', title_cancel='Sair', force_separate_button=True).add_to(m3)
+        m3.add_child(MeasureControl(primary_length_unit="meters", secondary_length_unit="kilometers", primary_area_unit="hectares"))
+        MousePosition().add_to(m3)
 
-        # Função auxiliar para adicionar um GeoJSON (se existir)
-        def add_geo_layer(layer_name: str, path_candidates, style=None, tooltip_keys=None):
-            gj = load_geojson_any(path_candidates)
-            if not gj:
-                return None
-            if style is None:
-                style = lambda f: {"color": COLORS["primary"], "weight": 2, "fillOpacity": 0.05}
-            g = folium.GeoJson(
-                gj,
-                name=layer_name,
-                style_function=style,
-                tooltip=folium.GeoJsonTooltip(fields=tooltip_keys) if tooltip_keys else None
-            )
-            g.add_to(m)
-            return geojson_bounds(gj)
+        # Centraliza por Distritos se disponível
+        if data_geo.get("Distritos"):
+            b = geojson_bounds(data_geo["Distritos"])
+            if b:
+                (min_lat, min_lon), (max_lat, max_lon) = b
+                m3.fit_bounds([[min_lat, min_lon], [max_lat, max_lon]])
 
-        # Acumula bounds para ajustar a vista
-        all_bounds = []
+        # 1. Território
+        if show_distritos and data_geo.get("Distritos"):
+            folium.GeoJson(
+                data_geo["Distritos"],
+                name="Distritos",
+                style_function=lambda x: {"fillColor": "#9fe2fc", "fillOpacity": 0.2, "color": "#000000", "weight": 1},
+                tooltip=folium.GeoJsonTooltip(fields=list(data_geo["Distritos"]["features"][0]["properties"].keys())[:3])
+            ).add_to(m3)
 
-        # SUGESTÃO DE ARQUIVOS — ajuste os nomes se necessário
-        if cb_distritos:
-            b = add_geo_layer(
-                "Distritos",
-                ["dados/distritos.geojson", "dados/milha_distritos.geojson", "/mnt/data/distritos.geojson"],
-                style=lambda f: {"color": COLORS["secondary"], "weight": 2, "fillOpacity": 0.05},
-                tooltip_keys=["name","nome","distrito"]
-            )
-            if b: all_bounds.append(b)
+        if show_sede_distritos and data_geo.get("Sede Distritos"):
+            layer_sd = folium.FeatureGroup(name="Sede Distritos")
+            for ftr in data_geo["Sede Distritos"]["features"]:
+                x, y = ftr["geometry"]["coordinates"]
+                nome = ftr["properties"].get("Name", "Sede")
+                folium.Marker([y, x], tooltip=nome, icon=folium.Icon(color="green", icon="home")).add_to(layer_sd)
+            layer_sd.add_to(m3)
 
-        if cb_localidades:
-            b = add_geo_layer(
-                "Localidades",
-                ["dados/localidades.geojson", "/mnt/data/localidades.geojson"],
-                style=lambda f: {"color": COLORS["accent"], "weight": 1, "fillOpacity": 0.05},
-                tooltip_keys=["nome","name","localidade"]
-            )
-            if b: all_bounds.append(b)
+        if show_localidades and data_geo.get("Localidades"):
+            layer_loc = folium.FeatureGroup(name="Localidades")
+            for ftr in data_geo["Localidades"]["features"]:
+                x, y = ftr["geometry"]["coordinates"]
+                props = ftr["properties"]
+                nome = props.get("Name", "Localidade")
+                distrito = props.get("Distrito", "-")
+                popup = f"<b>Localidade:</b> {nome}<br><b>Distrito:</b> {distrito}"
+                folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="purple", icon="flag")).add_to(layer_loc)
+            layer_loc.add_to(m3)
 
-        if cb_escolas:
-            b = add_geo_layer(
-                "Escolas",
-                ["dados/escolas.geojson", "/mnt/data/escolas.geojson"],
-                style=lambda f: {"color": "#2563EB", "weight": 1, "fillOpacity": 0.05},
-                tooltip_keys=["nome","escola","name"]
-            )
-            if b: all_bounds.append(b)
+        # 2. Infraestrutura
+        if show_escolas and data_geo.get("Escolas"):
+            layer_esc = folium.FeatureGroup(name="Escolas")
+            for ftr in data_geo["Escolas"]["features"]:
+                x, y = ftr["geometry"]["coordinates"]
+                props = ftr["properties"]
+                nome = props.get("no_entidad", props.get("Name", "Escola"))
+                popup = (
+                    "<div style='font-family:Arial;font-size:13px'>"
+                    f"<b>Escola:</b> {nome}<br>"
+                    f"<b>Endereço:</b> {props.get('endereco','-')}"
+                    "</div>"
+                )
+                folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="red", icon="education")).add_to(layer_esc)
+            layer_esc.add_to(m3)
 
-        if cb_saude:
-            b = add_geo_layer(
-                "Unidades de Saúde",
-                ["dados/saude.geojson", "/mnt/data/saude.geojson"],
-                style=lambda f: {"color": "#16A34A", "weight": 1, "fillOpacity": 0.05},
-                tooltip_keys=["unidade","nome","name"]
-            )
-            if b: all_bounds.append(b)
+        if show_unidades and data_geo.get("Unidades de Saúde"):
+            layer_saude = folium.FeatureGroup(name="Unidades de Saúde")
+            for ftr in data_geo["Unidades de Saúde"]["features"]:
+                x, y = ftr["geometry"]["coordinates"]
+                props = ftr["properties"]
+                nome = props.get("nome", props.get("Name", "Unidade"))
+                popup = (
+                    "<div style='font-family:Arial;font-size:13px'>"
+                    f"<b>Unidade:</b> {nome}<br>"
+                    f"<b>Bairro:</b> {props.get('bairro','-')}<br>"
+                    f"<b>Município:</b> {props.get('municipio','-')}"
+                    "</div>"
+                )
+                folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="green", icon="plus-sign")).add_to(layer_saude)
+            layer_saude.add_to(m3)
 
-        if cb_pu:
-            b = add_geo_layer(
-                "Poços Urbanos",
-                ["dados/pocos_urbanos.geojson", "/mnt/data/pocos_urbanos.geojson"],
-                style=lambda f: {"color": "#0ea5e9", "weight": 1, "fillOpacity": 0.05},
-                tooltip_keys=["nome","status","id"]
-            )
-            if b: all_bounds.append(b)
+        # 3. Recursos Hídricos
+        if show_tecnologias and data_geo.get("Tecnologias Sociais"):
+            layer_tec = folium.FeatureGroup(name="Tecnologias Sociais")
+            for ftr in data_geo["Tecnologias Sociais"]["features"]:
+                x, y = ftr["geometry"]["coordinates"]
+                props = ftr["properties"]
+                nome = props.get("Comunidade", props.get("Name", "Tecnologia Social"))
+                popup = "<div style='font-family:Arial;font-size:13px'><b>Local:</b> {}</div>".format(nome)
+                folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="orange", icon="tint")).add_to(layer_tec)
+            layer_tec.add_to(m3)
 
-        if cb_pr:
-            b = add_geo_layer(
-                "Poços Rurais",
-                ["dados/pocos_rurais.geojson", "/mnt/data/pocos_rurais.geojson"],
-                style=lambda f: {"color": "#0284c7", "weight": 1, "fillOpacity": 0.05},
-                tooltip_keys=["nome","status","id"]
-            )
-            if b: all_bounds.append(b)
+        if show_pocos_cidade and data_geo.get("Poços Cidade"):
+            layer_pc = folium.FeatureGroup(name="Poços Cidade")
+            for ftr in data_geo["Poços Cidade"]["features"]:
+                x, y = ftr["geometry"]["coordinates"]
+                props = ftr["properties"]
+                nome = props.get("Localidade", props.get("Name", "Poço"))
+                popup = (
+                    "<div style='font-family:Arial;font-size:13px'>"
+                    f"<b>Localidade:</b> {nome}<br>"
+                    f"<b>Profundidade:</b> {props.get('Profundida','-')}<br>"
+                    f"<b>Vazão (L/h):</b> {props.get('Vazão_LH_2','-')}"
+                    "</div>"
+                )
+                folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="blue", icon="tint")).add_to(layer_pc)
+            layer_pc.add_to(m3)
 
-        if cb_tec:
-            b = add_geo_layer(
-                "Tecnologias Sociais",
-                ["dados/tecnologias_sociais.geojson", "/mnt/data/tecnologias_sociais.geojson"],
-                style=lambda f: {"color": "#F59E0B", "weight": 1, "fillOpacity": 0.05},
-                tooltip_keys=["tipo","nome","programa"]
-            )
-            if b: all_bounds.append(b)
+        if show_pocos_rural and data_geo.get("Poços Zona Rural"):
+            layer_pr = folium.FeatureGroup(name="Poços Zona Rural")
+            for ftr in data_geo["Poços Zona Rural"]["features"]:
+                x, y = ftr["geometry"]["coordinates"]
+                props = ftr["properties"]
+                nome = props.get("Localidade", props.get("Name", "Poço"))
+                popup = (
+                    "<div style='font-family:Arial;font-size:13px'>"
+                    f"<b>Localidade:</b> {nome}<br>"
+                    f"<b>Profundidade:</b> {props.get('Profundida','-')}<br>"
+                    f"<b>Vazão (L/h):</b> {props.get('Vazão_LH_2','-')}"
+                    "</div>"
+                )
+                folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="cadetblue", icon="tint")).add_to(layer_pr)
+            layer_pr.add_to(m3)
 
-        folium.LayerControl(collapsed=False).add_to(m)
-
-        # Ajusta a vista se houver bounds
-        if all_bounds:
-            min_lat = min(b[0][0] for b in all_bounds)
-            min_lon = min(b[0][1] for b in all_bounds)
-            max_lat = max(b[1][0] for b in all_bounds)
-            max_lon = max(b[1][1] for b in all_bounds)
-            m.fit_bounds([[min_lat, min_lon], [max_lat, max_lon]])
-
-        folium_static(m, height=650)
-
+        folium.LayerControl(collapsed=True).add_to(m3)
+        folium_static(m3, width=1200, height=700)
+    
     st.markdown('</div>', unsafe_allow_html=True)
 
 # =====================================================
