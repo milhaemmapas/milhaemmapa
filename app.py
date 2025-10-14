@@ -180,155 +180,174 @@ with aba1:
 # =====================================================
 with aba2:
     st.subheader("Mapa das Obras")
-    st.caption("Fonte: Google Sheets (planilha oficial)")
+    st.caption("Fonte: CSV oficial (pasta dados)")
 
-    # URL fixa (não exibida na UI)
-    url_planilha = "https://docs.google.com/spreadsheets/d/1rZvNp7di3fcjh_lao-ryqLYgP1aYJ4M8t6ZGmrdhj8k/edit?gid=0#gid=0"
-
-    # Helpers locais (sem imports aqui)
+    # ===== Helpers específicos do painel =====
     def br_money(x):
         try:
-            s = str(x).replace("R$", "").strip()
-            if "," in s and s.count(".") >= 1:
-                s = s.replace(".", "")
-            v = float(s.replace(",", "."))
+            v = float(str(x).replace(".", "").replace(",", ".")) if isinstance(x, str) and "," in str(x) and str(x).count(",")==1 and str(x).count(".")>1 else float(str(x).replace(",", "."))
             return f"R$ {v:,.2f}".replace(",", "_").replace(".", ",").replace("_", ".")
         except Exception:
             return str(x)
 
     def pick(colnames, *options):
-        cols = list(colnames)
+        """Seleciona a primeira coluna existente em df_obras dentre as opções."""
         for o in options:
-            if o in cols:
+            if o in colnames:
                 return o
-        lower = {c.lower(): c for c in cols}
+        # tentar case-insensitive
+        lower = {c.lower(): c for c in colnames}
         for o in options:
             if o.lower() in lower:
                 return lower[o.lower()]
         return None
 
-    def to_float_series(s: pd.Series) -> pd.Series:
-        def _conv(v):
-            if pd.isna(v):
-                return None
-            txt = str(v)
-            m = re.search(r"-?\d+[.,]?\d*", txt)
-            if not m:
-                return None
-            try:
-                return float(m.group(0).replace(",", "."))
-            except Exception:
-                return None
-        return s.apply(_conv)
+    def status_icon_color(status_val: str):
+        s = (status_val or "").strip().lower()
+        if any(k in s for k in ["conclu", "finaliz"]):
+            return "green"
+        if any(k in s for k in ["execu", "andamento", "em andamento"]):
+            return "orange"
+        if any(k in s for k in ["paralis", "suspens"]):
+            return "red"
+        if any(k in s for k in ["planej", "licita", "projeto"]):
+            return "blue"
+        return "gray"
 
-    # Leitura exclusiva da planilha (usa read_public_sheet definido acima)
-    df_obras = read_public_sheet(url_planilha)
+    # Fonte local fixa (CSV de obras)
+CSV_OBRAS_CANDIDATES = ["dados/milha_obras.csv", "/mnt/data/milha_obras.csv"]
+    CSV_OBRAS = next((p for p in CSV_OBRAS_CANDIDATES if os.path.exists(p)), CSV_OBRAS_CANDIDATES[0])
 
+def _sniff_read_csv(path: str) -> pd.DataFrame:
+    try:
+        with open(path, "r", encoding="utf-8-sig") as f:
+            sample = f.read(4096)
+            f.seek(0)
+            sep = ";" if sample.count(";") > sample.count(",") else ","
+            return pd.read_csv(f, sep=sep)
+    except Exception as e:
+        st.error(f"Falha ao ler CSV '{path}': {e}")
+        return pd.DataFrame()
+
+def _to_float_series(s: pd.Series) -> pd.Series:
+    def _conv(v):
+        if pd.isna(v):
+            return None
+        txt = str(v)
+        m = re.search(r"(-?[0-9]+[.,]?[0-9]*)", txt)
+        if not m:
+            return None
+        try:
+            return float(m.group(1).replace(",", "."))
+        except Exception:
+            return None
+    return s.apply(_conv)
+
+df_obras = _sniff_read_csv(CSV_OBRAS)
     if not df_obras.empty:
-        # Detectar colunas de coordenadas
+        # Detecta coordenadas
         coords = autodetect_coords(df_obras)
         if coords is None:
-            # tenta pares comuns
-            lat = pick(df_obras.columns, "LAT", "LATITUDE", "Latitude", "lat")
-            lon = pick(df_obras.columns, "LON", "LONG", "LONGITUDE", "Longitude", "lon")
-            if lat and lon:
-                df_obras["__LAT__"] = to_float_series(df_obras[lat])
-                df_obras["__LON__"] = to_float_series(df_obras[lon])
-            else:
-                st.error("Não foi possível identificar colunas de latitude/longitude nem 'COORDENADAS'.")
-                df_map = pd.DataFrame()
+            st.error("Não foi possível identificar as colunas de latitude/longitude. Ajuste os cabeçalhos ou inclua uma coluna 'COORDENADAS' no formato 'lat,lon'.")
         else:
             lat_col, lon_col = coords
-            # Converter para float robusto
-            df_obras["__LAT__"] = to_float_series(df_obras[lat_col])
-            df_obras["__LON__"] = to_float_series(df_obras[lon_col])
+            # Conversão robusta de coordenadas (aceita vírgula/ponto e valores mistos)
+df_obras["__LAT__"] = _to_float_series(df_obras[lat_col])
+df_obras["__LON__"] = _to_float_series(df_obras[lon_col])
 
-        # Filtrar apenas linhas com coordenadas válidas
-        df_map = df_obras.dropna(subset=["__LAT__", "__LON__"]).copy()
+# Correção heurística para Milhã-CE (troca lat/lon e/ou sinal da longitude, se melhorar)
+lat_s = df_obras["__LAT__"]
+lon_s = df_obras["__LON__"]
 
-        # Colunas prioritárias para o popup/tabela
-        cols = list(df_obras.columns)
-        c_obra    = pick(cols, "Obra", "OBRA", "Nome", "NOME", "Projeto", "Descrição")
-        c_status  = pick(cols, "Status", "STATUS", "Situação", "SITUACAO", "SITUAÇÃO")
-        c_empresa = pick(cols, "Empresa", "EMPRESA", "Contratada", "CONTRATADA")
-        c_valor   = pick(cols, "Valor", "VALOR", "Valor Total", "VALOR_TOTAL", "Custo", "CUSTO")
-        c_bairro  = pick(cols, "Bairro", "BAIRRO", "Localidade", "LOCALIDADE")
-        c_dtini   = pick(cols, "Início", "DATA_INICIO", "Data Início", "DATA INICIO", "Inicio")
-        c_dtfim   = pick(cols, "Término", "DATA_FIM", "Data Fim", "DATA FIM", "Termino")
+def _pct_inside(a, b):
+    try:
+        m = (a.between(-6.5, -4.5)) & (b.between(-40.5, -38.0))
+        return float(m.mean())
+    except Exception:
+        return 0.0
 
-        st.success(f"{len(df_map)} obra(s) com coordenadas válidas.")
+cands = [
+    ("orig", lat_s, lon_s, _pct_inside(lat_s, lon_s)),
+    ("swap", lon_s, lat_s, _pct_inside(lon_s, lat_s)),
+    ("neg_lon", lat_s, -lon_s, _pct_inside(lat_s, -lon_s)),
+    ("swap_neg", lon_s, -lat_s, _pct_inside(lon_s, -lat_s)),
+]
+best = max(cands, key=lambda x: x[3])
+if best[0] != "orig" and best[3] > cands[0][3]:
+    df_obras["__LAT__"], df_obras["__LON__"] = best[1], best[2]
 
-        # Centro do mapa
-        center = [-5.680, -39.200]
-        if not df_map.empty:
-            center = [df_map["__LAT__"].mean(), df_map["__LON__"].mean()]
+# Filtra somente coordenadas válidas
+df_map = df_obras.dropna(subset=["__LAT__", "__LON__"]).copy()
 
-        # Mapa
-        m2 = folium.Map(location=center, zoom_start=12, tiles=None)
-        add_base_tiles(m2)
-        Fullscreen(position='topright', title='Tela Cheia', title_cancel='Sair', force_separate_button=True).add_to(m2)
-        m2.add_child(MeasureControl(primary_length_unit="meters", secondary_length_unit="kilometers", primary_area_unit="hectares"))
-        MousePosition().add_to(m2)
-        Draw(export=True).add_to(m2)
+            # Colunas prioritárias
+            cols = list(df_map.columns)
+            c_obra    = pick(cols, "Obra", "OBRA", "Nome", "NOME", "Projeto", "Descrição")
+            c_status  = pick(cols, "Status", "STATUS", "Situação", "SITUACAO", "SITUAÇÃO")
+            c_empresa = pick(cols, "Empresa", "EMPRESA", "Contratada", "CONTRATADA")
+            c_valor   = pick(cols, "Valor", "VALOR", "Valor Total", "VALOR_TOTAL", "Custo", "CUSTO")
+            c_bairro  = pick(cols, "Bairro", "BAIRRO", "Localidade", "LOCALIDADE")
+            c_dtini   = pick(cols, "Início", "DATA_INICIO", "Data Início", "DATA INICIO", "Inicio")
+            c_dtfim   = pick(cols, "Término", "DATA_FIM", "Data Fim", "DATA FIM", "Termino")
 
-        # Cor do ícone por status
-        def status_icon_color(status_val: str):
-            s = (status_val or "").strip().lower()
-            if any(k in s for k in ["conclu", "finaliz"]):     return "green"
-            if any(k in s for k in ["execu", "andamento"]):    return "orange"
-            if any(k in s for k in ["paralis", "suspens"]):    return "red"
-            if any(k in s for k in ["planej", "licita", "proj"]): return "blue"
-            return "gray"
+            st.success(f"{len(df_map)} obra(s) com coordenadas válidas.")
 
-        # Marcadores + popups
-        ignore_cols = {"__LAT__", "__LON__"}
-        for _, r in df_map.iterrows():
-            nome   = str(r.get(c_obra, "Obra")) if c_obra else "Obra"
-            status = str(r.get(c_status, "-")) if c_status else "-"
-            empresa= str(r.get(c_empresa, "-")) if c_empresa else "-"
-            valor  = br_money(r.get(c_valor)) if c_valor else "-"
-            bairro = str(r.get(c_bairro, "-")) if c_bairro else "-"
-            dtini  = str(r.get(c_dtini, "-")) if c_dtini else "-"
-            dtfim  = str(r.get(c_dtfim, "-")) if c_dtfim else "-"
+            # Mapa centrado em Milhã-CE
+            m2 = folium.Map(location=[-5.680, -39.200], zoom_start=11, tiles=None)
+            add_base_tiles(m2)
+            Fullscreen(position='topright', title='Tela Cheia', title_cancel='Sair', force_separate_button=True).add_to(m2)
+            m2.add_child(MeasureControl(primary_length_unit="meters", secondary_length_unit="kilometers", primary_area_unit="hectares"))
+            MousePosition().add_to(m2)
+            Draw(export=True).add_to(m2)
 
-            extra_rows = []
-            for c in df_obras.columns:
-                if c in ignore_cols or c in {c_obra, c_status, c_empresa, c_valor, c_bairro, c_dtini, c_dtfim}:
-                    continue
-                val = r.get(c, "")
-                if pd.notna(val) and str(val).strip() != "":
-                    extra_rows.append(f"<tr><td><b>{c}</b></td><td>{val}</td></tr>")
-            extra_html = "".join(extra_rows)
+            # Popups customizados
+            for _, r in df_map.iterrows():
+                nome   = str(r.get(c_obra, "Obra")) if c_obra else "Obra"
+                status = str(r.get(c_status, "-")) if c_status else "-"
+                empresa= str(r.get(c_empresa, "-")) if c_empresa else "-"
+                valor  = br_money(r.get(c_valor)) if c_valor else "-"
+                bairro = str(r.get(c_bairro, "-")) if c_bairro else "-"
+                dtini  = str(r.get(c_dtini, "-")) if c_dtini else "-"
+                dtfim  = str(r.get(c_dtfim, "-")) if c_dtfim else "-"
 
-            popup_html = (
-                "<div style='font-family:Arial; font-size:13px'>"
-                f"<h4 style='margin:4px 0 8px 0'>🧱 {nome}</h4>"
-                f"<p style='margin:0 0 6px'><b>Status:</b> {status}</p>"
-                f"<p style='margin:0 0 6px'><b>Empresa:</b> {empresa}</p>"
-                f"<p style='margin:0 0 6px'><b>Valor:</b> {valor}</p>"
-                f"<p style='margin:0 0 6px'><b>Bairro/Localidade:</b> {bairro}</p>"
-                f"<p style='margin:0 0 6px'><b>Início:</b> {dtini} &nbsp; <b>Término:</b> {dtfim}</p>"
-                + (f"<table border='1' cellpadding='4' cellspacing='0' style='border-collapse:collapse; margin-top:6px'>{extra_html}</table>" if extra_html else "")
-                + "</div>"
-            )
+                extra_rows = []
+                for c in df_map.columns:
+                    if c in {lat_col, lon_col, "__LAT__", "__LON__", c_obra, c_status, c_empresa, c_valor, c_bairro, c_dtini, c_dtfim}:
+                        continue
+                    val = r.get(c, "")
+                    if pd.notna(val) and str(val).strip() != "":
+                        extra_rows.append(f"<tr><td><b>{c}</b></td><td>{val}</td></tr>")
+                extra_html = "".join(extra_rows)
 
-            folium.Marker(
-                location=[r["__LAT__"], r["__LON__"]],
-                tooltip=nome,
-                popup=folium.Popup(popup_html, max_width=420),
-                icon=folium.Icon(color=status_icon_color(status), icon="info-sign")
-            ).add_to(m2)
+                popup_html = (
+                    "<div style='font-family:Arial; font-size:13px'>"
+                    f"<h4 style='margin:4px 0 8px 0'>🧱 {nome}</h4>"
+                    f"<p style='margin:0 0 6px'><b>Status:</b> {status}</p>"
+                    f"<p style='margin:0 0 6px'><b>Empresa:</b> {empresa}</p>"
+                    f"<p style='margin:0 0 6px'><b>Valor:</b> {valor}</p>"
+                    f"<p style='margin:0 0 6px'><b>Bairro/Localidade:</b> {bairro}</p>"
+                    f"<p style='margin:0 0 6px'><b>Início:</b> {dtini} &nbsp; <b>Término:</b> {dtfim}</p>"
+                    + (f"<table border='1' cellpadding='4' cellspacing='0' style='border-collapse:collapse; margin-top:6px'>{extra_html}</table>" if extra_html else "")
+                    + "</div>"
+                )
 
-        folium.LayerControl(collapsed=True).add_to(m2)
-        folium_static(m2, width=1200, height=700)
+                folium.Marker(
+                    location=[r["__LAT__"], r["__LON__"]],
+                    tooltip=nome,
+                    popup=folium.Popup(popup_html, max_width=420),
+                    icon=folium.Icon(color=status_icon_color(status), icon="info-sign")
+                ).add_to(m2)
 
-        st.markdown("### Tabela de Obras")
-        ordered = []
-        for c in [c_obra, c_status, c_empresa, c_valor, c_bairro, c_dtini, c_dtfim]:
-            if c and c not in ordered:
-                ordered.append(c)
-        rest = [c for c in df_obras.columns if c not in ordered]
-        st.dataframe(df_obras[ordered + rest] if ordered else df_obras, use_container_width=True)
+            folium.LayerControl(collapsed=True).add_to(m2)
+            folium_static(m2, width=1200, height=700)
+
+            st.markdown("### Tabela de Obras")
+            # Reordena tabela com prioridades na frente, quando existirem
+            ordered = []
+            for c in [c_obra, c_status, c_empresa, c_valor, c_bairro, c_dtini, c_dtfim]:
+                if c and c not in ordered:
+                    ordered.append(c)
+            rest = [c for c in df_obras.columns if c not in ordered]
+            st.dataframe(df_obras[ordered + rest] if ordered else df_obras, use_container_width=True)
 
 # =====================================================
 # 3) Milhã em Mapas
