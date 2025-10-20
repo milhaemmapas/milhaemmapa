@@ -822,7 +822,7 @@ with aba3:
         
         # LADO ESQUERDO (TOPLEFT)
         
-        # 1. Fullscreen - MUDANÇA PARA 'topleft'
+        # 1. Fullscreen - AGORA EM 'topleft'
         Fullscreen(
             position='topleft', 
             title='Tela Cheia', 
@@ -830,10 +830,12 @@ with aba3:
             force_separate_button=True
         ).add_to(m3)
         
-        # 2. Ferramentas de Desenho - MUDANÇA PARA 'topleft'
+        # LADO DIREITO (TOPRIGHT)
+        
+        # 2. Ferramentas de Desenho - AGORA EM 'topright'
         Draw(
             export=True,
-            position='topleft',
+            position='topright',
             draw_options={
                 'marker': True,
                 'circle': True,
@@ -842,10 +844,8 @@ with aba3:
                 'rectangle': True
             }
         ).add_to(m3)
-
-        # LADO DIREITO (TOPRIGHT)
         
-        # 3. Controle de Medidas - MUDANÇA PARA 'topright'
+        # 3. Controle de Medidas - AGORA EM 'topright'
         m3.add_child(MeasureControl(
             primary_length_unit="meters", 
             secondary_length_unit="kilometers", 
@@ -977,14 +977,12 @@ with aba3:
                 folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="cadetblue", icon="tint")).add_to(layer_pr)
             layer_pr.add_to(m3)
 
-        # 5. LayerControl (Controle de Camadas) - Deve ser o ÚLTIMO, e está no lado esquerdo ('topleft') por padrão, mas para garantir:
+        # 5. LayerControl (Controle de Camadas) - AGORA EM 'topleft'
         folium.LayerControl(collapsed=True, position='topleft').add_to(m3)
 
         # Render preservando viewport quando possível
         if _HAS_ST_FOLIUM:
             try:
-                # O problema de não aparecer o botão LayerControl pode ser causado por st_folium
-                # O fallback folium_static é mais seguro se st_folium causar problemas
                 out = _st_folium(m3, width=1200, height=700)
             except TypeError:
                 out = _st_folium(m3)
