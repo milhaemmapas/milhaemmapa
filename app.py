@@ -752,11 +752,11 @@ with aba3:
     # Estados da UI
     if "show_layer_panel" not in st.session_state:
         st.session_state["show_layer_panel"] = True
-    if "m3_view" not in st.session_state:
-        # centro/zoom padrão apenas na primeira carga
-        st.session_state["m3_view"] = {"center": [-5.680, -39.200], "zoom": 10}
-    if "m3_should_fit" not in st.session_state:
-        st.session_state["m3_should_fit"] = True  # primeiro render ou ao clicar no botão
+
+    # Centro/zoom 100% FIXOS — não serão alterados em runtime
+    FIXED_CENTER = [-5.679655973175536, -39.194764639355746]
+    FIXED_ZOOM   = 12
+    st.session_state["m3_view"] = {"center": FIXED_CENTER, "zoom": FIXED_ZOOM}
 
     # Botões (mostrar/ocultar painel e centralizar)
     show_now = st.session_state["show_layer_panel"]
@@ -772,7 +772,8 @@ with aba3:
         st.markdown("</div>", unsafe_allow_html=True)
     with col_btnR:
         if st.button("📍 Centralizar em Milhã", use_container_width=True, key="btn_center_milha"):
-            st.session_state["m3_should_fit"] = True
+            # Apenas regrava o centro/zoom fixos (sem fit)
+            st.session_state["m3_view"] = {"center": FIXED_CENTER, "zoom": FIXED_ZOOM}
 
     show_panel = st.session_state["show_layer_panel"]
 
@@ -834,54 +835,38 @@ with aba3:
         show_pocos_rural    = st.session_state.get("lyr_pr", False)
 
     # =======================
-    # MAPA (viewport fixo - SEM TRANSIÇÃO)
+    # MAPA (viewport fixo)
     # =======================
     with col_map:
         st.markdown("### 🗺️ Mapa Interativo")
 
-        # Usa SEMPRE o último centro/zoom salvo
+        # Usa SEMPRE o centro/zoom FIXOS
         center = st.session_state["m3_view"]["center"]
         zoom   = st.session_state["m3_view"]["zoom"]
 
-        # 💡 CORREÇÃO: Configurações para eliminar TODAS as transições
+        # Mapa travado: sem pan/zoom/animações
         m3 = folium.Map(
             location=center,
             zoom_start=zoom,
             tiles=None,
-            zoomAnimation=False,        # Sem animação de zoom
-            scrollWheelZoom=False,      # Opcional: desativa zoom com scroll
-            tap=False,                  # Opcional: reduz interações que podem causar transições
+            zoom_control=False,        # oculta controles de zoom
+            prefer_canvas=True,
+            # Desativa interações que moveriam o mapa
+            dragging=False,
+            scrollWheelZoom=False,
+            doubleClickZoom=False,
+            boxZoom=False,
+            touchZoom=False,
+            keyboard=False,
+            # Desativa animações
+            zoomAnimation=False,
+            fadeAnimation=False,
+            markerZoomAnimation=False,
         )
         add_base_tiles(m3)
         Fullscreen(position='topright', title='Tela Cheia', title_cancel='Sair', force_separate_button=True).add_to(m3)
         m3.add_child(MeasureControl(primary_length_unit="meters", secondary_length_unit="kilometers", primary_area_unit="hectares"))
         MousePosition().add_to(m3)
-
-        # Fit somente quando solicitado (primeira carga ou clique no botão)
-        if st.session_state["m3_should_fit"] and data_geo.get("Distritos"):
-            b = geojson_bounds(data_geo["Distritos"])
-            if b:
-                (min_lat, min_lon), (max_lat, max_lon) = b
-                # 💡 SOLUÇÃO: Adicionar script JavaScript para fit_bounds sem animação
-                m3.fit_bounds([[min_lat, min_lon], [max_lat, max_lon]])
-                
-                # Script para eliminar a transição do fit_bounds
-                no_animation_script = """
-                <script>
-                // Aguarda o mapa carregar e então remove animações
-                setTimeout(function() {
-                    if (window['m3_{map_id}']) {{
-                        window['m3_{map_id}'].options.zoomAnimation = false;
-                        window['m3_{map_id}'].options.fadeAnimation = false;
-                        window['m3_{map_id}'].options.markerZoomAnimation = false;
-                    }}
-                }, 100);
-                </script>
-                """.format(map_id=m3._id)
-                
-                m3.get_root().html.add_child(folium.Element(no_animation_script))
-                
-            st.session_state["m3_should_fit"] = False  # trava o auto-fit
 
         # --- Camadas (não alteram viewport) ---
         if show_distritos and data_geo.get("Distritos"):
@@ -988,23 +973,12 @@ with aba3:
 
         folium.LayerControl(collapsed=True).add_to(m3)
 
-        # Render preservando viewport quando possível
+        # Render SEM capturar/atualizar viewport (não ler nem salvar o retorno)
         if _HAS_ST_FOLIUM:
             try:
-                out = _st_folium(m3, width=1200, height=700)
+                _ = _st_folium(m3, width=1200, height=700)
             except TypeError:
-                out = _st_folium(m3)  # compat com versões antigas
-            # Atualiza centro/zoom se a lib fornecer
-            if isinstance(out, dict):
-                last_center = out.get("last_center") or out.get("center")
-                zoom_val = out.get("zoom") or out.get("last_zoom")
-                if last_center and ("lat" in last_center and "lng" in last_center):
-                    st.session_state["m3_view"]["center"] = [last_center["lat"], last_center["lng"]]
-                if zoom_val is not None:
-                    try:
-                        st.session_state["m3_view"]["zoom"] = int(zoom_val)
-                    except Exception:
-                        pass
+                _ = _st_folium(m3)  # compat com versões antigas
         else:
             # Fallback: sem captura de viewport (ainda assim sem transição porque não há fit automático)
             folium_static(m3, width=1200, height=700)
