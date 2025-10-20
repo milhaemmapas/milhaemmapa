@@ -213,7 +213,7 @@ def css_global():
                 margin-bottom: 20px; 
             }}
             
-            /* Botão de toggle aprimorado */
+            /* Botão de toggle aprimorado (MANTIDO APENAS O CSS, OS ELEMENTOS HTML SERÃO REMOVIDOS) */
             #toggle-lyr-obras-pulse button, #toggle-panel-pulse button {{
                  background-color: {COLORS["accent"]} !important;
                  border-color: {COLORS["accent"]} !important;
@@ -585,49 +585,27 @@ with aba2:
         gj_distritos = load_geojson_any([os.path.join(b, "milha_dist_polig.geojson") for b in base_dir_candidates])
         gj_sede      = load_geojson_any([os.path.join(b, "Distritos_pontos.geojson") for b in base_dir_candidates])
 
-        if "show_layer_panel_obras" not in st.session_state:
-            st.session_state["show_layer_panel_obras"] = True
-        
-        show_now = st.session_state["show_layer_panel_obras"]
-        wrapper_id = "toggle-lyr-obras" if show_now else "toggle-lyr-obras-pulse"
+        # A LÓGICA DO BOTÃO FOI REMOVIDA. show_panel AGORA É SEMPRE TRUE
+        show_panel = True # Painel fixo
 
-        col_btn, _ = st.columns([1, 6])
-        with col_btn:
-            st.markdown(f"<div id='{wrapper_id}'>", unsafe_allow_html=True)
-            label = ("🙈 Ocultar painel de camadas" if show_now else "👁️ Exibir painel de camadas")
-            if st.button(label, use_container_width=True, key="toggle_panel_btn_obras"):
-                st.session_state["show_layer_panel_obras"] = not st.session_state["show_layer_panel_obras"]
-                st.rerun()
-            st.markdown("</div>", unsafe_allow_html=True)
+        # Layout: com painel lateral (Fixo)
+        col_map, col_panel = st.columns([5, 2], gap="large")
 
-        show_panel = st.session_state["show_layer_panel_obras"]
+        # Painel lateral (checkboxes)
+        with col_panel:
+            st.markdown('<div class="sticky-panel">', unsafe_allow_html=True)
+            st.markdown('<div class="panel-title">🎛️ Camadas do Mapa</div>', unsafe_allow_html=True)
+            st.markdown('<div class="panel-subtitle">Controle a visualização</div>', unsafe_allow_html=True)
 
-        # Layout: com painel ou sem painel
-        if show_panel:
-            col_map, col_panel = st.columns([5, 2], gap="large")
-        else:
-            col_map, = st.columns([1])
+            # ORGANIZAÇÃO NO PADRÃO DA ABA MILHÃ - COM EXPANDERS
+            with st.expander("🏗️ Obras", expanded=True):
+                show_obras = st.checkbox("Obras Municipais", value=True, key="obras_markers")
 
-        # Painel lateral (checkboxes) - CORREÇÃO APLICADA AQUI
-        if show_panel:
-            with col_panel:
-                st.markdown('<div class="sticky-panel">', unsafe_allow_html=True)
-                st.markdown('<div class="panel-title">🎛️ Camadas do Mapa</div>', unsafe_allow_html=True)  # CORRIGIDO
-                st.markdown('<div class="panel-subtitle">Controle a visualização</div>', unsafe_allow_html=True)
+            with st.expander("🗾 Território", expanded=False):
+                show_distritos = st.checkbox("Distritos", value=True, key="obras_distritos")
+                show_sede = st.checkbox("Sede Distritos", value=True, key="obras_sede")
 
-                # ORGANIZAÇÃO NO PADRÃO DA ABA MILHÃ - COM EXPANDERS
-                with st.expander("🏗️ Obras", expanded=True):
-                    show_obras = st.checkbox("Obras Municipais", value=True, key="obras_markers")
-
-                with st.expander("🗾 Território", expanded=False):
-                    show_distritos = st.checkbox("Distritos", value=True, key="obras_distritos")
-                    show_sede = st.checkbox("Sede Distritos", value=True, key="obras_sede")
-
-                st.markdown('</div>', unsafe_allow_html=True)
-        else:
-            show_obras     = st.session_state.get("obras_markers", True)
-            show_distritos = st.session_state.get("obras_distritos", True)
-            show_sede      = st.session_state.get("obras_sede", True)
+            st.markdown('</div>', unsafe_allow_html=True)
 
         # ---------- MAPA FUNCIONAL ----------
         with col_map:
@@ -643,7 +621,7 @@ with aba2:
             Fullscreen(position='topright', title='Tela Cheia', title_cancel='Sair', force_separate_button=True).add_to(m2)
             m2.add_child(MeasureControl(primary_length_unit="meters", secondary_length_unit="kilometers", primary_area_unit="hectares"))
             MousePosition().add_to(m2)
-            Draw(export=True).add_to(m2) # <-- Já estava aqui
+            Draw(export=True).add_to(m2)
 
             # Centraliza pela camada Distritos se existir
             if gj_distritos:
@@ -736,7 +714,7 @@ with aba2:
         st.error(f"❌ Não foi possível carregar o CSV de obras em: {CSV_OBRAS}")
 
 # =====================================================
-# 3) Milhã em Mapas — CONFIGURAÇÕES DE FERRAMENTAS PADRONIZADAS
+# 3) Milhã em Mapas — SEM BOTÕES DE CONTROLE
 # =====================================================
 with aba3:
     # Import robusto (local) para capturar viewport quando possível
@@ -752,31 +730,16 @@ with aba3:
     )
 
     # Estados da UI
-    if "show_layer_panel" not in st.session_state:
-        st.session_state["show_layer_panel"] = True
+    # A LÓGICA DO BOTÃO FOI REMOVIDA. show_panel AGORA É SEMPRE TRUE
+    show_panel = True # Painel fixo
+    
     if "m3_view" not in st.session_state:
         # centro/zoom padrão apenas na primeira carga
         st.session_state["m3_view"] = {"center": [-5.680, -39.200], "zoom": 10}
     if "m3_should_fit" not in st.session_state:
-        st.session_state["m3_should_fit"] = True  # primeiro render ou ao clicar no botão
+        st.session_state["m3_should_fit"] = True  # Centraliza apenas na primeira carga
 
-    # Botões (mostrar/ocultar painel e centralizar)
-    show_now = st.session_state["show_layer_panel"]
-    wrapper_id = "toggle-panel" if show_now else "toggle-panel-pulse"
-
-    col_btnL, col_btnR = st.columns([1, 6])
-    with col_btnL:
-        st.markdown(f"<div id='{wrapper_id}'>", unsafe_allow_html=True)
-        label = ("🙈 Ocultar painel de camadas" if show_now else "👁️ Exibir painel de camadas")
-        if st.button(label, use_container_width=True, key="toggle_panel_btn"):
-            st.session_state["show_layer_panel"] = not st.session_state["show_layer_panel"]
-            st.rerun()
-        st.markdown("</div>", unsafe_allow_html=True)
-    with col_btnR:
-        if st.button("📍 Centralizar em Milhã", use_container_width=True, key="btn_center_milha"):
-            st.session_state["m3_should_fit"] = True
-
-    show_panel = st.session_state["show_layer_panel"]
+    # OBS: OS BOTÕES DE CONTROLE DE EXIBIÇÃO E CENTRALIZAÇÃO FORAM REMOVIDOS AQUI
 
     # Carregar dados GeoJSON
     base_dir_candidates = ["dados", "/mnt/data"]
@@ -795,45 +758,32 @@ with aba3:
         for name, fname in files.items()
     }
 
-    # Layout do mapa/painel
-    if show_panel:
-        col_map, col_panel = st.columns([5, 2], gap="large")
-    else:
-        col_map, = st.columns([1])
+    # Layout do mapa/painel (Fixo)
+    col_map, col_panel = st.columns([5, 2], gap="large")
 
-    # Painel de camadas
-    if show_panel:
-        with col_panel:
-            st.markdown('<div class="sticky-panel">', unsafe_allow_html=True)
-            st.markdown('<div class="panel-title">🎯 Camadas do Mapa</div>', unsafe_allow_html=True)
-            st.markdown('<div class="panel-subtitle">Selecione o que deseja visualizar</div>', unsafe_allow_html=True)
+    # Painel de camadas (Fixo)
+    with col_panel:
+        st.markdown('<div class="sticky-panel">', unsafe_allow_html=True)
+        st.markdown('<div class="panel-title">🎯 Camadas do Mapa</div>', unsafe_allow_html=True)
+        st.markdown('<div class="panel-subtitle">Selecione o que deseja visualizar</div>', unsafe_allow_html=True)
 
-            with st.expander("🗾 Território", expanded=True):
-                show_distritos = st.checkbox("Distritos", value=True, key="lyr_distritos")
-                show_sede_distritos = st.checkbox("Sede Distritos", value=True, key="lyr_sede")
-                show_localidades = st.checkbox("Localidades", value=True, key="lyr_local")
+        with st.expander("🗾 Território", expanded=True):
+            show_distritos = st.checkbox("Distritos", value=True, key="lyr_distritos")
+            show_sede_distritos = st.checkbox("Sede Distritos", value=True, key="lyr_sede")
+            show_localidades = st.checkbox("Localidades", value=True, key="lyr_local")
 
-            with st.expander("🏥 Infraestrutura", expanded=False):
-                show_escolas = st.checkbox("Escolas", value=False, key="lyr_escolas")
-                show_unidades = st.checkbox("Unidades de Saúde", value=False, key="lyr_unid")
+        with st.expander("🏥 Infraestrutura", expanded=False):
+            show_escolas = st.checkbox("Escolas", value=False, key="lyr_escolas")
+            show_unidades = st.checkbox("Unidades de Saúde", value=False, key="lyr_unid")
 
-            with st.expander("💧 Recursos Hídricos", expanded=False):
-                show_tecnologias = st.checkbox("Tecnologias Sociais", value=False, key="lyr_tec")
-                st.markdown("**Poços**")
-                show_pocos_cidade = st.checkbox("Poços Cidade", value=False, key="lyr_pc")
-                show_pocos_rural = st.checkbox("Poços Zona Rural", value=False, key="lyr_pr")
+        with st.expander("💧 Recursos Hídricos", expanded=False):
+            show_tecnologias = st.checkbox("Tecnologias Sociais", value=False, key="lyr_tec")
+            st.markdown("**Poços**")
+            show_pocos_cidade = st.checkbox("Poços Cidade", value=False, key="lyr_pc")
+            show_pocos_rural = st.checkbox("Poços Zona Rural", value=False, key="lyr_pr")
 
-            st.markdown('</div>', unsafe_allow_html=True)
-    else:
-        # painel oculto → usa valores atuais/padrão
-        show_distritos      = st.session_state.get("lyr_distritos", True)
-        show_sede_distritos = st.session_state.get("lyr_sede", True)
-        show_localidades    = st.session_state.get("lyr_local", True)
-        show_escolas        = st.session_state.get("lyr_escolas", False)
-        show_unidades       = st.session_state.get("lyr_unid", False)
-        show_tecnologias    = st.session_state.get("lyr_tec", False)
-        show_pocos_cidade   = st.session_state.get("lyr_pc", False)
-        show_pocos_rural    = st.session_state.get("lyr_pr", False)
+        st.markdown('</div>', unsafe_allow_html=True)
+
 
     # =======================
     # MAPA (viewport fixo)
@@ -852,9 +802,9 @@ with aba3:
         Fullscreen(position='topright', title='Tela Cheia', title_cancel='Sair', force_separate_button=True).add_to(m3)
         m3.add_child(MeasureControl(primary_length_unit="meters", secondary_length_unit="kilometers", primary_area_unit="hectares"))
         MousePosition().add_to(m3)
-        Draw(export=True).add_to(m3) # <-- LINHA ADICIONADA PARA PADRONIZAR
+        Draw(export=True).add_to(m3)
 
-        # Fit somente quando solicitado (primeira carga ou clique no botão)
+        # Fit somente na primeira carga para centralizar (não há mais botão de centralizar)
         if st.session_state["m3_should_fit"] and data_geo.get("Distritos"):
             b = geojson_bounds(data_geo["Distritos"])
             if b:
@@ -985,7 +935,7 @@ with aba3:
                     except Exception:
                         pass
         else:
-            # Fallback: sem captura de viewport (ainda assim sem transição porque não há fit automático)
+            # Fallback: sem captura de viewport 
             folium_static(m3, width=1200, height=700)
 
 
