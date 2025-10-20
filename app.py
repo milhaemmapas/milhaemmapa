@@ -666,7 +666,7 @@ with aba2:
                 folium.GeoJson(
                     gj_distritos,
                     name="Distritos",
-                    style_function=lambda x: {"fillColor": "#9fe2fc", "fillOpacity": 0.2, "color": "#000000", "weight": 1},
+                    style_function=lambda x: {"fillColor": "#9fe2fc", "fillOpacity": 0.1, "color": "#000000", "weight": 1},
                 ).add_to(m2)
 
             # Sede de Distritos
