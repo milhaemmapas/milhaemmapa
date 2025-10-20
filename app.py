@@ -580,88 +580,56 @@ with aba2:
 
         st.success(f"✅ **{len(df_map)} obra(s)** com coordenadas válidas encontradas")
 
-        # Painel lateral
+        # Camadas laterais necessárias
         base_dir_candidates = ["dados", "/mnt/data"]
         gj_distritos = load_geojson_any([os.path.join(b, "milha_dist_polig.geojson") for b in base_dir_candidates])
         gj_sede      = load_geojson_any([os.path.join(b, "Distritos_pontos.geojson") for b in base_dir_candidates])
 
-        if "show_layer_panel_obras" not in st.session_state:
-            st.session_state["show_layer_panel_obras"] = True
-        
-        show_now = st.session_state["show_layer_panel_obras"]
-        wrapper_id = "toggle-lyr-obras" if show_now else "toggle-lyr-obras-pulse"
+        # Layout fixo: mapa + painel (sem botão de ocultar)
+        col_map, col_panel = st.columns([5, 2], gap="large")
 
-        col_btn, _ = st.columns([1, 6])
-        with col_btn:
-            st.markdown(f"<div id='{wrapper_id}'>", unsafe_allow_html=True)
-            label = ("🙈 Ocultar painel de camadas" if show_now else "👁️ Exibir painel de camadas")
-            if st.button(label, use_container_width=True, key="toggle_panel_btn_obras"):
-                st.session_state["show_layer_panel_obras"] = not st.session_state["show_layer_panel_obras"]
-                st.rerun()
-            st.markdown("</div>", unsafe_allow_html=True)
+        # Painel lateral (checkboxes)
+        with col_panel:
+            st.markdown('<div class="sticky-panel">', unsafe_allow_html=True)
+            st.markdown('<div class="panel-title">🎛️ Camadas do Mapa</div>', unsafe_allow_html=True)
+            st.markdown('<div class="panel-subtitle">Controle a visualização</div>', unsafe_allow_html=True)
 
-        show_panel = st.session_state["show_layer_panel_obras"]
+            with st.expander("🏗️ Obras", expanded=True):
+                show_obras = st.checkbox("Obras Municipais", value=True, key="obras_markers")
 
-        # Layout: com painel ou sem painel
-        if show_panel:
-            col_map, col_panel = st.columns([5, 2], gap="large")
-        else:
-            col_map, = st.columns([1])
+            with st.expander("🗾 Território", expanded=True):
+                show_distritos = st.checkbox("Distritos", value=True, key="obras_distritos")
+                show_sede = st.checkbox("Sede Distritos", value=True, key="obras_sede")
 
-        # Painel lateral (checkboxes) - CORREÇÃO APLICADA AQUI
-        if show_panel:
-            with col_panel:
-                st.markdown('<div class="sticky-panel">', unsafe_allow_html=True)
-                st.markdown('<div class="panel-title">🎛️ Camadas do Mapa</div>', unsafe_allow_html=True)  # CORRIGIDO
-                st.markdown('<div class="panel-subtitle">Controle a visualização</div>', unsafe_allow_html=True)
-
-                # ORGANIZAÇÃO NO PADRÃO DA ABA MILHÃ - COM EXPANDERS
-                with st.expander("🏗️ Obras", expanded=True):
-                    show_obras = st.checkbox("Obras Municipais", value=True, key="obras_markers")
-
-                with st.expander("🗾 Território", expanded=False):
-                    show_distritos = st.checkbox("Distritos", value=True, key="obras_distritos")
-                    show_sede = st.checkbox("Sede Distritos", value=True, key="obras_sede")
-
-                st.markdown('</div>', unsafe_allow_html=True)
-        else:
-            show_obras     = st.session_state.get("obras_markers", True)
-            show_distritos = st.session_state.get("obras_distritos", True)
-            show_sede      = st.session_state.get("obras_sede", True)
+            st.markdown('</div>', unsafe_allow_html=True)
 
         # ---------- MAPA FUNCIONAL ----------
         with col_map:
             st.markdown("### 🗺️ Mapa Interativo")
-            
-            default_center = [-5.680, -39.200]
-            default_zoom = 12
 
-            m2 = folium.Map(location=default_center, zoom_start=default_zoom, tiles=None)
+            # Centralização priorizando os Distritos
+            bounds = None
+            if gj_distritos:
+                b = geojson_bounds(gj_distritos)  # ((min_lat,min_lon),(max_lat,max_lon))
+                if b:
+                    bounds = b
+                    (min_lat, min_lon), (max_lat, max_lon) = b
+                    center_lat = (min_lat + max_lat) / 2.0
+                    center_lon = (min_lon + max_lon) / 2.0
+                    default_center = [center_lat, center_lon]
+                else:
+                    default_center = [-5.680, -39.200]
+            else:
+                default_center = [-5.680, -39.200]
+
+            m2 = folium.Map(location=default_center, zoom_start=12, tiles=None)
             add_base_tiles(m2)
             Fullscreen(position='topright', title='Tela Cheia', title_cancel='Sair', force_separate_button=True).add_to(m2)
             m2.add_child(MeasureControl(primary_length_unit="meters", secondary_length_unit="kilometers", primary_area_unit="hectares"))
             MousePosition().add_to(m2)
             Draw(export=True).add_to(m2)
 
-            # Centraliza pela camada Distritos se existir
-            if gj_distritos:
-                b = geojson_bounds(gj_distritos)
-                if b:
-                    (min_lat, min_lon), (max_lat, max_lon) = b
-                    m2.fit_bounds([[min_lat, min_lon], [max_lat, max_lon]])
-            elif not df_map.empty:
-                m2.fit_bounds([[df_map["__LAT__"].min(), df_map["__LON__"].min()],
-                               [df_map["__LAT__"].max(), df_map["__LON__"].max()]])
-
-            def status_icon_color(status_val: str):
-                s = (str(status_val) if status_val is not None else "").strip().lower()
-                if any(k in s for k in ["conclu", "finaliz"]):     return "green"
-                if any(k in s for k in ["execu", "andamento"]):    return "orange"
-                if any(k in s for k in ["paralis", "suspens"]):    return "red"
-                if any(k in s for k in ["planej", "licita", "proj"]): return "blue"
-                return "gray"
-
-            # Distritos
+            # Camada Distritos
             if show_distritos and gj_distritos:
                 folium.GeoJson(
                     gj_distritos,
@@ -680,6 +648,14 @@ with aba2:
 
             # Obras
             if show_obras and not df_map.empty:
+                def status_icon_color(status_val: str):
+                    s = (str(status_val) if status_val is not None else "").strip().lower()
+                    if any(k in s for k in ["conclu", "finaliz"]):     return "green"
+                    if any(k in s for k in ["execu", "andamento"]):    return "orange"
+                    if any(k in s for k in ["paralis", "suspens"]):    return "red"
+                    if any(k in s for k in ["planej", "licita", "proj"]): return "blue"
+                    return "gray"
+
                 lyr_obras = folium.FeatureGroup(name="Obras")
                 ignore_cols = {"__LAT__", "__LON__"}
                 for _, r in df_map.iterrows():
@@ -721,6 +697,14 @@ with aba2:
 
                 lyr_obras.add_to(m2)
 
+            # Ajusta a visão para os Distritos (se disponíveis); senão, ajusta às obras
+            if bounds:
+                (min_lat, min_lon), (max_lat, max_lon) = bounds
+                m2.fit_bounds([[min_lat, min_lon], [max_lat, max_lon]])
+            elif not df_map.empty:
+                m2.fit_bounds([[df_map["__LAT__"].min(), df_map["__LON__"].min()],
+                               [df_map["__LAT__"].max(), df_map["__LON__"].max()]])
+
             folium.LayerControl(collapsed=True).add_to(m2)
             folium_static(m2, width=1200, height=700)
 
@@ -732,6 +716,7 @@ with aba2:
         st.dataframe(df_obras[ordered + rest] if ordered else df_obras, use_container_width=True)
     else:
         st.error(f"❌ Não foi possível carregar o CSV de obras em: {CSV_OBRAS}")
+
 
 # =====================================================
 # 3) Milhã em Mapas — FERRAMENTAS PADRONIZADAS
