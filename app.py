@@ -714,7 +714,7 @@ with aba2:
         st.error(f"❌ Não foi possível carregar o CSV de obras em: {CSV_OBRAS}")
 
 # =====================================================
-# 3) Milhã em Mapas — SEM BOTÕES DE CONTROLE
+# 3) Milhã em Mapas — FERRAMENTAS PADRONIZADAS
 # =====================================================
 with aba3:
     # Import robusto (local) para capturar viewport quando possível
@@ -729,17 +729,14 @@ with aba3:
         "<p>Explore as camadas territoriais, de infraestrutura e recursos hídricos do município</p>",
     )
 
-    # Estados da UI
-    # A LÓGICA DO BOTÃO FOI REMOVIDA. show_panel AGORA É SEMPRE TRUE
-    show_panel = True # Painel fixo
+    # Painel Fixo
+    show_panel = True 
     
     if "m3_view" not in st.session_state:
         # centro/zoom padrão apenas na primeira carga
         st.session_state["m3_view"] = {"center": [-5.680, -39.200], "zoom": 10}
     if "m3_should_fit" not in st.session_state:
         st.session_state["m3_should_fit"] = True  # Centraliza apenas na primeira carga
-
-    # OBS: OS BOTÕES DE CONTROLE DE EXIBIÇÃO E CENTRALIZAÇÃO FORAM REMOVIDOS AQUI
 
     # Carregar dados GeoJSON
     base_dir_candidates = ["dados", "/mnt/data"]
@@ -798,8 +795,8 @@ with aba3:
         m3 = folium.Map(location=center, zoom_start=zoom, tiles=None)
         add_base_tiles(m3)
         
-        # --- FERRAMENTAS DO MAPA (m3) - AGORA IGUAIS AO m2 ---
-        # Botão de Tela Cheia: Já estava presente!
+        # --- FERRAMENTAS DO MAPA (m3) PADRONIZADAS ---
+        # Fullscreen (Tela Cheia) - Confirmado!
         Fullscreen(position='topright', title='Tela Cheia', title_cancel='Sair', force_separate_button=True).add_to(m3)
         m3.add_child(MeasureControl(primary_length_unit="meters", secondary_length_unit="kilometers", primary_area_unit="hectares"))
         MousePosition().add_to(m3)
@@ -916,7 +913,7 @@ with aba3:
                 folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="cadetblue", icon="tint")).add_to(layer_pr)
             layer_pr.add_to(m3)
 
-        # Botão de Controle de Camadas (LayerControl) - Garantido!
+        # Controle de Camadas (LayerControl) - Confirmado!
         folium.LayerControl(collapsed=True).add_to(m3)
 
         # Render preservando viewport quando possível
@@ -939,8 +936,6 @@ with aba3:
         else:
             # Fallback: sem captura de viewport 
             folium_static(m3, width=1200, height=700)
-
-
 
 
 # =====================================================
