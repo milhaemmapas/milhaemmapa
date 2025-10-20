@@ -481,31 +481,32 @@ with aba1:
     with colA:
         render_card(
             "<h3>🗺️ Explore o Território</h3>",
-            """
-            <p>Na aba <strong>'Milhã em Mapas'</strong> você encontra:</p>
-            <ul>
-                <li>Divisões territoriais (Distritos e Localidades)</li>
-                <li>Infraestrutura pública (Escolas e Unidades de Saúde)</li>
-                <li>Recursos hídricos (Poços e Tecnologias Sociais)</li>
-                <li>Camadas interativas e ferramentas de medição</li>
-            </ul>
-            """
+            (
+                "<p>Na aba <strong>'Milhã em Mapas'</strong> você encontra:</p>"
+                "<ul>"
+                "<li>Divisões territoriais (Distritos e Localidades)</li>"
+                "<li>Infraestrutura pública (Escolas e Unidades de Saúde)</li>"
+                "<li>Recursos hídricos (Poços e Tecnologias Sociais)</li>"
+                "<li>Camadas interativas e ferramentas de medição</li>"
+                "</ul>"
+            )
         )
     
     with colB:
         render_card(
             "<h3>🏗️ Acompanhe as Obras</h3>",
-            """
-            <p>No <strong>Painel de Obras</strong> monitore:</p>
-            <ul>
-                <li>Status atual de cada projeto municipal</li>
-                <li>Localização precisa no mapa</li>
-                <li>Investimentos e prazos</li>
-                <li>Empresas responsáveis</li>
-                <li>Histórico de andamento</li>
-            </ul>
-            """
+            (
+                "<p>No <strong>Painel de Obras</strong> monitore:</p>"
+                "<ul>"
+                "<li>Status atual de cada projeto municipal</li>"
+                "<li>Localização precisa no mapa</li>"
+                "<li>Investimentos e prazos</li>"
+                "<li>Empresas responsáveis</li>"
+                "<li>Histórico de andamento</li>"
+                "</ul>"
+            )
         )
+
 
 # =====================================================
 # 2) Painel de Obras - COM MAPAS FUNCIONAIS
