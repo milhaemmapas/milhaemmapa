@@ -878,7 +878,7 @@ with aba3:
             layer_sd = folium.FeatureGroup(name="Sede Distritos")
             for ftr in data_geo["Sede Distritos"]["features"]:
                 x, y = ftr["geometry"]["coordinates"]
-                nome = ftr["properties"].get("Name", "Sede")
+                nome = ftr["properties"].get("nome_do_distrito", "Sede")
                 folium.Marker([y, x], tooltip=nome, icon=folium.Icon(color="green", icon="home")).add_to(layer_sd)
             layer_sd.add_to(m3)
 
