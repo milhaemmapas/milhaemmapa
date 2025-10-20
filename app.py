@@ -792,17 +792,55 @@ with aba3:
         center = st.session_state["m3_view"]["center"]
         zoom   = st.session_state["m3_view"]["zoom"]
 
-        m3 = folium.Map(location=center, zoom_start=zoom, tiles=None)
+        m3 = folium.Map(
+            location=center, 
+            zoom_start=zoom, 
+            tiles=None,
+            control_scale=True  # Adiciona escala no mapa
+        )
         add_base_tiles(m3)
         
         # --- FERRAMENTAS DO MAPA (m3) PADRONIZADAS ---
-        # Fullscreen (Tela Cheia) - Confirmado!
-        Fullscreen(position='topright', title='Tela Cheia', title_cancel='Sair', force_separate_button=True).add_to(m3)
-        m3.add_child(MeasureControl(primary_length_unit="meters", secondary_length_unit="kilometers", primary_area_unit="hectares"))
-        MousePosition().add_to(m3)
-        Draw(export=True).add_to(m3)
+        # 1. Fullscreen (Tela Cheia) - TOPRIGHT
+        Fullscreen(
+            position='topright', 
+            title='Tela Cheia', 
+            title_cancel='Sair', 
+            force_separate_button=True
+        ).add_to(m3)
+        
+        # 2. Controle de Medidas - TOPRIGHT (abaixo do Fullscreen)
+        m3.add_child(MeasureControl(
+            primary_length_unit="meters", 
+            secondary_length_unit="kilometers", 
+            primary_area_unit="hectares",
+            position='topright'
+        ))
+        
+        # 3. Posição do Mouse - BOTTOMLEFT
+        MousePosition(
+            position='bottomleft',
+            separator=' | ',
+            empty_string='Coordenadas indisponíveis',
+            lng_first=True,
+            num_digits=4,
+            prefix='Coordenadas:'
+        ).add_to(m3)
+        
+        # 4. Ferramentas de Desenho - TOPRIGHT (abaixo das outras ferramentas)
+        Draw(
+            export=True,
+            position='topright',
+            draw_options={
+                'marker': True,
+                'circle': True,
+                'polyline': True,
+                'polygon': True,
+                'rectangle': True
+            }
+        ).add_to(m3)
 
-        # Fit somente na primeira carga para centralizar (não há mais botão de centralizar)
+        # Fit somente na primeira carga para centralizar
         if st.session_state["m3_should_fit"] and data_geo.get("Distritos"):
             b = geojson_bounds(data_geo["Distritos"])
             if b:
@@ -913,8 +951,11 @@ with aba3:
                 folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="cadetblue", icon="tint")).add_to(layer_pr)
             layer_pr.add_to(m3)
 
-        # Controle de Camadas (LayerControl) - Confirmado!
-        folium.LayerControl(collapsed=True).add_to(m3)
+        # 5. Controle de Camadas (LayerControl) - TOPRIGHT (último)
+        folium.LayerControl(
+            collapsed=True,
+            position='topright'
+        ).add_to(m3)
 
         # Render preservando viewport quando possível
         if _HAS_ST_FOLIUM:
