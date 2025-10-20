@@ -737,13 +737,6 @@ with aba2:
 # 3) Milhã em Mapas — FERRAMENTAS PADRONIZADAS
 # =====================================================
 with aba3:
-    # Import robusto (local) para capturar viewport quando possível
-    try:
-        from streamlit_folium import st_folium as _st_folium
-        _HAS_ST_FOLIUM = True
-    except Exception:
-        _HAS_ST_FOLIUM = False
-
     render_card(
         "<h2>🗺️ Milhã em Mapas</h2>",
         "<p>Explore as camadas territoriais, de infraestrutura e recursos hídricos do município</p>",
@@ -753,10 +746,9 @@ with aba3:
     show_panel = True 
     
     if "m3_view" not in st.session_state:
-        # centro/zoom padrão apenas na primeira carga
         st.session_state["m3_view"] = {"center": [-5.680, -39.200], "zoom": 10}
     if "m3_should_fit" not in st.session_state:
-        st.session_state["m3_should_fit"] = True  # Centraliza apenas na primeira carga
+        st.session_state["m3_should_fit"] = True
 
     # Carregar dados GeoJSON
     base_dir_candidates = ["dados", "/mnt/data"]
@@ -801,9 +793,8 @@ with aba3:
 
         st.markdown('</div>', unsafe_allow_html=True)
 
-
     # =======================
-    # MAPA (viewport fixo)
+    # MAPA (usando mesma abordagem da aba Obras)
     # =======================
     with col_map:
         st.markdown("### 🗺️ Mapa Interativo")
@@ -820,8 +811,8 @@ with aba3:
         )
         add_base_tiles(m3)
         
-        # --- FERRAMENTAS DO MAPA (m3) ORGANIZADAS ---
-        # 1. Fullscreen - TOPRIGHT 
+        # --- FERRAMENTAS DO MAPA ---
+        # 1. Fullscreen - TOPRIGHT
         Fullscreen(
             position='topright', 
             title='Tela Cheia', 
@@ -829,19 +820,15 @@ with aba3:
             force_separate_button=True
         ).add_to(m3)
         
-        # 2. Draw - TOPLEFT (padrão)
-        Draw(export=True).add_to(m3)
-
-        # 3. Controle de Medidas - TOPLEFT (padrão)
-        measure_control = MeasureControl(
+        # 2. Controle de Medidas - TOPLEFT
+        m3.add_child(MeasureControl(
             primary_length_unit="meters", 
             secondary_length_unit="kilometers", 
             primary_area_unit="hectares",
             position='topleft'
-        )
-        m3.add_child(measure_control)
+        ))
         
-        # 4. Posição do Mouse - BOTTOMLEFT
+        # 3. Posição do Mouse - BOTTOMLEFT
         MousePosition(
             position='bottomleft',
             separator=' | ',
@@ -851,17 +838,29 @@ with aba3:
             prefix='Coordenadas:'
         ).add_to(m3)
 
+        # 4. Ferramentas de Desenho - TOPRIGHT (abaixo do Fullscreen)
+        Draw(
+            export=True,
+            position='topright',
+            draw_options={
+                'marker': True,
+                'circle': True,
+                'polyline': True,
+                'polygon': True,
+                'rectangle': True
+            }
+        ).add_to(m3)
+
         # Fit somente na primeira carga para centralizar
         if st.session_state["m3_should_fit"] and data_geo.get("Distritos"):
             b = geojson_bounds(data_geo["Distritos"])
             if b:
                 (min_lat, min_lon), (max_lat, max_lon) = b
                 m3.fit_bounds([[min_lat, min_lon], [max_lat, max_lon]])
-            st.session_state["m3_should_fit"] = False  # trava o auto-fit
+            st.session_state["m3_should_fit"] = False
 
-        # --- Camadas (não alteram viewport) ---
-        # NOTE: Todos os GeoJson/FeatureGroups adicionados aqui serão exibidos no LayerControl abaixo.
-
+        # --- Camadas ---
+        # Território
         if show_distritos and data_geo.get("Distritos"):
             folium.GeoJson(
                 data_geo["Distritos"],
@@ -964,29 +963,11 @@ with aba3:
                 folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="cadetblue", icon="tint")).add_to(layer_pr)
             layer_pr.add_to(m3)
 
-        # 5. LayerControl (Controle de Camadas) - Deve ser a ÚLTIMA A SER ADICIONADA para incluir todas as camadas.
-        folium.LayerControl(collapsed=True).add_to(m3)
+        # Controle de Camadas - DEVE SER O ÚLTIMO
+        folium.LayerControl(collapsed=False).add_to(m3)
 
-        # Render preservando viewport quando possível
-        if _HAS_ST_FOLIUM:
-            try:
-                out = _st_folium(m3, width=1200, height=700)
-            except TypeError:
-                out = _st_folium(m3)  # compat com versões antigas
-            # Atualiza centro/zoom se a lib fornecer
-            if isinstance(out, dict):
-                last_center = out.get("last_center") or out.get("center")
-                zoom_val = out.get("zoom") or out.get("last_zoom")
-                if last_center and ("lat" in last_center and "lng" in last_center):
-                    st.session_state["m3_view"]["center"] = [last_center["lat"], last_center["lng"]]
-                if zoom_val is not None:
-                    try:
-                        st.session_state["m3_view"]["zoom"] = int(zoom_val)
-                    except Exception:
-                        pass
-        else:
-            # Fallback: sem captura de viewport 
-            folium_static(m3, width=1200, height=700)
+        # 🔥 CORREÇÃO: Usar folium_static igual na aba Obras
+        folium_static(m3, width=1200, height=700)
 
 
 # =====================================================
