@@ -95,9 +95,9 @@ def css_global():
             .fade-in {{ animation: fadeIn .6s ease-out; }}
 
             /* Refreforço p/ controles Leaflet dentro de iframe/st_folium */
-            .leaflet-top, .leaflet-bottom {{ z-index: 999999 !important; }}
+            .leaflet-top, .leaflet-bottom {{ z-index: 999999 !important; pointer-events: auto !important; }}
             .leaflet-control-container .leaflet-control {{
-                z-index: 999999 !important; background-color: #fff !important;
+                z-index: 999999 !important; background-color: #fff !important; pointer-events: auto !important;
             }}
             .leaflet-control-container .leaflet-control a {{ color: {COLORS["text_dark"]} !important; }}
             .leaflet-control-container .leaflet-control-layers-expanded {{ padding: 6px !important; }}
@@ -194,7 +194,7 @@ def add_base_tiles(m: folium.Map):
         ("Esri Satellite", "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", "Tiles © Esri")
     ]
     for name, url, attr in tiles:
-        folium.TileLayer(tiles=url, name=name, attr=attr).add_to(m)
+        folium.TileLayer(tiles=url, name=name, attr=attr, control=True).add_to(m)
 
 def load_geojson_any(path_candidates):
     for p in path_candidates:
@@ -379,7 +379,7 @@ with aba1:
         )
 
 # =====================================================
-# 2) Painel de Obras - COM MAPAS FUNCIONAIS (sem alterações)
+# 2) Painel de Obras - COM MAPAS FUNCIONAIS
 # =====================================================
 with aba2:
     render_card(
@@ -450,7 +450,6 @@ with aba2:
         gj_distritos = load_geojson_any([os.path.join(b, "milha_dist_polig.geojson") for b in base_dir_candidates])
         gj_sede      = load_geojson_any([os.path.join(b, "Distritos_pontos.geojson") for b in base_dir_candidates])
 
-        show_panel = True
         col_map, col_panel = st.columns([5, 2], gap="large")
 
         with col_panel:
@@ -483,12 +482,12 @@ with aba2:
             Draw(export=True, position='topleft').add_to(m2)
             MousePosition(position='bottomleft', prefix="Lat/Lon: ").add_to(m2)
 
-            if gj_distritos:
+            if gj_distritos and show_distritos:
                 b = geojson_bounds(gj_distritos)
                 if b:
                     (min_lat, min_lon), (max_lat, max_lon) = b
                     m2.fit_bounds([[min_lat, min_lon], [max_lat, max_lon]])
-            elif not df_map.empty:
+            elif show_obras and not df_map.empty:
                 m2.fit_bounds([[df_map["__LAT__"].min(), df_map["__LON__"].min()],
                                [df_map["__LAT__"].max(), df_map["__LON__"].max()]])
 
@@ -557,11 +556,11 @@ with aba2:
 
                 lyr_obras.add_to(m2)
 
-            folium.LayerControl(position='topright', collapsed=True).add_to(m2)
+            folium.LayerControl(position='topright', collapsed=False).add_to(m2)
 
             try:
                 from streamlit_folium import st_folium as _st_folium
-                _ = _st_folium(m2, width=1200, height=700)
+                _ = _st_folium(m2, width=1200, height=700, key="map_obras")
             except Exception:
                 folium_static(m2, width=1200, height=700)
 
@@ -588,8 +587,6 @@ with aba3:
         "<h2>🗺️ Milhã em Mapas</h2>",
         "<p>Explore as camadas territoriais, de infraestrutura e recursos hídricos do município</p>",
     )
-
-    show_panel = True
 
     if "m3_view" not in st.session_state:
         st.session_state["m3_view"] = {"center": [-5.680, -39.200], "zoom": 10}
@@ -642,11 +639,10 @@ with aba3:
         center = st.session_state["m3_view"]["center"]
         zoom   = st.session_state["m3_view"]["zoom"]
 
-        # control_scale=True e posições explícitas dos controles
         m3 = folium.Map(location=center, zoom_start=zoom, tiles=None, control_scale=True)
         add_base_tiles(m3)
 
-        # CONTROLES COM POSIÇÕES DEFINIDAS (evita sobreposição e “sumir”)
+        # CONTROLES
         Fullscreen(position='topright', title='Tela Cheia', title_cancel='Sair', force_separate_button=True).add_to(m3)
         m3.add_child(MeasureControl(position='topleft',
                                     primary_length_unit="meters",
@@ -764,15 +760,15 @@ with aba3:
                 folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="cadetblue", icon="tint")).add_to(layer_pr)
             layer_pr.add_to(m3)
 
-        # LayerControl visível e no topo direito
-        folium.LayerControl(position='topright', collapsed=True).add_to(m3)
+        # LayerControl sempre visível
+        folium.LayerControl(position='topright', collapsed=False).add_to(m3)
 
-        # Render evitando sumiço de controles (preferir st_folium)
+        # Render evitando sumiço de controles (keys únicas por mapa)
         if _HAS_ST_FOLIUM:
             try:
-                out = _st_folium(m3, width=1200, height=700)
+                out = _st_folium(m3, width=1200, height=700, key="map_milha")
             except TypeError:
-                out = _st_folium(m3)
+                out = _st_folium(m3, key="map_milha")
             if isinstance(out, dict):
                 last_center = out.get("last_center") or out.get("center")
                 zoom_val = out.get("zoom") or out.get("last_zoom")
