@@ -737,6 +737,13 @@ with aba2:
 # 3) Milhã em Mapas — FERRAMENTAS PADRONIZADAS
 # =====================================================
 with aba3:
+    # Import robusto (local) para capturar viewport quando possível
+    try:
+        from streamlit_folium import st_folium as _st_folium
+        _HAS_ST_FOLIUM = True
+    except Exception:
+        _HAS_ST_FOLIUM = False
+
     render_card(
         "<h2>🗺️ Milhã em Mapas</h2>",
         "<p>Explore as camadas territoriais, de infraestrutura e recursos hídricos do município</p>",
@@ -811,37 +818,22 @@ with aba3:
         )
         add_base_tiles(m3)
         
-        # --- FERRAMENTAS DO MAPA ---
-        # 1. Fullscreen - TOPRIGHT
+        # --- FERRAMENTAS DO MAPA ORGANIZADAS POR POSIÇÃO ---
+        
+        # LADO ESQUERDO (TOPLEFT)
+        
+        # 1. Fullscreen - MUDANÇA PARA 'topleft'
         Fullscreen(
-            position='topright', 
+            position='topleft', 
             title='Tela Cheia', 
             title_cancel='Sair', 
             force_separate_button=True
         ).add_to(m3)
         
-        # 2. Controle de Medidas - TOPLEFT
-        m3.add_child(MeasureControl(
-            primary_length_unit="meters", 
-            secondary_length_unit="kilometers", 
-            primary_area_unit="hectares",
-            position='topleft'
-        ))
-        
-        # 3. Posição do Mouse - BOTTOMLEFT
-        MousePosition(
-            position='bottomleft',
-            separator=' | ',
-            empty_string='Coordenadas indisponíveis',
-            lng_first=True,
-            num_digits=4,
-            prefix='Coordenadas:'
-        ).add_to(m3)
-
-        # 4. Ferramentas de Desenho - TOPRIGHT (abaixo do Fullscreen)
+        # 2. Ferramentas de Desenho - MUDANÇA PARA 'topleft'
         Draw(
             export=True,
-            position='topright',
+            position='topleft',
             draw_options={
                 'marker': True,
                 'circle': True,
@@ -851,6 +843,28 @@ with aba3:
             }
         ).add_to(m3)
 
+        # LADO DIREITO (TOPRIGHT)
+        
+        # 3. Controle de Medidas - MUDANÇA PARA 'topright'
+        m3.add_child(MeasureControl(
+            primary_length_unit="meters", 
+            secondary_length_unit="kilometers", 
+            primary_area_unit="hectares",
+            position='topright'
+        ))
+        
+        # LADO INFERIOR ESQUERDO (BOTTOMLEFT)
+        
+        # 4. Posição do Mouse - BOTTOMLEFT (posição mantida)
+        MousePosition(
+            position='bottomleft',
+            separator=' | ',
+            empty_string='Coordenadas indisponíveis',
+            lng_first=True,
+            num_digits=4,
+            prefix='Coordenadas:'
+        ).add_to(m3)
+        
         # Fit somente na primeira carga para centralizar
         if st.session_state["m3_should_fit"] and data_geo.get("Distritos"):
             b = geojson_bounds(data_geo["Distritos"])
@@ -963,11 +977,31 @@ with aba3:
                 folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="cadetblue", icon="tint")).add_to(layer_pr)
             layer_pr.add_to(m3)
 
-        # Controle de Camadas - DEVE SER O ÚLTIMO
-        folium.LayerControl(collapsed=True).add_to(m3)
+        # 5. LayerControl (Controle de Camadas) - Deve ser o ÚLTIMO, e está no lado esquerdo ('topleft') por padrão, mas para garantir:
+        folium.LayerControl(collapsed=True, position='topleft').add_to(m3)
 
-        # 🔥 CORREÇÃO: Usar folium_static igual na aba Obras
-        folium_static(m3, width=1200, height=700)
+        # Render preservando viewport quando possível
+        if _HAS_ST_FOLIUM:
+            try:
+                # O problema de não aparecer o botão LayerControl pode ser causado por st_folium
+                # O fallback folium_static é mais seguro se st_folium causar problemas
+                out = _st_folium(m3, width=1200, height=700)
+            except TypeError:
+                out = _st_folium(m3)
+            # Atualiza centro/zoom se a lib fornecer
+            if isinstance(out, dict):
+                last_center = out.get("last_center") or out.get("center")
+                zoom_val = out.get("zoom") or out.get("last_zoom")
+                if last_center and ("lat" in last_center and "lng" in last_center):
+                    st.session_state["m3_view"]["center"] = [last_center["lat"], last_center["lng"]]
+                if zoom_val is not None:
+                    try:
+                        st.session_state["m3_view"]["zoom"] = int(zoom_val)
+                    except Exception:
+                        pass
+        else:
+            # Fallback: sem captura de viewport 
+            folium_static(m3, width=1200, height=700)
 
 
 # =====================================================
