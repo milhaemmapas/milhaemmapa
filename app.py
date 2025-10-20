@@ -734,366 +734,139 @@ with aba2:
         st.error(f"❌ Não foi possível carregar o CSV de obras em: {CSV_OBRAS}")
 
 # =====================================================
-# 3) Milhã em Mapas — FERRAMENTAS PADRONIZADAS
+# 3) Milhã em Mapas — FERRAMENTAS PADRONIZADAS E PAINEL MODERNO
 # =====================================================
 with aba3:
-    # Import robusto (local) para capturar viewport quando possível
-    try:
-        from streamlit_folium import st_folium as _st_folium
-        _HAS_ST_FOLIUM = True
-    except Exception:
-        _HAS_ST_FOLIUM = False
-
     render_card(
         "<h2>🗺️ Milhã em Mapas</h2>",
         "<p>Explore as camadas territoriais, de infraestrutura e recursos hídricos do município</p>",
     )
 
-    # Painel Fixo
-    show_panel = True 
-    
-    if "m3_view" not in st.session_state:
-        st.session_state["m3_view"] = {"center": [-5.680, -39.200], "zoom": 10}
-    if "m3_should_fit" not in st.session_state:
-        st.session_state["m3_should_fit"] = True
-
-    # Carregar dados GeoJSON - ATUALIZADO COM ESPELHOS D'ÁGUA
+    # Carregar dados GeoJSON
     base_dir_candidates = ["dados", "/mnt/data"]
     files = {
         "Distritos": "milha_dist_polig.geojson",
         "Sede Distritos": "Distritos_pontos.geojson",
         "Localidades": "Localidades.geojson",
+        "Estradas": "estradas_milha.geojson",
+        "Espelhos d'Água": "espelhos_dagua.geojson",
         "Escolas": "Escolas_publicas.geojson",
         "Unidades de Saúde": "Unidades_saude.geojson",
-        "Tecnologias Sociais": "teclogias_sociais.geojson",
-        "Poços Cidade": "pocos_cidade_mil.geojson",
         "Poços Zona Rural": "pocos_rural_mil.geojson",
-        "Estradas": "estradas_milha.geojson",
-        "Outorgas Vigentes": "outorgas_milha.geojson",
-        "Espelhos d'Água": "espelhos_dagua.geojson",  # NOVA CAMADA ADICIONADA
+        "Tecnologias Sociais": "teclogias_sociais.geojson",
     }
     data_geo = {
         name: load_geojson_any([os.path.join(b, fname) for b in base_dir_candidates])
         for name, fname in files.items()
     }
+    
+    # Dicionário de mapas base
+    TILE_LAYERS = {
+        "Padrão (Claro)": ("CartoDB Positron", "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", "© OpenStreetMap, © CARTO"),
+        "Padrão (Escuro)": ("CartoDB Dark", "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", "© OpenStreetMap, © CARTO"),
+        "Satélite": ("Esri Satellite", "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", "Tiles © Esri"),
+        "Ruas (Detalhado)": ("Open Street Map", "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", "© OpenStreetMap contributors"),
+    }
 
-    # Layout do mapa/painel (Fixo)
+    # Layout do mapa e painel de controle
     col_map, col_panel = st.columns([5, 2], gap="large")
 
-    # Painel de camadas (Fixo) - ATUALIZADO COM ESPELHOS D'ÁGUA
+    # ========================================
+    # PAINEL DE CONTROLE DE CAMADAS (NOVO)
+    # ========================================
     with col_panel:
-        st.markdown('<div class="sticky-panel">', unsafe_allow_html=True)
-        st.markdown('<div class="panel-title">🎯 Camadas do Mapa</div>', unsafe_allow_html=True)
-        st.markdown('<div class="panel-subtitle">Selecione o que deseja visualizar</div>', unsafe_allow_html=True)
+        st.markdown('<div class="sticky-panel layer-control-panel">', unsafe_allow_html=True)
+        
+        st.markdown('<div class="panel-title">🎛️ Controle do Mapa</div>', unsafe_allow_html=True)
+        st.markdown('<div class="panel-subtitle">Selecione o que deseja visualizar</div><br>', unsafe_allow_html=True)
+
+        # Seletor de Mapa Base
+        st.markdown("<h3>🗺️ Mapas Base</h3>", unsafe_allow_html=True)
+        base_map_selection = st.radio(
+            "Selecione o mapa de fundo:",
+            options=list(TILE_LAYERS.keys()),
+            key="base_map_selector",
+            label_visibility="collapsed"
+        )
+
+        # Seletor de Camadas (Overlays)
+        st.markdown("<h3>📍 Camadas</h3>", unsafe_allow_html=True)
 
         with st.expander("🗾 Território", expanded=True):
             show_distritos = st.checkbox("Distritos", value=True, key="lyr_distritos")
             show_sede_distritos = st.checkbox("Sede Distritos", value=True, key="lyr_sede")
-            show_localidades = st.checkbox("Localidades", value=True, key="lyr_local")
+            show_localidades = st.checkbox("Localidades", value=False, key="lyr_local")
 
-        with st.expander("🏥 Infraestrutura", expanded=False):
+        with st.expander("💧 Recursos Hídricos e Vias", expanded=False):
+            show_estradas = st.checkbox("Estradas", value=True, key="lyr_estradas")
+            show_espelhos_agua = st.checkbox("Espelhos d'Água", value=True, key="lyr_agua")
+            show_pocos_rural = st.checkbox("Poços (Zona Rural)", value=False, key="lyr_pocos_rural")
+            show_tecnologias = st.checkbox("Tecnologias Sociais", value=False, key="lyr_tecnologias")
+
+        with st.expander("🏥 Infraestrutura Pública", expanded=False):
             show_escolas = st.checkbox("Escolas", value=False, key="lyr_escolas")
-            show_unidades = st.checkbox("Unidades de Saúde", value=False, key="lyr_unid")
-            show_estradas = st.checkbox("Estradas", value=False, key="lyr_estradas")
-
-        with st.expander("💧 Recursos Hídricos", expanded=False):
-            show_tecnologias = st.checkbox("Tecnologias Sociais", value=False, key="lyr_tec")
-            show_outorgas = st.checkbox("Outorgas Vigentes", value=False, key="lyr_outorgas")
-            show_espelhos_agua = st.checkbox("Espelhos d'Água", value=False, key="lyr_espelhos")  # NOVO CHECKBOX
-            st.markdown("**Poços**")
-            show_pocos_cidade = st.checkbox("Poços Cidade", value=False, key="lyr_pc")
-            show_pocos_rural = st.checkbox("Poços Zona Rural", value=False, key="lyr_pr")
-
+            show_unidades_saude = st.checkbox("Unidades de Saúde", value=False, key="lyr_saude")
+            
         st.markdown('</div>', unsafe_allow_html=True)
 
-    # =======================
-    # MAPA (usando mesma abordagem da aba Obras)
-    # =======================
+
+    # ============================
+    # RENDERIZAÇÃO DO MAPA (NOVO)
+    # ============================
     with col_map:
-        st.markdown("### 🗺️ Mapa Interativo")
+        m3 = folium.Map(location=[-5.680, -39.200], zoom_start=11, tiles=None)
 
-        # Usa SEMPRE o último centro/zoom salvo
-        center = st.session_state["m3_view"]["center"]
-        zoom   = st.session_state["m3_view"]["zoom"]
+        # 1. Adiciona o mapa base SELECIONADO
+        _, url, attr = TILE_LAYERS[base_map_selection]
+        folium.TileLayer(tiles=url, name=base_map_selection, attr=attr).add_to(m3)
 
-        m3 = folium.Map(
-            location=center, 
-            zoom_start=zoom, 
-            tiles=None,
-            control_scale=True
-        )
-        add_base_tiles(m3)
+        # 2. Adiciona as camadas (overlays) SELECIONADAS
+        if show_distritos and data_geo["Distritos"]:
+            folium.GeoJson(data_geo["Distritos"], name="Distritos", style_function=lambda x: {"fillColor": "#2563EB", "fillOpacity": 0.1, "color": "#1E40AF", "weight": 1.5}).add_to(m3)
         
-        # --- FERRAMENTAS DO MAPA ORGANIZADAS POR POSIÇÃO ---
-        
-        # LADO ESQUERDO (TOPLEFT)
-        
-        # 1. Fullscreen - AGORA EM 'topleft'
-        Fullscreen(
-            position='topleft', 
-            title='Tela Cheia', 
-            title_cancel='Sair', 
-            force_separate_button=True
-        ).add_to(m3)
-        
-        # LADO DIREITO (TOPRIGHT)
-        
-        # 2. Ferramentas de Desenho - AGORA EM 'topright'
-        Draw(
-            export=True,
-            position='topright',
-            draw_options={
-                'marker': True,
-                'circle': True,
-                'polyline': True,
-                'polygon': True,
-                'rectangle': True
-            }
-        ).add_to(m3)
-        
-        # 3. Controle de Medidas - AGORA EM 'topright'
-        m3.add_child(MeasureControl(
-            primary_length_unit="meters", 
-            secondary_length_unit="kilometers", 
-            primary_area_unit="hectares",
-            position='topright'
-        ))
-        
-        # LADO INFERIOR ESQUERDO (BOTTOMLEFT)
-        
-        # 4. Posição do Mouse - BOTTOMLEFT (posição mantida)
-        MousePosition(
-            position='bottomleft',
-            separator=' | ',
-            empty_string='Coordenadas indisponíveis',
-            lng_first=True,
-            num_digits=4,
-            prefix='Coordenadas:'
-        ).add_to(m3)
-        
-        # Fit somente na primeira carga para centralizar
-        if st.session_state["m3_should_fit"] and data_geo.get("Distritos"):
-            b = geojson_bounds(data_geo["Distritos"])
-            if b:
-                (min_lat, min_lon), (max_lat, max_lon) = b
-                m3.fit_bounds([[min_lat, min_lon], [max_lat, max_lon]])
-            st.session_state["m3_should_fit"] = False
+        if show_sede_distritos and data_geo["Sede Distritos"]:
+            fg_sede = folium.FeatureGroup(name="Sede Distritos")
+            for f in data_geo["Sede Distritos"].get("features", []):
+                coords = f["geometry"]["coordinates"]
+                name = f["properties"].get("Name", "Sede")
+                folium.Marker([coords[1], coords[0]], tooltip=name, icon=folium.Icon(color="darkblue", icon="home", prefix="fa")).add_to(fg_sede)
+            fg_sede.add_to(m3)
 
-        # --- Camadas ---
-        # Território
-        if show_distritos and data_geo.get("Distritos"):
-            folium.GeoJson(
-                data_geo["Distritos"],
-                name="Distritos",
-                style_function=lambda x: {"fillColor": "#9fe2fc", "fillOpacity": 0.2, "color": "#000000", "weight": 1},
-                tooltip=folium.GeoJsonTooltip(fields=list(data_geo["Distritos"]["features"][0]["properties"].keys())[:3])
-            ).add_to(m3)
+        if show_localidades and data_geo["Localidades"]:
+            folium.GeoJson(data_geo["Localidades"], name="Localidades", marker=folium.Marker(icon=folium.Icon(color='purple', icon='circle', prefix='fa')), tooltip=folium.GeoJsonTooltip(fields=['Name'], aliases=['Localidade:'])).add_to(m3)
 
-        if show_sede_distritos and data_geo.get("Sede Distritos"):
-            layer_sd = folium.FeatureGroup(name="Sede Distritos")
-            for ftr in data_geo["Sede Distritos"]["features"]:
-                x, y = ftr["geometry"]["coordinates"]
-                nome = ftr["properties"].get("Name", "Sede")
-                folium.Marker([y, x], tooltip=nome, icon=folium.Icon(color="green", icon="home")).add_to(layer_sd)
-            layer_sd.add_to(m3)
-
-        if show_localidades and data_geo.get("Localidades"):
-            layer_loc = folium.FeatureGroup(name="Localidades")
-            for ftr in data_geo["Localidades"]["features"]:
-                x, y = ftr["geometry"]["coordinates"]
-                props = ftr["properties"]
-                nome = props.get("Name", "Localidade")
-                distrito = props.get("Distrito", "-")
-                popup = f"<b>Localidade:</b> {nome}<br><b>Distrito:</b> {distrito}"
-                folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="purple", icon="flag")).add_to(layer_loc)
-            layer_loc.add_to(m3)
-
-        # Infraestrutura
-        if show_escolas and data_geo.get("Escolas"):
-            layer_esc = folium.FeatureGroup(name="Escolas")
-            for ftr in data_geo["Escolas"]["features"]:
-                x, y = ftr["geometry"]["coordinates"]
-                props = ftr["properties"]
-                nome = props.get("no_entidad", props.get("Name", "Escola"))
-                popup = (
-                    "<div style='font-family:Arial;font-size:13px'>"
-                    f"<b>Escola:</b> {nome}<br>"
-                    f"<b>Endereço:</b> {props.get('endereco','-')}"
-                    "</div>"
-                )
-                folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="red", icon="education")).add_to(layer_esc)
-            layer_esc.add_to(m3)
-
-        if show_unidades and data_geo.get("Unidades de Saúde"):
-            layer_saude = folium.FeatureGroup(name="Unidades de Saúde")
-            for ftr in data_geo["Unidades de Saúde"]["features"]:
-                x, y = ftr["geometry"]["coordinates"]
-                props = ftr["properties"]
-                nome = props.get("nome", props.get("Name", "Unidade"))
-                popup = (
-                    "<div style='font-family:Arial;font-size:13px'>"
-                    f"<b>Unidade:</b> {nome}<br>"
-                    f"<b>Bairro:</b> {props.get('bairro','-')}<br>"
-                    f"<b>Município:</b> {props.get('municipio','-')}"
-                    "</div>"
-                )
-                folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="green", icon="plus-sign")).add_to(layer_saude)
-            layer_saude.add_to(m3)
-
-        # NOVA CAMADA: ESTRADAS
-        if show_estradas and data_geo.get("Estradas"):
-            layer_estradas = folium.FeatureGroup(name="Estradas")
-            folium.GeoJson(
-                data_geo["Estradas"],
-                name="Estradas",
-                style_function=lambda x: {
-                    "color": "#8B4513",  # Cor marrom para estradas
-                    "weight": 2,         # Linha mais grossa
-                    "opacity": 0.8
-                },
-                tooltip=folium.GeoJsonTooltip(
-                    fields=list(data_geo["Estradas"]["features"][0]["properties"].keys())[:3],
-                    aliases=["Propriedade:"] * 3  # Rótulos para as propriedades
-                )
-            ).add_to(layer_estradas)
-            layer_estradas.add_to(m3)
-
-        # Recursos Hídricos
-        if show_tecnologias and data_geo.get("Tecnologias Sociais"):
-            layer_tec = folium.FeatureGroup(name="Tecnologias Sociais")
-            for ftr in data_geo["Tecnologias Sociais"]["features"]:
-                x, y = ftr["geometry"]["coordinates"]
-                props = ftr["properties"]
-                nome = props.get("Comunidade", props.get("Name", "Tecnologia Social"))
-                popup = "<div style='font-family:Arial;font-size:13px'><b>Local:</b> {}</div>".format(nome)
-                folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="orange", icon="tint")).add_to(layer_tec)
-            layer_tec.add_to(m3)
-
-        # CAMADA ATUALIZADA: OUTORGAS MILHA
-        if show_outorgas and data_geo.get("Outorgas Vigentes"):
-            layer_outorgas = folium.FeatureGroup(name="Outorgas Vigentes")
-            for ftr in data_geo["Outorgas Vigentes"]["features"]:
-                props = ftr["properties"]
-                
-                # Usar coordenadas geográficas diretamente do GeoJSON
-                coords = ftr["geometry"]["coordinates"]
-                lng, lat = coords[0], coords[1]
-                
-                # Criar popup simplificado conforme solicitado
-                popup_content = f"""
-                <div style='font-family:Arial;font-size:12px;max-width:300px'>
-                    <b>Requerente:</b> {props.get('REQUERENTE', 'N/A')}<br>
-                    <b>Tipo Manancial:</b> {props.get('TIPO MANANCIAL', 'N/A')}<br>
-                    <b>Tipo de Uso:</b> {props.get('TIPO DE USO', 'N/A')}<br>
-                    <b>Manancial:</b> {props.get('MANANCIAL', 'N/A')}<br>
-                    <b>Fim da Vigência:</b> {props.get('FIM DA VIGÊNCIA', 'N/A')}<br>
-                    <b>Volume Outorgado:</b> {props.get('VOLUME OUTORGADO (m³)', 'N/A')} m³
-                </div>
-                """
-                
-                # Definir cor baseada no tipo de uso
-                tipo_uso = props.get('TIPO DE USO', '').upper()
-                if 'IRRIGACAO' in tipo_uso:
-                    icon_color = 'green'
-                elif 'ABASTECIMENTO_HUMANO' in tipo_uso:
-                    icon_color = 'blue'
-                elif 'INDUSTRIA' in tipo_uso:
-                    icon_color = 'red'
-                elif 'SERVICO_E_COMERCIO' in tipo_uso:
-                    icon_color = 'purple'
-                else:
-                    icon_color = 'gray'
-                
-                folium.Marker(
-                    [lat, lng],
-                    tooltip=props.get('REQUERENTE', 'Outorga'),
-                    popup=folium.Popup(popup_content, max_width=300),
-                    icon=folium.Icon(color=icon_color, icon='file-text', prefix='fa')
-                ).add_to(layer_outorgas)
+        if show_estradas and data_geo["Estradas"]:
+            folium.GeoJson(data_geo["Estradas"], name="Estradas", style_function=lambda x: {"color": "#A16207", "weight": 2, "opacity": 0.7}).add_to(m3)
             
-            layer_outorgas.add_to(m3)
+        if show_espelhos_agua and data_geo["Espelhos d'Água"]:
+            folium.GeoJson(data_geo["Espelhos d'Água"], name="Espelhos d'Água", style_function=lambda x: {"fillColor": "#3B82F6", "fillOpacity": 0.7, "color": "#1D4ED8", "weight": 1}).add_to(m3)
 
-        # NOVA CAMADA: ESPELHOS D'ÁGUA
-        if show_espelhos_agua and data_geo.get("Espelhos d'Água"):
-            layer_espelhos = folium.FeatureGroup(name="Espelhos d'Água")
-            folium.GeoJson(
-                data_geo["Espelhos d'Água"],
-                name="Espelhos d'Água",
-                style_function=lambda x: {
-                    "fillColor": "#1E90FF",  # Azul para corpos d'água
-                    "fillOpacity": 0.7,      # Opacidade moderada
-                    "color": "#000080",      # Borda azul escuro
-                    "weight": 2,             # Espessura da borda
-                    "opacity": 0.8
-                },
-                tooltip=folium.GeoJsonTooltip(
-                    fields=["CODIGOES0", "AREA1"],
-                    aliases=["Código:", "Área (ha):"],
-                    style=("font-family: Arial; font-size: 12px;")
-                ),
-                popup=folium.GeoJsonPopup(
-                    fields=["CODIGOES0", "AREA1"],
-                    aliases=["Código:", "Área (ha):"],
-                    style=("font-family: Arial; font-size: 12px; max-width: 300px;")
-                )
-            ).add_to(layer_espelhos)
-            layer_espelhos.add_to(m3)
+        if show_escolas and data_geo["Escolas"]:
+            folium.GeoJson(data_geo["Escolas"], name="Escolas", marker=folium.Marker(icon=folium.Icon(color='green', icon='school', prefix='fa')), tooltip=folium.GeoJsonTooltip(fields=['Name'], aliases=['Escola:'])).add_to(m3)
 
-        if show_pocos_cidade and data_geo.get("Poços Cidade"):
-            layer_pc = folium.FeatureGroup(name="Poços Cidade")
-            for ftr in data_geo["Poços Cidade"]["features"]:
-                x, y = ftr["geometry"]["coordinates"]
-                props = ftr["properties"]
-                nome = props.get("Localidade", props.get("Name", "Poço"))
-                popup = (
-                    "<div style='font-family:Arial;font-size:13px'>"
-                    f"<b>Localidade:</b> {nome}<br>"
-                    f"<b>Profundidade:</b> {props.get('Profundida','-')}<br>"
-                    f"<b>Vazão (L/h):</b> {props.get('Vazão_LH_2','-')}"
-                    "</div>"
-                )
-                folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="blue", icon="tint")).add_to(layer_pc)
-            layer_pc.add_to(m3)
+        if show_unidades_saude and data_geo["Unidades de Saúde"]:
+            folium.GeoJson(data_geo["Unidades de Saúde"], name="Unidades de Saúde", marker=folium.Marker(icon=folium.Icon(color='red', icon='briefcase-medical', prefix='fa')), tooltip=folium.GeoJsonTooltip(fields=['Name'], aliases=['Posto:'])).add_to(m3)
 
-        if show_pocos_rural and data_geo.get("Poços Zona Rural"):
-            layer_pr = folium.FeatureGroup(name="Poços Zona Rural")
-            for ftr in data_geo["Poços Zona Rural"]["features"]:
-                x, y = ftr["geometry"]["coordinates"]
-                props = ftr["properties"]
-                nome = props.get("Localidade", props.get("Name", "Poço"))
-                popup = (
-                    "<div style='font-family:Arial;font-size:13px'>"
-                    f"<b>Localidade:</b> {nome}<br>"
-                    f"<b>Profundidade:</b> {props.get('Profundida','-')}<br>"
-                    f"<b>Vazão (L/h):</b> {props.get('Vazão_LH_2','-')}"
-                    "</div>"
-                )
-                folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="cadetblue", icon="tint")).add_to(layer_pr)
-            layer_pr.add_to(m3)
+        if show_pocos_rural and data_geo["Poços Zona Rural"]:
+            folium.GeoJson(data_geo["Poços Zona Rural"], name="Poços (Zona Rural)", marker=folium.Marker(icon=folium.Icon(color='blue', icon='tint', prefix='fa')), tooltip=folium.GeoJsonTooltip(fields=['Localidade'], aliases=['Local:'])).add_to(m3)
+            
+        if show_tecnologias and data_geo["Tecnologias Sociais"]:
+            folium.GeoJson(data_geo["Tecnologias Sociais"], name="Tecnologias Sociais", marker=folium.Marker(icon=folium.Icon(color='orange', icon='gears', prefix='fa')), tooltip=folium.GeoJsonTooltip(fields=['Tecnologia'], aliases=['Tecnologia:'])).add_to(m3)
+            
+        # 3. Adiciona plugins e ajusta o zoom
+        Fullscreen().add_to(m3)
+        MeasureControl(primary_length_unit="kilometers").add_to(m3)
+        MousePosition().add_to(m3)
+        Draw(export=True).add_to(m3)
 
-        # 5. LayerControl (Controle de Camadas) - AGORA EM 'topleft'
-        folium.LayerControl(collapsed=True, position='topleft').add_to(m3)
-
-        # Render preservando viewport quando possível
-        if _HAS_ST_FOLIUM:
-            try:
-                out = _st_folium(m3, width=1200, height=700)
-            except TypeError:
-                out = _st_folium(m3)
-            # Atualiza centro/zoom se a lib fornecer
-            if isinstance(out, dict):
-                last_center = out.get("last_center") or out.get("center")
-                zoom_val = out.get("zoom") or out.get("last_zoom")
-                if last_center and ("lat" in last_center and "lng" in last_center):
-                    st.session_state["m3_view"]["center"] = [last_center["lat"], last_center["lng"]]
-                if zoom_val is not None:
-                    try:
-                        st.session_state["m3_view"]["zoom"] = int(zoom_val)
-                    except Exception:
-                        pass
-        else:
-            # Fallback: sem captura de viewport 
-            folium_static(m3, width=1200, height=700)
+        # Ajusta o mapa aos limites da camada de distritos, se ela existir
+        if data_geo["Distritos"]:
+            bounds = geojson_bounds(data_geo["Distritos"])
+            if bounds:
+                m3.fit_bounds(bounds)
+        
+        # 4. Renderiza o mapa SEM o LayerControl padrão
+        folium_static(m3, width=1200, height=700)
 
 
 # =====================================================
