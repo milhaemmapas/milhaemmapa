@@ -230,9 +230,9 @@ def css_global():
             }}
             
             @keyframes pulseObras {{
-                0%    {{ transform: scale(1);    box-shadow: 0 0 0 0 {COLORS["accent"]}40; }} 
+                0%   {{ transform: scale(1);   box-shadow: 0 0 0 0 {COLORS["accent"]}40; }} 
                 70%  {{ transform: scale(1.03); box-shadow: 0 0 0 12px {COLORS["accent"]}00; }}
-                100% {{ transform: scale(1);    box-shadow: 0 0 0 0 {COLORS["accent"]}00; }}
+                100% {{ transform: scale(1);   box-shadow: 0 0 0 0 {COLORS["accent"]}00; }}
             }}
             #toggle-lyr-obras-pulse button {{
                 animation: pulseObras 1.1s ease-in-out 0s 2;
@@ -638,10 +638,12 @@ with aba2:
 
             m2 = folium.Map(location=default_center, zoom_start=default_zoom, tiles=None)
             add_base_tiles(m2)
+            
+            # --- FERRAMENTAS DO MAPA (m2) ---
             Fullscreen(position='topright', title='Tela Cheia', title_cancel='Sair', force_separate_button=True).add_to(m2)
             m2.add_child(MeasureControl(primary_length_unit="meters", secondary_length_unit="kilometers", primary_area_unit="hectares"))
             MousePosition().add_to(m2)
-            Draw(export=True).add_to(m2)
+            Draw(export=True).add_to(m2) # <-- Já estava aqui
 
             # Centraliza pela camada Distritos se existir
             if gj_distritos:
@@ -655,9 +657,9 @@ with aba2:
 
             def status_icon_color(status_val: str):
                 s = (str(status_val) if status_val is not None else "").strip().lower()
-                if any(k in s for k in ["conclu", "finaliz"]):     return "green"
-                if any(k in s for k in ["execu", "andamento"]):    return "orange"
-                if any(k in s for k in ["paralis", "suspens"]):    return "red"
+                if any(k in s for k in ["conclu", "finaliz"]):      return "green"
+                if any(k in s for k in ["execu", "andamento"]):     return "orange"
+                if any(k in s for k in ["paralis", "suspens"]):     return "red"
                 if any(k in s for k in ["planej", "licita", "proj"]): return "blue"
                 return "gray"
 
@@ -734,7 +736,7 @@ with aba2:
         st.error(f"❌ Não foi possível carregar o CSV de obras em: {CSV_OBRAS}")
 
 # =====================================================
-# 3) Milhã em Mapas — SEM TRANSIÇÃO / VIEWPORT FIXO
+# 3) Milhã em Mapas — CONFIGURAÇÕES DE FERRAMENTAS PADRONIZADAS
 # =====================================================
 with aba3:
     # Import robusto (local) para capturar viewport quando possível
@@ -843,18 +845,14 @@ with aba3:
         center = st.session_state["m3_view"]["center"]
         zoom   = st.session_state["m3_view"]["zoom"]
 
-        # 💡 CORREÇÃO: Adiciona zoomAnimation=False para desativar a transição
-        m3 = folium.Map(
-            location=center,
-            zoom_start=zoom,
-            tiles=None,
-            zoomAnimation=False,
-            panes=False, # Impede o movimento/pan
-        )
+        m3 = folium.Map(location=center, zoom_start=zoom, tiles=None)
         add_base_tiles(m3)
+        
+        # --- FERRAMENTAS DO MAPA (m3) - AGORA IGUAIS AO m2 ---
         Fullscreen(position='topright', title='Tela Cheia', title_cancel='Sair', force_separate_button=True).add_to(m3)
         m3.add_child(MeasureControl(primary_length_unit="meters", secondary_length_unit="kilometers", primary_area_unit="hectares"))
         MousePosition().add_to(m3)
+        Draw(export=True).add_to(m3) # <-- LINHA ADICIONADA PARA PADRONIZAR
 
         # Fit somente quando solicitado (primeira carga ou clique no botão)
         if st.session_state["m3_should_fit"] and data_geo.get("Distritos"):
