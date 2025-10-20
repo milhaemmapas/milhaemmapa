@@ -33,7 +33,7 @@ COLORS = {
 }
 
 # =====================================================
-# CSS Global Atualizado
+# CSS Global Atualizado (incluindo correção para Folium)
 # =====================================================
 def css_global():
     st.markdown(
@@ -205,7 +205,21 @@ def css_global():
                 animation: fadeIn 0.6s ease-out;
             }}
             
-            /* Estilos originais preservados para os mapas */
+            /* CORREÇÃO CRÍTICA PARA BOTÕES E CONTROLES DO MAPA (Leaflet/Folium) */
+            .leaflet-control-container .leaflet-control {{
+                z-index: 999999 !important; /* Força os controles para a camada superior */
+                background-color: white !important; /* Garante que os botões tenham fundo visível */
+            }}
+            
+            .leaflet-control-container .leaflet-control a {{
+                color: {COLORS["text_dark"]} !important; /* Garante cores visíveis nos ícones */
+            }}
+            
+            .leaflet-control-container .leaflet-control-layers-expanded {{
+                padding: 6px !important; /* Garante espaço visível para a caixa de camadas */
+            }}
+            
+            /* Estilos originais preservados por segurança */
             .top-banner, .footer-banner {{ 
                 width: 100%; 
                 height: auto; 
@@ -213,7 +227,6 @@ def css_global():
                 margin-bottom: 20px; 
             }}
             
-            /* Botão de toggle aprimorado (MANTIDO APENAS O CSS, OS ELEMENTOS HTML SERÃO REMOVIDOS) */
             #toggle-lyr-obras-pulse button, #toggle-panel-pulse button {{
                  background-color: {COLORS["accent"]} !important;
                  border-color: {COLORS["accent"]} !important;
@@ -585,8 +598,8 @@ with aba2:
         gj_distritos = load_geojson_any([os.path.join(b, "milha_dist_polig.geojson") for b in base_dir_candidates])
         gj_sede      = load_geojson_any([os.path.join(b, "Distritos_pontos.geojson") for b in base_dir_candidates])
 
-        # A LÓGICA DO BOTÃO FOI REMOVIDA. show_panel AGORA É SEMPRE TRUE
-        show_panel = True # Painel fixo
+        # Painel Fixo
+        show_panel = True
 
         # Layout: com painel lateral (Fixo)
         col_map, col_panel = st.columns([5, 2], gap="large")
@@ -617,7 +630,7 @@ with aba2:
             m2 = folium.Map(location=default_center, zoom_start=default_zoom, tiles=None)
             add_base_tiles(m2)
             
-            # --- FERRAMENTAS DO MAPA (m2) ---
+            # --- FERRAMENTAS DO MAPA (m2) PADRONIZADAS ---
             Fullscreen(position='topright', title='Tela Cheia', title_cancel='Sair', force_separate_button=True).add_to(m2)
             m2.add_child(MeasureControl(primary_length_unit="meters", secondary_length_unit="kilometers", primary_area_unit="hectares"))
             MousePosition().add_to(m2)
@@ -701,6 +714,7 @@ with aba2:
 
                 lyr_obras.add_to(m2)
 
+            # Controle de Camadas para o mapa m2
             folium.LayerControl(collapsed=True).add_to(m2)
             folium_static(m2, width=1200, height=700)
 
@@ -792,55 +806,17 @@ with aba3:
         center = st.session_state["m3_view"]["center"]
         zoom   = st.session_state["m3_view"]["zoom"]
 
-        m3 = folium.Map(
-            location=center, 
-            zoom_start=zoom, 
-            tiles=None,
-            control_scale=True  # Adiciona escala no mapa
-        )
+        m3 = folium.Map(location=center, zoom_start=zoom, tiles=None)
         add_base_tiles(m3)
         
         # --- FERRAMENTAS DO MAPA (m3) PADRONIZADAS ---
-        # 1. Fullscreen (Tela Cheia) - TOPRIGHT
-        Fullscreen(
-            position='topright', 
-            title='Tela Cheia', 
-            title_cancel='Sair', 
-            force_separate_button=True
-        ).add_to(m3)
-        
-        # 2. Controle de Medidas - TOPRIGHT (abaixo do Fullscreen)
-        m3.add_child(MeasureControl(
-            primary_length_unit="meters", 
-            secondary_length_unit="kilometers", 
-            primary_area_unit="hectares",
-            position='topright'
-        ))
-        
-        # 3. Posição do Mouse - BOTTOMLEFT
-        MousePosition(
-            position='bottomleft',
-            separator=' | ',
-            empty_string='Coordenadas indisponíveis',
-            lng_first=True,
-            num_digits=4,
-            prefix='Coordenadas:'
-        ).add_to(m3)
-        
-        # 4. Ferramentas de Desenho - TOPRIGHT (abaixo das outras ferramentas)
-        Draw(
-            export=True,
-            position='topright',
-            draw_options={
-                'marker': True,
-                'circle': True,
-                'polyline': True,
-                'polygon': True,
-                'rectangle': True
-            }
-        ).add_to(m3)
+        # Fullscreen (Tela Cheia) - Confirmado!
+        Fullscreen(position='topright', title='Tela Cheia', title_cancel='Sair', force_separate_button=True).add_to(m3)
+        m3.add_child(MeasureControl(primary_length_unit="meters", secondary_length_unit="kilometers", primary_area_unit="hectares"))
+        MousePosition().add_to(m3)
+        Draw(export=True).add_to(m3)
 
-        # Fit somente na primeira carga para centralizar
+        # Fit somente na primeira carga para centralizar (não há mais botão de centralizar)
         if st.session_state["m3_should_fit"] and data_geo.get("Distritos"):
             b = geojson_bounds(data_geo["Distritos"])
             if b:
@@ -951,11 +927,8 @@ with aba3:
                 folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="cadetblue", icon="tint")).add_to(layer_pr)
             layer_pr.add_to(m3)
 
-        # 5. Controle de Camadas (LayerControl) - TOPRIGHT (último)
-        folium.LayerControl(
-            collapsed=True,
-            position='topright'
-        ).add_to(m3)
+        # Controle de Camadas (LayerControl) - Confirmado!
+        folium.LayerControl(collapsed=True).add_to(m3)
 
         # Render preservando viewport quando possível
         if _HAS_ST_FOLIUM:
