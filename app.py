@@ -887,7 +887,7 @@ with aba3:
             for ftr in data_geo["Localidades"]["features"]:
                 x, y = ftr["geometry"]["coordinates"]
                 props = ftr["properties"]
-                nome = props.get("Name", "Localidade")
+                nome = props.get("Localidade", "Localidade")
                 distrito = props.get("Distrito", "-")
                 popup = f"<b>Localidade:</b> {nome}<br><b>Distrito:</b> {distrito}"
                 folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="purple", icon="flag")).add_to(layer_loc)
