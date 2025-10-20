@@ -517,127 +517,55 @@ with aba1:
     # espaçamento entre KPI e painel de boas-vindas (mantido)
     st.markdown("<div style='margin-top: 2rem;'></div>", unsafe_allow_html=True)
 
-# 👉 estilos locais para as caixas desta seção (cores do template)
-st.markdown("""
-<style>
-  .welcome-intro p { margin: 0 0 .6rem 0; line-height: 1.5; }
-  .goals { display: grid; gap: .6rem; margin: .8rem 0 0 0; padding: 0; list-style: none; }
-  .goal {
-    display: grid; grid-template-columns: 28px 1fr; gap: .6rem;
-    align-items: center; padding: .6rem .8rem; border-radius: 12px;
-    background: #F0F9FF; border: 1px solid #E2E8F0;
-  }
-  .goal .g-ic { font-size: 16px; width: 28px; height: 28px; display:flex; align-items:center; justify-content:center;
-    background:#1E3A8A; color:#fff; border-radius:8px; }
-  .goal .g-tt b { color:#1E293B; }
-  .goal .g-tt { color:#475569; }
-
-  /* grid das caixas laterais */
-  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  @media (max-width: 900px){ .info-grid { grid-template-columns: 1fr; } }
-
-  .info-card {
-    position: relative; border-radius: 16px; background: #FFFFFF; border: 1px solid #E2E8F0;
-    overflow: hidden; transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
-  }
-  .info-card:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(0,0,0,.10); border-color:#CBD5E1; }
-  .info-card .bar { height: 6px; width: 100%; }
-  .info-card .body { padding: 14px 16px 16px; }
-  .info-card h4 { margin: 0 0 8px 0; font-size: 1.05rem; color:#1E293B; }
-  .info-card p { margin: 0 0 8px 0; color:#475569; }
-  .info-card ul { margin: 8px 0 0 18px; color:#475569; }
-  .info-card ul li { margin: 4px 0; }
-
-  /* variações por cor */
-  .is-primary .bar { background:#1E3A8A; }
-  .is-secondary .bar { background:#059669; }
-  .is-accent .bar { background:#EA580C; }
-
-  /* botão leve opcional */
-  .btn-ghost {
-    display:inline-block; margin-top:.6rem; padding:.4rem .7rem; border-radius:10px;
-    border:1px solid #E2E8F0; color:#1E3A8A; text-decoration:none; font-size:.92rem;
-  }
-  .btn-ghost:hover { background:#F0F9FF; border-color:#CBD5E1; }
-</style>
-""", unsafe_allow_html=True)
-
-# 👉 Painel de boas-vindas (com lista estilizada por cor do template)
-render_card(
-    "<h2>🌟 Bem-vindo ao ATLAS Geoespacial de Milhã</h2>",
-    """
-    <div class="welcome-intro">
-      <p>
-        Esta plataforma integra <strong>dados geoespaciais</strong> do município para apoiar a tomada de decisões públicas,
-        qualificar projetos urbanos e aproximar a gestão municipal dos cidadãos.
-      </p>
-      <h3>🎯 Objetivos Principais:</h3>
-      <ul class="goals">
-        <li class="goal">
-          <span class="g-ic">🔎</span>
-          <div class="g-tt"><b>Transparência.</b> Disponibilizar informações públicas de forma acessível.</div>
-        </li>
-        <li class="goal">
-          <span class="g-ic">🗺️</span>
-          <div class="g-tt"><b>Planejamento.</b> Apoiar o planejamento urbano e territorial.</div>
-        </li>
-        <li class="goal">
-          <span class="g-ic">⏱️</span>
-          <div class="g-tt"><b>Monitoramento.</b> Acompanhar obras e projetos em tempo real.</div>
-        </li>
-        <li class="goal">
-          <span class="g-ic">🤝</span>
-          <div class="g-tt"><b>Participação.</b> Engajar a comunidade no desenvolvimento municipal.</div>
-        </li>
-      </ul>
-    </div>
-    """
-)
-
-# 👉 duas “caixas” laterais, agora com barras coloridas e hover
-st.markdown('<div class="info-grid">', unsafe_allow_html=True)
-
-st.markdown(
-    """
-    <div class="info-card is-secondary">
-      <div class="bar"></div>
-      <div class="body">
-        <h4>🗺️ Explore o Território</h4>
-        <p>Na aba <strong>“Milhã em Mapas”</strong> você encontra:</p>
+      
+    # 👉 Painel de boas-vindas
+    render_card(
+        "<h2>🌟 Bem-vindo ao ATLAS Geoespacial de Milhã</h2>",
+        """
+        <p>
+            Esta plataforma integra <strong>dados geoespaciais</strong> do município para apoiar a tomada de decisões públicas, 
+            qualificar projetos urbanos e aproximar a gestão municipal dos cidadãos. 
+        </p>
+        <h3>🎯 Objetivos Principais:</h3>
         <ul>
-          <li>Divisões territoriais (Distritos e Localidades)</li>
-          <li>Infraestrutura pública (Escolas e Unidades de Saúde)</li>
-          <li>Recursos hídricos (Poços e Tecnologias Sociais)</li>
-          <li>Camadas interativas e ferramentas de medição</li>
+            <li><strong>Transparência</strong>: Disponibilizar informações públicas de forma acessível</li>
+            <li><strong>Planejamento</strong>: Auxiliar no planejamento urbano e territorial</li>
+            <li><strong>Monitoramento</strong>: Acompanhar obras e projetos em tempo real</li>
+            <li><strong>Participação</strong>: Engajar a comunidade no desenvolvimento municipal</li>
         </ul>
-      </div>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
-st.markdown(
-    """
-    <div class="info-card is-accent">
-      <div class="bar"></div>
-      <div class="body">
-        <h4>🏗️ Acompanhe as Obras</h4>
-        <p>No <strong>Painel de Obras</strong> você monitora:</p>
-        <ul>
-          <li>Status atual de cada projeto municipal</li>
-          <li>Localização precisa no mapa</li>
-          <li>Investimentos e prazos</li>
-          <li>Empresas responsáveis</li>
-          <li>Histórico de andamento</li>
-        </ul>
-      </div>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
-st.markdown('</div>', unsafe_allow_html=True)
-
+        """
+    )
+    
+    colA, colB = st.columns(2)
+    
+    with colA:
+        render_card(
+            "<h3>🗺️ Explore o Território</h3>",
+            (
+                "<p>Na aba <strong>'Milhã em Mapas'</strong> você encontra:</p>"
+                "<ul>"
+                "<li>Divisões territoriais (Distritos e Localidades)</li>"
+                "<li>Infraestrutura pública (Escolas e Unidades de Saúde)</li>"
+                "<li>Recursos hídricos (Poços e Tecnologias Sociais)</li>"
+                "<li>Camadas interativas e ferramentas de medição</li>"
+                "</ul>"
+            )
+        )
+    
+    with colB:
+        render_card(
+            "<h3>🏗️ Acompanhe as Obras</h3>",
+            (
+                "<p>No <strong>Painel de Obras</strong> monitore:</p>"
+                "<ul>"
+                "<li>Status atual de cada projeto municipal</li>"
+                "<li>Localização precisa no mapa</li>"
+                "<li>Investimentos e prazos</li>"
+                "<li>Empresas responsáveis</li>"
+                "<li>Histórico de andamento</li>"
+                "</ul>"
+            )
+        )
 
 # =====================================================
 # 2) Painel de Obras - COM MAPAS FUNCIONAIS
