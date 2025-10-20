@@ -948,7 +948,7 @@ with aba3:
                 name="Estradas",
                 style_function=lambda x: {
                     "color": "#8B4513",  # Cor marrom para estradas
-                    "weight": 3,         # Linha mais grossa
+                    "weight": 2,         # Linha mais grossa
                     "opacity": 0.8
                 },
                 tooltip=folium.GeoJsonTooltip(
