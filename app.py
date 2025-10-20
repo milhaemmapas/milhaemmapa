@@ -734,7 +734,7 @@ with aba2:
         st.error(f"❌ Não foi possível carregar o CSV de obras em: {CSV_OBRAS}")
 
 # =====================================================
-# 3) Milhã em Mapas — SEM TRANSIÇÃO / VIEWPORT FIXO
+# 3) Milhã em Mapas — FERRAMENTAS PADRONIZADAS
 # =====================================================
 with aba3:
     # Import robusto (local) para capturar viewport quando possível
@@ -749,32 +749,14 @@ with aba3:
         "<p>Explore as camadas territoriais, de infraestrutura e recursos hídricos do município</p>",
     )
 
-    # Estados da UI
-    if "show_layer_panel" not in st.session_state:
-        st.session_state["show_layer_panel"] = True
+    # Painel Fixo
+    show_panel = True 
+    
     if "m3_view" not in st.session_state:
         # centro/zoom padrão apenas na primeira carga
         st.session_state["m3_view"] = {"center": [-5.680, -39.200], "zoom": 10}
     if "m3_should_fit" not in st.session_state:
-        st.session_state["m3_should_fit"] = True  # primeiro render ou ao clicar no botão
-
-    # Botões (mostrar/ocultar painel e centralizar)
-    show_now = st.session_state["show_layer_panel"]
-    wrapper_id = "toggle-panel" if show_now else "toggle-panel-pulse"
-
-    col_btnL, col_btnR = st.columns([1, 6])
-    with col_btnL:
-        st.markdown(f"<div id='{wrapper_id}'>", unsafe_allow_html=True)
-        label = ("🙈 Ocultar painel de camadas" if show_now else "👁️ Exibir painel de camadas")
-        if st.button(label, use_container_width=True, key="toggle_panel_btn"):
-            st.session_state["show_layer_panel"] = not st.session_state["show_layer_panel"]
-            st.rerun()
-        st.markdown("</div>", unsafe_allow_html=True)
-    with col_btnR:
-        if st.button("📍 Centralizar em Milhã", use_container_width=True, key="btn_center_milha"):
-            st.session_state["m3_should_fit"] = True
-
-    show_panel = st.session_state["show_layer_panel"]
+        st.session_state["m3_should_fit"] = True  # Centraliza apenas na primeira carga
 
     # Carregar dados GeoJSON
     base_dir_candidates = ["dados", "/mnt/data"]
@@ -793,45 +775,32 @@ with aba3:
         for name, fname in files.items()
     }
 
-    # Layout do mapa/painel
-    if show_panel:
-        col_map, col_panel = st.columns([5, 2], gap="large")
-    else:
-        col_map, = st.columns([1])
+    # Layout do mapa/painel (Fixo)
+    col_map, col_panel = st.columns([5, 2], gap="large")
 
-    # Painel de camadas
-    if show_panel:
-        with col_panel:
-            st.markdown('<div class="sticky-panel">', unsafe_allow_html=True)
-            st.markdown('<div class="panel-title">🎯 Camadas do Mapa</div>', unsafe_allow_html=True)
-            st.markdown('<div class="panel-subtitle">Selecione o que deseja visualizar</div>', unsafe_allow_html=True)
+    # Painel de camadas (Fixo)
+    with col_panel:
+        st.markdown('<div class="sticky-panel">', unsafe_allow_html=True)
+        st.markdown('<div class="panel-title">🎯 Camadas do Mapa</div>', unsafe_allow_html=True)
+        st.markdown('<div class="panel-subtitle">Selecione o que deseja visualizar</div>', unsafe_allow_html=True)
 
-            with st.expander("🗾 Território", expanded=True):
-                show_distritos = st.checkbox("Distritos", value=True, key="lyr_distritos")
-                show_sede_distritos = st.checkbox("Sede Distritos", value=True, key="lyr_sede")
-                show_localidades = st.checkbox("Localidades", value=True, key="lyr_local")
+        with st.expander("🗾 Território", expanded=True):
+            show_distritos = st.checkbox("Distritos", value=True, key="lyr_distritos")
+            show_sede_distritos = st.checkbox("Sede Distritos", value=True, key="lyr_sede")
+            show_localidades = st.checkbox("Localidades", value=True, key="lyr_local")
 
-            with st.expander("🏥 Infraestrutura", expanded=False):
-                show_escolas = st.checkbox("Escolas", value=False, key="lyr_escolas")
-                show_unidades = st.checkbox("Unidades de Saúde", value=False, key="lyr_unid")
+        with st.expander("🏥 Infraestrutura", expanded=False):
+            show_escolas = st.checkbox("Escolas", value=False, key="lyr_escolas")
+            show_unidades = st.checkbox("Unidades de Saúde", value=False, key="lyr_unid")
 
-            with st.expander("💧 Recursos Hídricos", expanded=False):
-                show_tecnologias = st.checkbox("Tecnologias Sociais", value=False, key="lyr_tec")
-                st.markdown("**Poços**")
-                show_pocos_cidade = st.checkbox("Poços Cidade", value=False, key="lyr_pc")
-                show_pocos_rural = st.checkbox("Poços Zona Rural", value=False, key="lyr_pr")
+        with st.expander("💧 Recursos Hídricos", expanded=False):
+            show_tecnologias = st.checkbox("Tecnologias Sociais", value=False, key="lyr_tec")
+            st.markdown("**Poços**")
+            show_pocos_cidade = st.checkbox("Poços Cidade", value=False, key="lyr_pc")
+            show_pocos_rural = st.checkbox("Poços Zona Rural", value=False, key="lyr_pr")
 
-            st.markdown('</div>', unsafe_allow_html=True)
-    else:
-        # painel oculto → usa valores atuais/padrão
-        show_distritos      = st.session_state.get("lyr_distritos", True)
-        show_sede_distritos = st.session_state.get("lyr_sede", True)
-        show_localidades    = st.session_state.get("lyr_local", True)
-        show_escolas        = st.session_state.get("lyr_escolas", False)
-        show_unidades       = st.session_state.get("lyr_unid", False)
-        show_tecnologias    = st.session_state.get("lyr_tec", False)
-        show_pocos_cidade   = st.session_state.get("lyr_pc", False)
-        show_pocos_rural    = st.session_state.get("lyr_pr", False)
+        st.markdown('</div>', unsafe_allow_html=True)
+
 
     # =======================
     # MAPA (viewport fixo)
@@ -843,20 +812,43 @@ with aba3:
         center = st.session_state["m3_view"]["center"]
         zoom   = st.session_state["m3_view"]["zoom"]
 
-        # 💡 CORREÇÃO: Adiciona zoomAnimation=False para desativar a transição
         m3 = folium.Map(
-            location=center,
-            zoom_start=zoom,
+            location=center, 
+            zoom_start=zoom, 
             tiles=None,
-            zoomAnimation=False,
-            panes=False, # Impede o movimento/pan
+            control_scale=True
         )
         add_base_tiles(m3)
-        Fullscreen(position='topright', title='Tela Cheia', title_cancel='Sair', force_separate_button=True).add_to(m3)
-        m3.add_child(MeasureControl(primary_length_unit="meters", secondary_length_unit="kilometers", primary_area_unit="hectares"))
-        MousePosition().add_to(m3)
+        
+        # --- FERRAMENTAS DO MAPA ORGANIZADAS ---
+        # 1. Fullscreen - TOPLEFT (não interfere com LayerControl)
+        Fullscreen(
+            position='topleft', 
+            title='Tela Cheia', 
+            title_cancel='Sair', 
+            force_separate_button=True
+        ).add_to(m3)
+        
+        # 2. Controle de Medidas - TOPLEFT (abaixo do Fullscreen)
+        measure_control = MeasureControl(
+            primary_length_unit="meters", 
+            secondary_length_unit="kilometers", 
+            primary_area_unit="hectares",
+            position='topleft'
+        )
+        m3.add_child(measure_control)
+        
+        # 3. Posição do Mouse - BOTTOMLEFT
+        MousePosition(
+            position='bottomleft',
+            separator=' | ',
+            empty_string='Coordenadas indisponíveis',
+            lng_first=True,
+            num_digits=4,
+            prefix='Coordenadas:'
+        ).add_to(m3)
 
-        # Fit somente quando solicitado (primeira carga ou clique no botão)
+        # Fit somente na primeira carga para centralizar
         if st.session_state["m3_should_fit"] and data_geo.get("Distritos"):
             b = geojson_bounds(data_geo["Distritos"])
             if b:
@@ -967,7 +959,11 @@ with aba3:
                 folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="cadetblue", icon="tint")).add_to(layer_pr)
             layer_pr.add_to(m3)
 
-        folium.LayerControl(collapsed=True).add_to(m3)
+        # 4. Controle de Camadas - TOPRIGHT (posição padrão do Leaflet)
+        folium.LayerControl(
+            collapsed=True,
+            position='topright'
+        ).add_to(m3)
 
         # Render preservando viewport quando possível
         if _HAS_ST_FOLIUM:
@@ -987,9 +983,8 @@ with aba3:
                     except Exception:
                         pass
         else:
-            # Fallback: sem captura de viewport (ainda assim sem transição porque não há fit automático)
+            # Fallback: sem captura de viewport 
             folium_static(m3, width=1200, height=700)
-
 
 
 
