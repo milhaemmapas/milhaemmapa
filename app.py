@@ -964,7 +964,7 @@ with aba3:
             layer_pr.add_to(m3)
 
         # Controle de Camadas - DEVE SER O ÚLTIMO
-        folium.LayerControl(collapsed=False).add_to(m3)
+        folium.LayerControl(collapsed=True).add_to(m3)
 
         # 🔥 CORREÇÃO: Usar folium_static igual na aba Obras
         folium_static(m3, width=1200, height=700)
