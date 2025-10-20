@@ -798,7 +798,7 @@ with aba3:
     show_panel = True 
     
     if "m3_view" not in st.session_state:
-        st.session_state["m3_view"] = {"center": [-5.680, -39.200], "zoom": 10}
+        st.session_state["m3_view"] = {"center": [-5.680, -39.200], "zoom": 12}
     if "m3_should_fit" not in st.session_state:
         st.session_state["m3_should_fit"] = True
 
