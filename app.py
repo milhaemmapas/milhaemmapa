@@ -834,7 +834,7 @@ with aba3:
         with st.expander("🗾 Território", expanded=True):
             show_distritos = st.checkbox("Distritos", value=True, key="lyr_distritos")
             show_sede_distritos = st.checkbox("Sede Distritos", value=True, key="lyr_sede")
-            show_localidades = st.checkbox("Localidades", value=True, key="lyr_local")
+            show_localidades = st.checkbox("Localidades", value=False, key="lyr_local")
 
         with st.expander("🏥 Infraestrutura", expanded=False):
             show_escolas = st.checkbox("Escolas", value=False, key="lyr_escolas")
