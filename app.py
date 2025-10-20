@@ -757,7 +757,7 @@ with aba3:
     if "m3_should_fit" not in st.session_state:
         st.session_state["m3_should_fit"] = True
 
-    # Carregar dados GeoJSON
+    # Carregar dados GeoJSON - ADICIONANDO ESTRADAS
     base_dir_candidates = ["dados", "/mnt/data"]
     files = {
         "Distritos": "milha_dist_polig.geojson",
@@ -768,6 +768,7 @@ with aba3:
         "Tecnologias Sociais": "teclogias_sociais.geojson",
         "Poços Cidade": "pocos_cidade_mil.geojson",
         "Poços Zona Rural": "pocos_rural_mil.geojson",
+        "Estradas": "estradas_milha.geojson",  # NOVA CAMADA
     }
     data_geo = {
         name: load_geojson_any([os.path.join(b, fname) for b in base_dir_candidates])
@@ -777,7 +778,7 @@ with aba3:
     # Layout do mapa/painel (Fixo)
     col_map, col_panel = st.columns([5, 2], gap="large")
 
-    # Painel de camadas (Fixo)
+    # Painel de camadas (Fixo) - ATUALIZADO COM ESTRADAS
     with col_panel:
         st.markdown('<div class="sticky-panel">', unsafe_allow_html=True)
         st.markdown('<div class="panel-title">🎯 Camadas do Mapa</div>', unsafe_allow_html=True)
@@ -791,6 +792,7 @@ with aba3:
         with st.expander("🏥 Infraestrutura", expanded=False):
             show_escolas = st.checkbox("Escolas", value=False, key="lyr_escolas")
             show_unidades = st.checkbox("Unidades de Saúde", value=False, key="lyr_unid")
+            show_estradas = st.checkbox("Estradas", value=False, key="lyr_estradas")  # NOVO CHECKBOX
 
         with st.expander("💧 Recursos Hídricos", expanded=False):
             show_tecnologias = st.checkbox("Tecnologias Sociais", value=False, key="lyr_tec")
@@ -933,6 +935,24 @@ with aba3:
                 )
                 folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="green", icon="plus-sign")).add_to(layer_saude)
             layer_saude.add_to(m3)
+
+        # NOVA CAMADA: ESTRADAS
+        if show_estradas and data_geo.get("Estradas"):
+            layer_estradas = folium.FeatureGroup(name="Estradas")
+            folium.GeoJson(
+                data_geo["Estradas"],
+                name="Estradas",
+                style_function=lambda x: {
+                    "color": "#8B4513",  # Cor marrom para estradas
+                    "weight": 3,         # Linha mais grossa
+                    "opacity": 0.8
+                },
+                tooltip=folium.GeoJsonTooltip(
+                    fields=list(data_geo["Estradas"]["features"][0]["properties"].keys())[:3],
+                    aliases=["Propriedade:"] * 3  # Rótulos para as propriedades
+                )
+            ).add_to(layer_estradas)
+            layer_estradas.add_to(m3)
 
         # Recursos Hídricos
         if show_tecnologias and data_geo.get("Tecnologias Sociais"):
