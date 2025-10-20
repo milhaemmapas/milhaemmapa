@@ -757,7 +757,7 @@ with aba3:
     if "m3_should_fit" not in st.session_state:
         st.session_state["m3_should_fit"] = True
 
-    # Carregar dados GeoJSON - ATUALIZADO COM OUTORGAS MILHA
+    # Carregar dados GeoJSON - ATUALIZADO COM ESPELHOS D'ÁGUA
     base_dir_candidates = ["dados", "/mnt/data"]
     files = {
         "Distritos": "milha_dist_polig.geojson",
@@ -769,7 +769,8 @@ with aba3:
         "Poços Cidade": "pocos_cidade_mil.geojson",
         "Poços Zona Rural": "pocos_rural_mil.geojson",
         "Estradas": "estradas_milha.geojson",
-        "Outorgas Vigentes": "outorgas_milha.geojson",  # ARQUIVO ATUALIZADO
+        "Outorgas Vigentes": "outorgas_milha.geojson",
+        "Espelhos d'Água": "espelhos_dagua.geojson",  # NOVA CAMADA ADICIONADA
     }
     data_geo = {
         name: load_geojson_any([os.path.join(b, fname) for b in base_dir_candidates])
@@ -779,7 +780,7 @@ with aba3:
     # Layout do mapa/painel (Fixo)
     col_map, col_panel = st.columns([5, 2], gap="large")
 
-    # Painel de camadas (Fixo) - ATUALIZADO COM OUTORGAS MILHA
+    # Painel de camadas (Fixo) - ATUALIZADO COM ESPELHOS D'ÁGUA
     with col_panel:
         st.markdown('<div class="sticky-panel">', unsafe_allow_html=True)
         st.markdown('<div class="panel-title">🎯 Camadas do Mapa</div>', unsafe_allow_html=True)
@@ -798,6 +799,7 @@ with aba3:
         with st.expander("💧 Recursos Hídricos", expanded=False):
             show_tecnologias = st.checkbox("Tecnologias Sociais", value=False, key="lyr_tec")
             show_outorgas = st.checkbox("Outorgas Vigentes", value=False, key="lyr_outorgas")
+            show_espelhos_agua = st.checkbox("Espelhos d'Água", value=False, key="lyr_espelhos")  # NOVO CHECKBOX
             st.markdown("**Poços**")
             show_pocos_cidade = st.checkbox("Poços Cidade", value=False, key="lyr_pc")
             show_pocos_rural = st.checkbox("Poços Zona Rural", value=False, key="lyr_pr")
@@ -1010,6 +1012,32 @@ with aba3:
                 ).add_to(layer_outorgas)
             
             layer_outorgas.add_to(m3)
+
+        # NOVA CAMADA: ESPELHOS D'ÁGUA
+        if show_espelhos_agua and data_geo.get("Espelhos d'Água"):
+            layer_espelhos = folium.FeatureGroup(name="Espelhos d'Água")
+            folium.GeoJson(
+                data_geo["Espelhos d'Água"],
+                name="Espelhos d'Água",
+                style_function=lambda x: {
+                    "fillColor": "#1E90FF",  # Azul para corpos d'água
+                    "fillOpacity": 0.7,      # Opacidade moderada
+                    "color": "#000080",      # Borda azul escuro
+                    "weight": 2,             # Espessura da borda
+                    "opacity": 0.8
+                },
+                tooltip=folium.GeoJsonTooltip(
+                    fields=["CODIGOES0", "AREA1"],
+                    aliases=["Código:", "Área (ha):"],
+                    style=("font-family: Arial; font-size: 12px;")
+                ),
+                popup=folium.GeoJsonPopup(
+                    fields=["CODIGOES0", "AREA1"],
+                    aliases=["Código:", "Área (ha):"],
+                    style=("font-family: Arial; font-size: 12px; max-width: 300px;")
+                )
+            ).add_to(layer_espelhos)
+            layer_espelhos.add_to(m3)
 
         if show_pocos_cidade and data_geo.get("Poços Cidade"):
             layer_pc = folium.FeatureGroup(name="Poços Cidade")
