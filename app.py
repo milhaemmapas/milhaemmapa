@@ -834,7 +834,7 @@ with aba3:
         show_pocos_rural    = st.session_state.get("lyr_pr", False)
 
     # =======================
-    # MAPA (viewport fixo)
+    # MAPA (viewport fixo - SEM TRANSIÇÃO)
     # =======================
     with col_map:
         st.markdown("### 🗺️ Mapa Interativo")
@@ -843,13 +843,14 @@ with aba3:
         center = st.session_state["m3_view"]["center"]
         zoom   = st.session_state["m3_view"]["zoom"]
 
-        # 💡 CORREÇÃO: Adiciona zoomAnimation=False para desativar a transição
+        # 💡 CORREÇÃO: Configurações para eliminar TODAS as transições
         m3 = folium.Map(
             location=center,
             zoom_start=zoom,
             tiles=None,
-            zoomAnimation=False,
-            panes=False, # Impede o movimento/pan
+            zoomAnimation=False,        # Sem animação de zoom
+            scrollWheelZoom=False,      # Opcional: desativa zoom com scroll
+            tap=False,                  # Opcional: reduz interações que podem causar transições
         )
         add_base_tiles(m3)
         Fullscreen(position='topright', title='Tela Cheia', title_cancel='Sair', force_separate_button=True).add_to(m3)
@@ -861,7 +862,25 @@ with aba3:
             b = geojson_bounds(data_geo["Distritos"])
             if b:
                 (min_lat, min_lon), (max_lat, max_lon) = b
+                # 💡 SOLUÇÃO: Adicionar script JavaScript para fit_bounds sem animação
                 m3.fit_bounds([[min_lat, min_lon], [max_lat, max_lon]])
+                
+                # Script para eliminar a transição do fit_bounds
+                no_animation_script = """
+                <script>
+                // Aguarda o mapa carregar e então remove animações
+                setTimeout(function() {
+                    if (window['m3_{map_id}']) {{
+                        window['m3_{map_id}'].options.zoomAnimation = false;
+                        window['m3_{map_id}'].options.fadeAnimation = false;
+                        window['m3_{map_id}'].options.markerZoomAnimation = false;
+                    }}
+                }, 100);
+                </script>
+                """.format(map_id=m3._id)
+                
+                m3.get_root().html.add_child(folium.Element(no_animation_script))
+                
             st.session_state["m3_should_fit"] = False  # trava o auto-fit
 
         # --- Camadas (não alteram viewport) ---
@@ -989,7 +1008,6 @@ with aba3:
         else:
             # Fallback: sem captura de viewport (ainda assim sem transição porque não há fit automático)
             folium_static(m3, width=1200, height=700)
-
 
 
 
