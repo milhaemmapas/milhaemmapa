@@ -457,8 +457,11 @@ with aba1:
             """,
             unsafe_allow_html=True,
         )
+
+    # 🌿 Espaço entre os KPIs e o painel de boas-vindas
+    st.markdown("<div style='margin-top: 2rem;'></div>", unsafe_allow_html=True)
     
-    # 👉 modern-card em UM bloco só
+    # 👉 Painel de boas-vindas
     render_card(
         "<h2>🌟 Bem-vindo ao ATLAS Geoespacial de Milhã</h2>",
         """
@@ -506,7 +509,6 @@ with aba1:
                 "</ul>"
             )
         )
-
 
 # =====================================================
 # 2) Painel de Obras - COM MAPAS FUNCIONAIS
