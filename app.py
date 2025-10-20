@@ -825,7 +825,7 @@ with aba3:
             primary_length_unit="meters", 
             secondary_length_unit="kilometers", 
             primary_area_unit="hectares",
-            position='centerleft'
+            position='topleft'
         ))
         
         # 3. Posição do Mouse - BOTTOMLEFT
