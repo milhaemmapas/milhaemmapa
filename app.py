@@ -757,7 +757,7 @@ with aba3:
     if "m3_should_fit" not in st.session_state:
         st.session_state["m3_should_fit"] = True
 
-    # Carregar dados GeoJSON - ADICIONANDO ESTRADAS
+    # Carregar dados GeoJSON - ADICIONANDO OUTORGAS VIGENTES
     base_dir_candidates = ["dados", "/mnt/data"]
     files = {
         "Distritos": "milha_dist_polig.geojson",
@@ -768,7 +768,8 @@ with aba3:
         "Tecnologias Sociais": "teclogias_sociais.geojson",
         "Poços Cidade": "pocos_cidade_mil.geojson",
         "Poços Zona Rural": "pocos_rural_mil.geojson",
-        "Estradas": "estradas_milha.geojson",  # NOVA CAMADA
+        "Estradas": "estradas_milha.geojson",
+        "Outorgas Vigentes": "outorgas_vigentes.geojson",  # NOVA CAMADA
     }
     data_geo = {
         name: load_geojson_any([os.path.join(b, fname) for b in base_dir_candidates])
@@ -778,7 +779,7 @@ with aba3:
     # Layout do mapa/painel (Fixo)
     col_map, col_panel = st.columns([5, 2], gap="large")
 
-    # Painel de camadas (Fixo) - ATUALIZADO COM ESTRADAS
+    # Painel de camadas (Fixo) - ATUALIZADO COM OUTORGAS VIGENTES
     with col_panel:
         st.markdown('<div class="sticky-panel">', unsafe_allow_html=True)
         st.markdown('<div class="panel-title">🎯 Camadas do Mapa</div>', unsafe_allow_html=True)
@@ -792,10 +793,11 @@ with aba3:
         with st.expander("🏥 Infraestrutura", expanded=False):
             show_escolas = st.checkbox("Escolas", value=False, key="lyr_escolas")
             show_unidades = st.checkbox("Unidades de Saúde", value=False, key="lyr_unid")
-            show_estradas = st.checkbox("Estradas", value=False, key="lyr_estradas")  # NOVO CHECKBOX
+            show_estradas = st.checkbox("Estradas", value=False, key="lyr_estradas")
 
         with st.expander("💧 Recursos Hídricos", expanded=False):
             show_tecnologias = st.checkbox("Tecnologias Sociais", value=False, key="lyr_tec")
+            show_outorgas = st.checkbox("Outorgas Vigentes", value=False, key="lyr_outorgas")  # NOVO CHECKBOX
             st.markdown("**Poços**")
             show_pocos_cidade = st.checkbox("Poços Cidade", value=False, key="lyr_pc")
             show_pocos_rural = st.checkbox("Poços Zona Rural", value=False, key="lyr_pr")
@@ -964,6 +966,54 @@ with aba3:
                 popup = "<div style='font-family:Arial;font-size:13px'><b>Local:</b> {}</div>".format(nome)
                 folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="orange", icon="tint")).add_to(layer_tec)
             layer_tec.add_to(m3)
+
+        # NOVA CAMADA: OUTORGAS VIGENTES
+        if show_outorgas and data_geo.get("Outorgas Vigentes"):
+            layer_outorgas = folium.FeatureGroup(name="Outorgas Vigentes")
+            for ftr in data_geo["Outorgas Vigentes"]["features"]:
+                props = ftr["properties"]
+                
+                # Converter coordenadas UTM para Lat/Long (aproximado)
+                easting = props.get("Easting (E)", 0)
+                northing = props.get("Northing (N)", 0)
+                
+                # Conversão aproximada para a região de Milhã
+                lat = -5.67 + (northing - 9380000) * 0.00001
+                lng = -39.19 + (easting - 479000) * 0.0001
+                
+                # Criar popup simplificado conforme solicitado
+                popup_content = f"""
+                <div style='font-family:Arial;font-size:12px;max-width:300px'>
+                    <b>Requerente:</b> {props.get('REQUERENTE', 'N/A')}<br>
+                    <b>Tipo Manancial:</b> {props.get('TIPO MANANCIAL', 'N/A')}<br>
+                    <b>Tipo de Uso:</b> {props.get('TIPO DE USO', 'N/A')}<br>
+                    <b>Manancial:</b> {props.get('MANANCIAL', 'N/A')}<br>
+                    <b>Fim da Vigência:</b> {props.get('FIM DA VIGÊNCIA', 'N/A')}<br>
+                    <b>Volume Outorgado:</b> {props.get('VOLUME OUTORGADO (m³)', 'N/A')} m³
+                </div>
+                """
+                
+                # Definir cor baseada no tipo de uso
+                tipo_uso = props.get('TIPO DE USO', '').upper()
+                if 'IRRIGACAO' in tipo_uso:
+                    icon_color = 'green'
+                elif 'ABASTECIMENTO_HUMANO' in tipo_uso:
+                    icon_color = 'blue'
+                elif 'INDUSTRIA' in tipo_uso:
+                    icon_color = 'red'
+                elif 'SERVICO_E_COMERCIO' in tipo_uso:
+                    icon_color = 'purple'
+                else:
+                    icon_color = 'gray'
+                
+                folium.Marker(
+                    [lat, lng],
+                    tooltip=props.get('REQUERENTE', 'Outorga'),
+                    popup=folium.Popup(popup_content, max_width=300),
+                    icon=folium.Icon(color=icon_color, icon='file-text', prefix='fa')
+                ).add_to(layer_outorgas)
+            
+            layer_outorgas.add_to(m3)
 
         if show_pocos_cidade and data_geo.get("Poços Cidade"):
             layer_pc = folium.FeatureGroup(name="Poços Cidade")
