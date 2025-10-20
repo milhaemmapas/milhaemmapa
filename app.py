@@ -821,15 +821,21 @@ with aba3:
         add_base_tiles(m3)
         
         # --- FERRAMENTAS DO MAPA ORGANIZADAS ---
-        # 1. Fullscreen - TOPLEFT (não interfere com LayerControl)
+        # 1. Controle de Camadas - TOPRIGHT (PRIMEIRO - mais importante)
+        folium.LayerControl(
+            collapsed=False,  # Deixe expandido para ser mais visível
+            position='topright'
+        ).add_to(m3)
+        
+        # 2. Fullscreen - TOPRIGHT (abaixo do LayerControl)
         Fullscreen(
-            position='topleft', 
+            position='topright', 
             title='Tela Cheia', 
             title_cancel='Sair', 
             force_separate_button=True
         ).add_to(m3)
         
-        # 2. Controle de Medidas - TOPLEFT (abaixo do Fullscreen)
+        # 3. Controle de Medidas - TOPLEFT 
         measure_control = MeasureControl(
             primary_length_unit="meters", 
             secondary_length_unit="kilometers", 
@@ -838,7 +844,7 @@ with aba3:
         )
         m3.add_child(measure_control)
         
-        # 3. Posição do Mouse - BOTTOMLEFT
+        # 4. Posição do Mouse - BOTTOMLEFT
         MousePosition(
             position='bottomleft',
             separator=' | ',
@@ -959,12 +965,6 @@ with aba3:
                 folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="cadetblue", icon="tint")).add_to(layer_pr)
             layer_pr.add_to(m3)
 
-        # 4. Controle de Camadas - TOPRIGHT (posição padrão do Leaflet)
-        folium.LayerControl(
-            collapsed=True,
-            position='topright'
-        ).add_to(m3)
-
         # Render preservando viewport quando possível
         if _HAS_ST_FOLIUM:
             try:
@@ -985,7 +985,6 @@ with aba3:
         else:
             # Fallback: sem captura de viewport 
             folium_static(m3, width=1200, height=700)
-
 
 
 # =====================================================
