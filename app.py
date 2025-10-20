@@ -205,14 +205,6 @@ def css_global():
                 animation: fadeIn 0.6s ease-out;
             }}
             
-            /* Estilos originais preservados para os mapas */
-            .top-banner, .footer-banner {{ 
-                width: 100%; 
-                height: auto; 
-                border-radius: 8px; 
-                margin-bottom: 20px; 
-            }}
-            
             /* Botão de toggle aprimorado */
             #toggle-lyr-obras-pulse button, #toggle-panel-pulse button {{
                  background-color: {COLORS["accent"]} !important;
@@ -230,13 +222,71 @@ def css_global():
             }}
             
             @keyframes pulseObras {{
-                0%    {{ transform: scale(1);    box-shadow: 0 0 0 0 {COLORS["accent"]}40; }} 
+                0%   {{ transform: scale(1);   box-shadow: 0 0 0 0 {COLORS["accent"]}40; }} 
                 70%  {{ transform: scale(1.03); box-shadow: 0 0 0 12px {COLORS["accent"]}00; }}
-                100% {{ transform: scale(1);    box-shadow: 0 0 0 0 {COLORS["accent"]}00; }}
+                100% {{ transform: scale(1);   box-shadow: 0 0 0 0 {COLORS["accent"]}00; }}
             }}
             #toggle-lyr-obras-pulse button {{
                 animation: pulseObras 1.1s ease-in-out 0s 2;
                 border-color: {COLORS["accent"]} !important;
+            }}
+
+            /* ================================================= */
+            /* === ESTILIZAÇÃO DO CONTROLE DE CAMADAS (FOLIUM) === */
+            /* ================================================= */
+            
+            /* Estilo do Ícone/Botão principal (fechado) */
+            .leaflet-control-layers-toggle {{
+                background-color: {COLORS["primary"]} !important;
+                background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93s3.05-7.44 7-7.93v15.86zm2-15.86c1.03.13 2 .45 2.87.93L15.87 5c-1.11-.33-2.28-.5-3.5-.5-1.22 0-2.39.17-3.5.5l.21.7c.87-.48 1.84-.8 2.87-.93zM13 12c0-1.66-1.34-3-3-3s-3 1.34-3 3 1.34 3 3 3 3-1.34 3-3zm1.13-2.07c.87.48 1.84.8 2.87.93.07.1.13.19.19.29l-3.06 3.06c-.2-.59-.3-1.23-.3-1.93 0-.44.06-.87.16-1.28zM19.93 13c-.06-.1-.12-.19-.19-.29-1.03-.13-2-.45-2.87-.93l-.21-.7c1.11.33 2.28.5 3.5.5 1.22 0 2.39-.17 3.5-.5l-.21.7c-.87.48-1.84.8-2.87.93zm-7.87 7.07c-1.03-.13-2-.45-2.87-.93l.21-.7c1.11.33 2.28.5 3.5.5 1.22 0 2.39-.17 3.5-.5l-.21.7c-.87.48-1.84.8-2.87.93z"/></svg>');
+                background-size: 20px 20px;
+                background-position: center;
+                width: 36px !important;
+                height: 36px !important;
+                border-radius: 8px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+                transition: all 0.2s ease;
+            }}
+            .leaflet-control-layers-toggle:hover {{
+                 background-color: {COLORS["secondary"]} !important;
+            }}
+
+            /* Estilo do painel (aberto) */
+            .leaflet-control-layers-expanded {{
+                background: {COLORS["card_bg"]} !important;
+                border-radius: 12px !important;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.15) !important;
+                border: 1px solid {COLORS["border"]} !important;
+                padding: 12px !important;
+            }}
+            
+            /* Estilo dos itens (labels) dentro do painel */
+            .leaflet-control-layers-base label, .leaflet-control-layers-overlays label {{
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+                font-size: 14px;
+                color: {COLORS["text_dark"]};
+                padding: 6px 0;
+                cursor: pointer;
+            }}
+            .leaflet-control-layers-base label span, .leaflet-control-layers-overlays label span {{
+                vertical-align: middle;
+            }}
+            .leaflet-control-layers-overlays label:hover {{
+                color: {COLORS["primary"]};
+            }}
+
+            /* Estilo do separador entre mapas base e camadas */
+            .leaflet-control-layers-separator {{
+                border-top: 1px solid {COLORS["border"]};
+                margin: 8px 0 !important;
+            }}
+            
+            /* Estilo dos inputs (checkbox e radio) */
+            .leaflet-control-layers-selector {{
+                vertical-align: middle;
+                margin-right: 8px !important;
+                accent-color: {COLORS["secondary"]}; /* Muda a cor do 'check' */
+                transform: scale(1.1);
             }}
         </style>
         """,
@@ -276,18 +326,6 @@ def render_card(title_html: str, body_html: str):
 # =====================================================
 # Funções utilitárias (mantidas do código original)
 # =====================================================
-def show_top_banner():
-    st.markdown(
-        '<img src="https://i.ibb.co/v4d32PvX/banner.jpg" alt="Banner topo" style="width:100%; border-radius:12px; margin-bottom:2rem;" />',
-        unsafe_allow_html=True,
-    )
-
-def show_footer_banner():
-    st.markdown(
-        '<img src="https://i.ibb.co/8nQQp8pS/barra-inferrior.png" alt="Banner rodapé" style="width:100%; border-radius:12px; margin-top:2rem;" />',
-        unsafe_allow_html=True,
-    )
-
 def autodetect_coords(df: pd.DataFrame):
     candidates_lat = [c for c in df.columns if re.search(r"(?:^|\b)(lat|latitude|y)(?:\b|$)", c, re.I)]
     candidates_lon = [c for c in df.columns if re.search(r"(?:^|\b)(lon|long|longitude|x)(?:\b|$)", c, re.I)]
@@ -416,12 +454,11 @@ create_header()
 aba1, aba2, aba3 = st.tabs(["🏠 Página Inicial", "🏗️ Painel de Obras", "🗺️ Milhã em Mapas"])
 
 # =====================================================
-# 1) Página Inicial - Atualizada
+# 1) Página Inicial
 # =====================================================
 with aba1:
     col1, col2, col3 = st.columns(3)
     
-    # 👉 Cada card em UM bloco (corrige o "efeito" não acompanhar o texto)
     with col1:
         st.markdown(
             """
@@ -458,7 +495,6 @@ with aba1:
             unsafe_allow_html=True,
         )
     
-    # 👉 modern-card em UM bloco só
     render_card(
         "<h2>🌟 Bem-vindo ao ATLAS Geoespacial de Milhã</h2>",
         """
@@ -508,10 +544,9 @@ with aba1:
         )
 
 # =====================================================
-# 2) Painel de Obras - COM MAPAS FUNCIONAIS
+# 2) Painel de Obras
 # =====================================================
 with aba2:
-    # Cabeçalho em card consolidado (um único bloco)
     render_card(
         "<h2>🏗️ Painel de Obras Municipais</h2>",
         "<p>Visualize e acompanhe o andamento das obras públicas em Milhã</p>",
@@ -523,11 +558,9 @@ with aba2:
     df_obras_raw = sniff_read_csv(CSV_OBRAS)
 
     if not df_obras_raw.empty:
-        # Normaliza colunas
         colmap = {c: norm_col(c) for c in df_obras_raw.columns}
         df_obras = df_obras_raw.rename(columns=colmap).copy()
 
-        # Detecta lat/lon
         lat_col = next((c for c in df_obras.columns if c in {"latitude","lat"}), None)
         lon_col = next((c for c in df_obras.columns if c in {"longitude","long","lon"}), None)
         if not lat_col or not lon_col:
@@ -541,8 +574,7 @@ with aba2:
 
         df_obras["__LAT__"] = to_float_series(df_obras[lat_col])
         df_obras["__LON__"] = to_float_series(df_obras[lon_col])
-
-        # Heurística para corrigir inversão e sinal
+        
         lat_s = pd.to_numeric(df_obras["__LAT__"], errors="coerce")
         lon_s = pd.to_numeric(df_obras["__LON__"], errors="coerce")
 
@@ -565,7 +597,6 @@ with aba2:
 
         df_map = df_obras.dropna(subset=["__LAT__", "__LON__"]).copy()
 
-        # Campos para popup/tabela
         cols = list(df_obras.columns)
         def pick_norm(*options):
             return next((c for c in cols if c in [norm_col(o) for o in options]), None)
@@ -580,7 +611,6 @@ with aba2:
 
         st.success(f"✅ **{len(df_map)} obra(s)** com coordenadas válidas encontradas")
 
-        # Painel lateral
         base_dir_candidates = ["dados", "/mnt/data"]
         gj_distritos = load_geojson_any([os.path.join(b, "milha_dist_polig.geojson") for b in base_dir_candidates])
         gj_sede      = load_geojson_any([os.path.join(b, "Distritos_pontos.geojson") for b in base_dir_candidates])
@@ -602,20 +632,17 @@ with aba2:
 
         show_panel = st.session_state["show_layer_panel_obras"]
 
-        # Layout: com painel ou sem painel
         if show_panel:
             col_map, col_panel = st.columns([5, 2], gap="large")
         else:
             col_map, = st.columns([1])
 
-        # Painel lateral (checkboxes) - CORREÇÃO APLICADA AQUI
         if show_panel:
             with col_panel:
                 st.markdown('<div class="sticky-panel">', unsafe_allow_html=True)
-                st.markdown('<div class="panel-title">🎛️ Camadas do Mapa</div>', unsafe_allow_html=True)  # CORRIGIDO
+                st.markdown('<div class="panel-title">🎛️ Camadas do Mapa</div>', unsafe_allow_html=True)
                 st.markdown('<div class="panel-subtitle">Controle a visualização</div>', unsafe_allow_html=True)
 
-                # ORGANIZAÇÃO NO PADRÃO DA ABA MILHÃ - COM EXPANDERS
                 with st.expander("🏗️ Obras", expanded=True):
                     show_obras = st.checkbox("Obras Municipais", value=True, key="obras_markers")
 
@@ -629,7 +656,6 @@ with aba2:
             show_distritos = st.session_state.get("obras_distritos", True)
             show_sede      = st.session_state.get("obras_sede", True)
 
-        # ---------- MAPA FUNCIONAL ----------
         with col_map:
             st.markdown("### 🗺️ Mapa Interativo")
             
@@ -643,7 +669,6 @@ with aba2:
             MousePosition().add_to(m2)
             Draw(export=True).add_to(m2)
 
-            # Centraliza pela camada Distritos se existir
             if gj_distritos:
                 b = geojson_bounds(gj_distritos)
                 if b:
@@ -655,13 +680,12 @@ with aba2:
 
             def status_icon_color(status_val: str):
                 s = (str(status_val) if status_val is not None else "").strip().lower()
-                if any(k in s for k in ["conclu", "finaliz"]):     return "green"
-                if any(k in s for k in ["execu", "andamento"]):    return "orange"
-                if any(k in s for k in ["paralis", "suspens"]):    return "red"
+                if any(k in s for k in ["conclu", "finaliz"]):   return "green"
+                if any(k in s for k in ["execu", "andamento"]):   return "orange"
+                if any(k in s for k in ["paralis", "suspens"]):   return "red"
                 if any(k in s for k in ["planej", "licita", "proj"]): return "blue"
                 return "gray"
 
-            # Distritos
             if show_distritos and gj_distritos:
                 folium.GeoJson(
                     gj_distritos,
@@ -669,7 +693,6 @@ with aba2:
                     style_function=lambda x: {"fillColor": "#9fe2fc", "fillOpacity": 0.1, "color": "#000000", "weight": 1},
                 ).add_to(m2)
 
-            # Sede de Distritos
             if show_sede and gj_sede:
                 lyr_sede = folium.FeatureGroup(name="Sede de Distritos")
                 for f in gj_sede.get("features", []):
@@ -678,7 +701,6 @@ with aba2:
                     folium.Marker([y, x], tooltip=nome, icon=folium.Icon(color="darkgreen", icon="home")).add_to(lyr_sede)
                 lyr_sede.add_to(m2)
 
-            # Obras
             if show_obras and not df_map.empty:
                 lyr_obras = folium.FeatureGroup(name="Obras")
                 ignore_cols = {"__LAT__", "__LON__"}
@@ -718,13 +740,11 @@ with aba2:
                         popup=folium.Popup(popup_html, max_width=420),
                         icon=folium.Icon(color=status_icon_color(status), icon="info-sign")
                     ).add_to(lyr_obras)
-
                 lyr_obras.add_to(m2)
 
             folium.LayerControl(collapsed=True).add_to(m2)
             folium_static(m2, width=1200, height=700)
 
-        # Tabela
         st.markdown("### 📋 Tabela de Obras")
         priority = [c_obra, c_status, c_empresa, c_valor, c_bairro, c_dtini, c_dtfim]
         ordered = [c for c in priority if c and c in df_obras.columns]
@@ -734,7 +754,7 @@ with aba2:
         st.error(f"❌ Não foi possível carregar o CSV de obras em: {CSV_OBRAS}")
 
 # =====================================================
-# 3) Milhã em Mapas — FERRAMENTAS PADRONIZADAS E PAINEL MODERNO
+# 3) Milhã em Mapas — COM CONTROLE DE CAMADAS ESTILIZADO
 # =====================================================
 with aba3:
     render_card(
@@ -759,126 +779,63 @@ with aba3:
         name: load_geojson_any([os.path.join(b, fname) for b in base_dir_candidates])
         for name, fname in files.items()
     }
-    
-    # Dicionário de mapas base
-    TILE_LAYERS = {
-        "Padrão (Claro)": ("CartoDB Positron", "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", "© OpenStreetMap, © CARTO"),
-        "Padrão (Escuro)": ("CartoDB Dark", "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", "© OpenStreetMap, © CARTO"),
-        "Satélite": ("Esri Satellite", "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", "Tiles © Esri"),
-        "Ruas (Detalhado)": ("Open Street Map", "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", "© OpenStreetMap contributors"),
-    }
 
-    # Layout do mapa e painel de controle
-    col_map, col_panel = st.columns([5, 2], gap="large")
+    # Layout do mapa em coluna única
+    col_map, = st.columns(1)
 
-    # ========================================
-    # PAINEL DE CONTROLE DE CAMADAS (NOVO)
-    # ========================================
-    with col_panel:
-        st.markdown('<div class="sticky-panel layer-control-panel">', unsafe_allow_html=True)
-        
-        st.markdown('<div class="panel-title">🎛️ Controle do Mapa</div>', unsafe_allow_html=True)
-        st.markdown('<div class="panel-subtitle">Selecione o que deseja visualizar</div><br>', unsafe_allow_html=True)
-
-        # Seletor de Mapa Base
-        st.markdown("<h3>🗺️ Mapas Base</h3>", unsafe_allow_html=True)
-        base_map_selection = st.radio(
-            "Selecione o mapa de fundo:",
-            options=list(TILE_LAYERS.keys()),
-            key="base_map_selector",
-            label_visibility="collapsed"
-        )
-
-        # Seletor de Camadas (Overlays)
-        st.markdown("<h3>📍 Camadas</h3>", unsafe_allow_html=True)
-
-        with st.expander("🗾 Território", expanded=True):
-            show_distritos = st.checkbox("Distritos", value=True, key="lyr_distritos")
-            show_sede_distritos = st.checkbox("Sede Distritos", value=True, key="lyr_sede")
-            show_localidades = st.checkbox("Localidades", value=False, key="lyr_local")
-
-        with st.expander("💧 Recursos Hídricos e Vias", expanded=False):
-            show_estradas = st.checkbox("Estradas", value=True, key="lyr_estradas")
-            show_espelhos_agua = st.checkbox("Espelhos d'Água", value=True, key="lyr_agua")
-            show_pocos_rural = st.checkbox("Poços (Zona Rural)", value=False, key="lyr_pocos_rural")
-            show_tecnologias = st.checkbox("Tecnologias Sociais", value=False, key="lyr_tecnologias")
-
-        with st.expander("🏥 Infraestrutura Pública", expanded=False):
-            show_escolas = st.checkbox("Escolas", value=False, key="lyr_escolas")
-            show_unidades_saude = st.checkbox("Unidades de Saúde", value=False, key="lyr_saude")
-            
-        st.markdown('</div>', unsafe_allow_html=True)
-
-
-    # ============================
-    # RENDERIZAÇÃO DO MAPA (NOVO)
-    # ============================
     with col_map:
-        m3 = folium.Map(location=[-5.680, -39.200], zoom_start=11, tiles=None)
+        # Cria o mapa base. Começamos com 'CartoDB Positron', mas os outros serão opções no controle.
+        m3 = folium.Map(location=[-5.680, -39.200], zoom_start=11, tiles="CartoDB Positron")
 
-        # 1. Adiciona o mapa base SELECIONADO
-        _, url, attr = TILE_LAYERS[base_map_selection]
-        folium.TileLayer(tiles=url, name=base_map_selection, attr=attr).add_to(m3)
+        # Adiciona os outros mapas base como opções
+        add_base_tiles(m3) # Nossa função utilitária já faz isso
 
-        # 2. Adiciona as camadas (overlays) SELECIONADAS
-        if show_distritos and data_geo["Distritos"]:
-            folium.GeoJson(data_geo["Distritos"], name="Distritos", style_function=lambda x: {"fillColor": "#2563EB", "fillOpacity": 0.1, "color": "#1E40AF", "weight": 1.5}).add_to(m3)
+        # --- CAMADAS (OVERLAYS) ---
+        # Usaremos FeatureGroups para agrupar elementos e controlar a visibilidade inicial.
         
-        if show_sede_distritos and data_geo["Sede Distritos"]:
-            fg_sede = folium.FeatureGroup(name="Sede Distritos")
+        # Grupo: Território (visível por padrão)
+        fg_territorio = folium.FeatureGroup(name="🗾 Território", show=True).add_to(m3)
+        if data_geo["Distritos"]:
+            folium.GeoJson(data_geo["Distritos"], name="Distritos", style_function=lambda x: {"fillColor": "#2563EB", "fillOpacity": 0.1, "color": "#1E40AF", "weight": 1.5}).add_to(fg_territorio)
+        if data_geo["Sede Distritos"]:
             for f in data_geo["Sede Distritos"].get("features", []):
                 coords = f["geometry"]["coordinates"]
                 name = f["properties"].get("Name", "Sede")
-                folium.Marker([coords[1], coords[0]], tooltip=name, icon=folium.Icon(color="darkblue", icon="home", prefix="fa")).add_to(fg_sede)
-            fg_sede.add_to(m3)
+                folium.Marker([coords[1], coords[0]], tooltip=name, icon=folium.Icon(color="darkblue", icon="home", prefix="fa")).add_to(fg_territorio)
+        
+        # Grupo: Infraestrutura (invisível por padrão)
+        fg_infra = folium.FeatureGroup(name="🏥 Infraestrutura Pública", show=False).add_to(m3)
+        if data_geo["Escolas"]:
+            folium.GeoJson(data_geo["Escolas"], name="Escolas", marker=folium.Marker(icon=folium.Icon(color='green', icon='school', prefix='fa')), tooltip=folium.GeoJsonTooltip(fields=['Name'], aliases=['Escola:'])).add_to(fg_infra)
+        if data_geo["Unidades de Saúde"]:
+            folium.GeoJson(data_geo["Unidades de Saúde"], name="Unidades de Saúde", marker=folium.Marker(icon=folium.Icon(color='red', icon='briefcase-medical', prefix='fa')), tooltip=folium.GeoJsonTooltip(fields=['Name'], aliases=['Posto:'])).add_to(fg_infra)
+        
+        # Grupo: Recursos Hídricos e Vias (visível por padrão)
+        fg_hidro = folium.FeatureGroup(name="💧 Hídrico & Vias", show=True).add_to(m3)
+        if data_geo["Estradas"]:
+            folium.GeoJson(data_geo["Estradas"], name="Estradas", style_function=lambda x: {"color": "#A16207", "weight": 2, "opacity": 0.7}).add_to(fg_hidro)
+        if data_geo["Espelhos d'Água"]:
+            folium.GeoJson(data_geo["Espelhos d'Água"], name="Espelhos d'Água", style_function=lambda x: {"fillColor": "#3B82F6", "fillOpacity": 0.7, "color": "#1D4ED8", "weight": 1}).add_to(fg_hidro)
+        
+        # Adiciona camadas individuais que não precisam de grupo
+        if data_geo["Localidades"]:
+            folium.GeoJson(data_geo["Localidades"], name="📍 Localidades", show=False, marker=folium.Marker(icon=folium.Icon(color='purple', icon='circle', prefix='fa')), tooltip=folium.GeoJsonTooltip(fields=['Name'], aliases=['Localidade:'])).add_to(m3)
 
-        if show_localidades and data_geo["Localidades"]:
-            folium.GeoJson(data_geo["Localidades"], name="Localidades", marker=folium.Marker(icon=folium.Icon(color='purple', icon='circle', prefix='fa')), tooltip=folium.GeoJsonTooltip(fields=['Name'], aliases=['Localidade:'])).add_to(m3)
-
-        if show_estradas and data_geo["Estradas"]:
-            folium.GeoJson(data_geo["Estradas"], name="Estradas", style_function=lambda x: {"color": "#A16207", "weight": 2, "opacity": 0.7}).add_to(m3)
-            
-        if show_espelhos_agua and data_geo["Espelhos d'Água"]:
-            folium.GeoJson(data_geo["Espelhos d'Água"], name="Espelhos d'Água", style_function=lambda x: {"fillColor": "#3B82F6", "fillOpacity": 0.7, "color": "#1D4ED8", "weight": 1}).add_to(m3)
-
-        if show_escolas and data_geo["Escolas"]:
-            folium.GeoJson(data_geo["Escolas"], name="Escolas", marker=folium.Marker(icon=folium.Icon(color='green', icon='school', prefix='fa')), tooltip=folium.GeoJsonTooltip(fields=['Name'], aliases=['Escola:'])).add_to(m3)
-
-        if show_unidades_saude and data_geo["Unidades de Saúde"]:
-            folium.GeoJson(data_geo["Unidades de Saúde"], name="Unidades de Saúde", marker=folium.Marker(icon=folium.Icon(color='red', icon='briefcase-medical', prefix='fa')), tooltip=folium.GeoJsonTooltip(fields=['Name'], aliases=['Posto:'])).add_to(m3)
-
-        if show_pocos_rural and data_geo["Poços Zona Rural"]:
-            folium.GeoJson(data_geo["Poços Zona Rural"], name="Poços (Zona Rural)", marker=folium.Marker(icon=folium.Icon(color='blue', icon='tint', prefix='fa')), tooltip=folium.GeoJsonTooltip(fields=['Localidade'], aliases=['Local:'])).add_to(m3)
-            
-        if show_tecnologias and data_geo["Tecnologias Sociais"]:
-            folium.GeoJson(data_geo["Tecnologias Sociais"], name="Tecnologias Sociais", marker=folium.Marker(icon=folium.Icon(color='orange', icon='gears', prefix='fa')), tooltip=folium.GeoJsonTooltip(fields=['Tecnologia'], aliases=['Tecnologia:'])).add_to(m3)
-            
-        # 3. Adiciona plugins e ajusta o zoom
+        # Plugins e ajustes
         Fullscreen().add_to(m3)
         MeasureControl(primary_length_unit="kilometers").add_to(m3)
         MousePosition().add_to(m3)
         Draw(export=True).add_to(m3)
 
-        # Ajusta o mapa aos limites da camada de distritos, se ela existir
+        # Ajusta o mapa aos limites da camada de distritos
         if data_geo["Distritos"]:
             bounds = geojson_bounds(data_geo["Distritos"])
             if bounds:
                 m3.fit_bounds(bounds)
-        
-        # 4. Renderiza o mapa SEM o LayerControl padrão
+
+        # >>> A MÁGICA ACONTECE AQUI <<<
+        # Adiciona o controle de camadas. O CSS que injetamos fará o resto.
+        folium.LayerControl(collapsed=True, position='topright').add_to(m3)
+
+        # Renderiza o mapa
         folium_static(m3, width=1200, height=700)
-
-
-# =====================================================
-# Rodapé
-# =====================================================
-st.markdown("---")
-st.markdown(
-    f"""
-    <div style='text-align: center; color: {COLORS["text_light"]}; padding: 2rem;'>
-        <p><strong>ATLAS Geoespacial de Milhã</strong> - Desenvolvido para transparência e gestão pública eficiente</p>
-        <p style='font-size: 0.9rem;'>© 2024 Prefeitura Municipal de Milhã</p>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
