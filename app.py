@@ -757,7 +757,7 @@ with aba3:
     if "m3_should_fit" not in st.session_state:
         st.session_state["m3_should_fit"] = True
 
-    # Carregar dados GeoJSON - ADICIONANDO OUTORGAS VIGENTES
+    # Carregar dados GeoJSON - ATUALIZADO COM OUTORGAS MILHA
     base_dir_candidates = ["dados", "/mnt/data"]
     files = {
         "Distritos": "milha_dist_polig.geojson",
@@ -769,7 +769,7 @@ with aba3:
         "Poços Cidade": "pocos_cidade_mil.geojson",
         "Poços Zona Rural": "pocos_rural_mil.geojson",
         "Estradas": "estradas_milha.geojson",
-        "Outorgas Vigentes": "outorgas_vigentes.geojson",  # NOVA CAMADA
+        "Outorgas Vigentes": "outorgas_milha.geojson",  # ARQUIVO ATUALIZADO
     }
     data_geo = {
         name: load_geojson_any([os.path.join(b, fname) for b in base_dir_candidates])
@@ -779,7 +779,7 @@ with aba3:
     # Layout do mapa/painel (Fixo)
     col_map, col_panel = st.columns([5, 2], gap="large")
 
-    # Painel de camadas (Fixo) - ATUALIZADO COM OUTORGAS VIGENTES
+    # Painel de camadas (Fixo) - ATUALIZADO COM OUTORGAS MILHA
     with col_panel:
         st.markdown('<div class="sticky-panel">', unsafe_allow_html=True)
         st.markdown('<div class="panel-title">🎯 Camadas do Mapa</div>', unsafe_allow_html=True)
@@ -797,7 +797,7 @@ with aba3:
 
         with st.expander("💧 Recursos Hídricos", expanded=False):
             show_tecnologias = st.checkbox("Tecnologias Sociais", value=False, key="lyr_tec")
-            show_outorgas = st.checkbox("Outorgas Vigentes", value=False, key="lyr_outorgas")  # NOVO CHECKBOX
+            show_outorgas = st.checkbox("Outorgas Vigentes", value=False, key="lyr_outorgas")
             st.markdown("**Poços**")
             show_pocos_cidade = st.checkbox("Poços Cidade", value=False, key="lyr_pc")
             show_pocos_rural = st.checkbox("Poços Zona Rural", value=False, key="lyr_pr")
@@ -967,19 +967,15 @@ with aba3:
                 folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="orange", icon="tint")).add_to(layer_tec)
             layer_tec.add_to(m3)
 
-        # NOVA CAMADA: OUTORGAS VIGENTES
+        # CAMADA ATUALIZADA: OUTORGAS MILHA
         if show_outorgas and data_geo.get("Outorgas Vigentes"):
             layer_outorgas = folium.FeatureGroup(name="Outorgas Vigentes")
             for ftr in data_geo["Outorgas Vigentes"]["features"]:
                 props = ftr["properties"]
                 
-                # Converter coordenadas UTM para Lat/Long (aproximado)
-                easting = props.get("Easting (E)", 0)
-                northing = props.get("Northing (N)", 0)
-                
-                # Conversão aproximada para a região de Milhã
-                lat = -5.67 + (northing - 9380000) * 0.00001
-                lng = -39.19 + (easting - 479000) * 0.0001
+                # Usar coordenadas geográficas diretamente do GeoJSON
+                coords = ftr["geometry"]["coordinates"]
+                lng, lat = coords[0], coords[1]
                 
                 # Criar popup simplificado conforme solicitado
                 popup_content = f"""
