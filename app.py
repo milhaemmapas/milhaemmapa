@@ -416,12 +416,73 @@ create_header()
 aba1, aba2, aba3 = st.tabs(["🏠 Página Inicial", "🏗️ Painel de Obras", "🗺️ Milhã em Mapas"])
 
 # =====================================================
-# 1) Página Inicial - Atualizada
+# 1) Página Inicial - Atualizada (com hover animado nos KPI)
 # =====================================================
 with aba1:
+    # CSS das animações de hover dos KPI
+    st.markdown("""
+    <style>
+      /* cartão base */
+      .stat-card{
+        position: relative;
+        border-radius: 16px;
+        transition: transform 160ms ease, box-shadow 160ms ease, background-color 160ms ease, border-color 160ms ease;
+        will-change: transform, box-shadow;
+        cursor: default;
+      }
+      /* brilho "sheen" ao passar o mouse */
+      .stat-card::after{
+        content:"";
+        position:absolute;
+        top:0; left:-40%;
+        width:40%; height:100%;
+        background: linear-gradient(120deg, rgba(255,255,255,0) 0%, rgba(255,255,255,.35) 60%, rgba(255,255,255,0) 100%);
+        transform: skewX(-20deg) translateX(-120%);
+        opacity:0;
+        pointer-events:none;
+      }
+      .stat-card:hover{
+        transform: translateY(-4px) scale(1.02);
+        box-shadow: 0 12px 28px rgba(0,0,0,.15);
+      }
+      .stat-card:hover::after{
+        animation: sheen 900ms ease forwards;
+      }
+      @keyframes sheen{
+        0%   { transform: skewX(-20deg) translateX(-120%); opacity:0; }
+        20%  { opacity:1; }
+        100% { transform: skewX(-20deg) translateX(260%); opacity:0; }
+      }
+
+      /* ícone e número ganham vida no hover */
+      .stat-card .feature-icon{
+        display:flex; align-items:center; justify-content:center;
+        font-size: 28px;
+        transition: transform 200ms ease, text-shadow 200ms ease;
+        will-change: transform;
+      }
+      .stat-card:hover .feature-icon{
+        transform: translateY(-2px) scale(1.06) rotate(-2deg);
+        text-shadow: 0 2px 10px rgba(0,0,0,.15);
+      }
+      .stat-card .stat-number{
+        transition: transform 200ms ease, letter-spacing 200ms ease, text-shadow 200ms ease;
+      }
+      .stat-card:hover .stat-number{
+        transform: translateY(-1px);
+        letter-spacing: .4px;
+        text-shadow: 0 2px 10px rgba(0,0,0,.12);
+      }
+
+      /* acessibilidade: respeita quem prefere menos movimento */
+      @media (prefers-reduced-motion: reduce){
+        .stat-card, .stat-card * { transition: none !important; animation: none !important; }
+      }
+    </style>
+    """, unsafe_allow_html=True)
+
     col1, col2, col3 = st.columns(3)
-    
-    # 👉 Cada card em UM bloco (corrige o "efeito" não acompanhar o texto)
+
     with col1:
         st.markdown(
             """
@@ -430,10 +491,8 @@ with aba1:
                 <div class="stat-number">100+</div>
                 <div class="stat-label">Dados Geoespaciais</div>
             </div>
-            """,
-            unsafe_allow_html=True,
+            """, unsafe_allow_html=True
         )
-    
     with col2:
         st.markdown(
             """
@@ -442,10 +501,8 @@ with aba1:
                 <div class="stat-number">50+</div>
                 <div class="stat-label">Obras Monitoradas</div>
             </div>
-            """,
-            unsafe_allow_html=True,
+            """, unsafe_allow_html=True
         )
-    
     with col3:
         st.markdown(
             """
@@ -454,13 +511,13 @@ with aba1:
                 <div class="stat-number">30+</div>
                 <div class="stat-label">Recursos Hídricos</div>
             </div>
-            """,
-            unsafe_allow_html=True,
+            """, unsafe_allow_html=True
         )
 
-    # 🌿 Espaço entre os KPIs e o painel de boas-vindas
+    # espaçamento entre KPI e painel de boas-vindas (mantido)
     st.markdown("<div style='margin-top: 2rem;'></div>", unsafe_allow_html=True)
-    
+
+      
     # 👉 Painel de boas-vindas
     render_card(
         "<h2>🌟 Bem-vindo ao ATLAS Geoespacial de Milhã</h2>",
