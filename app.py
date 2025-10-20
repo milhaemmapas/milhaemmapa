@@ -820,14 +820,8 @@ with aba3:
         )
         add_base_tiles(m3)
         
-        # --- FERRAMENTAS DO MAPA ORGANIZADAS ---
-        # 1. Controle de Camadas - TOPRIGHT (PRIMEIRO - mais importante)
-        folium.LayerControl(
-            collapsed=False,  # Deixe expandido para ser mais visível
-            position='topright'
-        ).add_to(m3)
-        
-        # 2. Fullscreen - TOPRIGHT (abaixo do LayerControl)
+        # --- FERRAMENTAS DO MAPA (m3) ORGANIZADAS ---
+        # 1. Fullscreen - TOPRIGHT 
         Fullscreen(
             position='topright', 
             title='Tela Cheia', 
@@ -835,7 +829,10 @@ with aba3:
             force_separate_button=True
         ).add_to(m3)
         
-        # 3. Controle de Medidas - TOPLEFT 
+        # 2. Draw - TOPLEFT (padrão)
+        Draw(export=True).add_to(m3)
+
+        # 3. Controle de Medidas - TOPLEFT (padrão)
         measure_control = MeasureControl(
             primary_length_unit="meters", 
             secondary_length_unit="kilometers", 
@@ -863,6 +860,8 @@ with aba3:
             st.session_state["m3_should_fit"] = False  # trava o auto-fit
 
         # --- Camadas (não alteram viewport) ---
+        # NOTE: Todos os GeoJson/FeatureGroups adicionados aqui serão exibidos no LayerControl abaixo.
+
         if show_distritos and data_geo.get("Distritos"):
             folium.GeoJson(
                 data_geo["Distritos"],
@@ -964,6 +963,9 @@ with aba3:
                 )
                 folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="cadetblue", icon="tint")).add_to(layer_pr)
             layer_pr.add_to(m3)
+
+        # 5. LayerControl (Controle de Camadas) - Deve ser a ÚLTIMA A SER ADICIONADA para incluir todas as camadas.
+        folium.LayerControl(collapsed=True).add_to(m3)
 
         # Render preservando viewport quando possível
         if _HAS_ST_FOLIUM:
