@@ -243,6 +243,114 @@ def css_global():
         unsafe_allow_html=True,
     )
 
+def inject_layercontrol_css():
+    """Estilo premium para o Leaflet LayerControl (botão flutuante + glassmorphism)."""
+    st.markdown("""
+    <style>
+    .leaflet-control-layers-toggle{
+      width:44px;height:44px;border-radius:14px;
+      box-shadow:0 8px 24px rgba(0,0,0,.18);
+      border:1px solid rgba(0,0,0,.1);
+      background:#ffffff !important;
+      background-size:24px 24px;
+      background-position:center;
+      background-repeat:no-repeat;
+      transition:transform .08s ease, box-shadow .2s ease, background-color .2s ease;
+      background-image:url("data:image/svg+xml;utf8,\
+      <svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%231E3A8A' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'>\
+        <polygon points='12 2 2 7 12 12 22 7 12 2'/>\
+        <polyline points='2 17 12 22 22 17'/>\
+        <polyline points='2 12 12 17 22 12'/>\
+      </svg>");
+    }
+    .leaflet-control-layers-toggle:hover{
+      transform:translateY(-1px);
+      box-shadow:0 10px 28px rgba(0,0,0,.22);
+    }
+    .leaflet-control-layers,
+    .leaflet-control-layers-expanded{
+      border:none !important;
+      background:transparent !important;
+    }
+    .leaflet-control-layers-list{
+      min-width: 260px;
+      max-height: 320px;
+      overflow:auto;
+      border-radius:18px;
+      background:rgba(255,255,255,.72);
+      backdrop-filter:saturate(140%) blur(8px);
+      -webkit-backdrop-filter:saturate(140%) blur(8px);
+      box-shadow:0 14px 40px rgba(2,6,23,.18), inset 0 1px 0 rgba(255,255,255,.6);
+      border:1px solid rgba(15,23,42,.10);
+      padding:10px 12px 12px 12px;
+      color:#0f172a;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    .leaflet-control-layers-list:before{
+      content:"Camadas do mapa";
+      display:block;
+      font-weight:700;
+      font-size:14px;
+      letter-spacing:.2px;
+      color:#0b1220;
+      padding:10px 12px 6px 12px;
+    }
+    .leaflet-control-layers-base{ 
+      margin:6px 0 10px 0; 
+      padding-bottom:8px;
+      border-bottom:1px dashed rgba(2,6,23,.20);
+    }
+    .leaflet-control-layers-base:before{
+      content:"Mapas de fundo";
+      display:block; font-size:12px; font-weight:600; color:#334155;
+      margin:0 0 6px 0; opacity:.9;
+    }
+    .leaflet-control-layers-overlays:before{
+      content:"Camadas";
+      display:block; font-size:12px; font-weight:600; color:#334155;
+      margin:6px 0 6px 0; opacity:.9;
+    }
+    .leaflet-control-layers-selector{
+      transform:scale(1.15);
+      margin-right:10px !important;
+      accent-color:#1E3A8A;
+    }
+    .leaflet-control-layers label{
+      display:flex; align-items:center; gap:8px;
+      padding:8px 10px;
+      border-radius:12px;
+      transition: background .15s ease, box-shadow .15s ease;
+      font-size:13px; line-height:1.25;
+    }
+    .leaflet-control-layers label:hover{
+      background:rgba(30,58,138,.08);
+      box-shadow: inset 0 0 0 1px rgba(30,58,138,.15);
+    }
+    .leaflet-control-layers-base label span:after{
+      content:"Base";
+      margin-left:auto; font-size:10px; font-weight:700;
+      color:#0b1220; background:#e2e8f0;
+      border:1px solid rgba(2,6,23,.12);
+      padding:3px 6px; border-radius:999px;
+    }
+    .leaflet-control-layers-overlays label span:after{
+      content:"On/Off";
+      margin-left:auto; font-size:10px; font-weight:700;
+      color:#065f46; background:#d1fae5;
+      border:1px solid rgba(5,150,105,.25);
+      padding:3px 6px; border-radius:999px;
+    }
+    .leaflet-control-layers-list::-webkit-scrollbar{{ width:10px; }}
+    .leaflet-control-layers-list::-webkit-scrollbar-thumb{{
+      background:linear-gradient(180deg,#94a3b8,#64748b);
+      border-radius:999px; border:3px solid rgba(255,255,255,.45);
+    }}
+    .leaflet-control-layers label:focus-within{{
+      outline: 2px solid #1E3A8A; outline-offset:2px;
+    }}
+    </style>
+    """, unsafe_allow_html=True)
+
 def create_header():
     st.markdown(
         f"""
@@ -289,14 +397,14 @@ def show_footer_banner():
     )
 
 def autodetect_coords(df: pd.DataFrame):
-    candidates_lat = [c for c in df.columns if re.search(r"(?:^|\b)(lat|latitude|y)(?:\b|$)", c, re.I)]
-    candidates_lon = [c for c in df.columns if re.search(r"(?:^|\b)(lon|long|longitude|x)(?:\b|$)", c, re.I)]
+    candidates_lat = [c for c in df.columns if re.search(r"(?:^|\\b)(lat|latitude|y)(?:\\b|$)", c, re.I)]
+    candidates_lon = [c for c in df.columns if re.search(r"(?:^|\\b)(lon|long|longitude|x)(?:\\b|$)", c, re.I)]
     if candidates_lat and candidates_lon:
         return candidates_lat[0], candidates_lon[0]
     for c in df.columns:
         if re.search(r"coord|coordenad", c, re.I):
             try:
-                tmp = df[c].astype(str).str.extract(r"(-?\d+[\.,]?\d*)\s*[,;]\s*(-?\d+[\.,]?\d*)")
+                tmp = df[c].astype(str).str.extract(r"(-?\\d+[\\.,]?\\d*)\\s*[,;]\\s*(-?\\d+[\\.,]?\\d*)")
                 tmp.columns = ["LATITUDE", "LONGITUDE"]
                 tmp["LATITUDE"] = tmp["LATITUDE"].str.replace(",", ".", regex=False).astype(float)
                 tmp["LONGITUDE"] = tmp["LONGITUDE"].str.replace(",", ".", regex=False).astype(float)
@@ -361,7 +469,7 @@ def to_float_series(s: pd.Series) -> pd.Series:
     def _conv(v):
         if pd.isna(v): return None
         txt = str(v)
-        m = re.search(r"-?\d+[.,]?\d*", txt)
+        m = re.search(r"-?\\d+[.,]?\\d*", txt)
         if not m: return None
         try: return float(m.group(0).replace(",", "."))
         except Exception: return None
@@ -420,8 +528,6 @@ aba1, aba2, aba3 = st.tabs(["🏠 Página Inicial", "🏗️ Painel de Obras", "
 # =====================================================
 with aba1:
     col1, col2, col3 = st.columns(3)
-    
-    # 👉 Cada card em UM bloco (corrige o "efeito" não acompanhar o texto)
     with col1:
         st.markdown(
             """
@@ -433,7 +539,6 @@ with aba1:
             """,
             unsafe_allow_html=True,
         )
-    
     with col2:
         st.markdown(
             """
@@ -445,7 +550,6 @@ with aba1:
             """,
             unsafe_allow_html=True,
         )
-    
     with col3:
         st.markdown(
             """
@@ -457,8 +561,6 @@ with aba1:
             """,
             unsafe_allow_html=True,
         )
-    
-    # 👉 modern-card em UM bloco só
     render_card(
         "<h2>🌟 Bem-vindo ao ATLAS Geoespacial de Milhã</h2>",
         """
@@ -475,9 +577,7 @@ with aba1:
         </ul>
         """
     )
-    
     colA, colB = st.columns(2)
-    
     with colA:
         render_card(
             "<h3>🗺️ Explore o Território</h3>",
@@ -491,7 +591,6 @@ with aba1:
             </ul>
             """
         )
-    
     with colB:
         render_card(
             "<h3>🏗️ Acompanhe as Obras</h3>",
@@ -511,7 +610,6 @@ with aba1:
 # 2) Painel de Obras - COM MAPAS FUNCIONAIS
 # =====================================================
 with aba2:
-    # Cabeçalho em card consolidado (um único bloco)
     render_card(
         "<h2>🏗️ Painel de Obras Municipais</h2>",
         "<p>Visualize e acompanhe o andamento das obras públicas em Milhã</p>",
@@ -608,21 +706,17 @@ with aba2:
         else:
             col_map, = st.columns([1])
 
-        # Painel lateral (checkboxes) - CORREÇÃO APLICADA AQUI
+        # Painel lateral (checkboxes)
         if show_panel:
             with col_panel:
                 st.markdown('<div class="sticky-panel">', unsafe_allow_html=True)
-                st.markdown('<div class="panel-title">🎛️ Camadas do Mapa</div>', unsafe_allow_html=True)  # CORRIGIDO
+                st.markdown('<div class="panel-title">🎛️ Camadas do Mapa</div>', unsafe_allow_html=True)
                 st.markdown('<div class="panel-subtitle">Controle a visualização</div>', unsafe_allow_html=True)
-
-                # ORGANIZAÇÃO NO PADRÃO DA ABA MILHÃ - COM EXPANDERS
                 with st.expander("🏗️ Obras", expanded=True):
                     show_obras = st.checkbox("Obras Municipais", value=True, key="obras_markers")
-
                 with st.expander("🗾 Território", expanded=False):
                     show_distritos = st.checkbox("Distritos", value=True, key="obras_distritos")
                     show_sede = st.checkbox("Sede Distritos", value=True, key="obras_sede")
-
                 st.markdown('</div>', unsafe_allow_html=True)
         else:
             show_obras     = st.session_state.get("obras_markers", True)
@@ -632,7 +726,8 @@ with aba2:
         # ---------- MAPA FUNCIONAL ----------
         with col_map:
             st.markdown("### 🗺️ Mapa Interativo")
-            
+            inject_layercontrol_css()  # <<< estilo do LayerControl
+
             default_center = [-5.680, -39.200]
             default_zoom = 12
 
@@ -665,13 +760,13 @@ with aba2:
             if show_distritos and gj_distritos:
                 folium.GeoJson(
                     gj_distritos,
-                    name="Distritos",
+                    name="🏞️ Distritos",
                     style_function=lambda x: {"fillColor": "#9fe2fc", "fillOpacity": 0.1, "color": "#000000", "weight": 1},
                 ).add_to(m2)
 
             # Sede de Distritos
             if show_sede and gj_sede:
-                lyr_sede = folium.FeatureGroup(name="Sede de Distritos")
+                lyr_sede = folium.FeatureGroup(name="🏠 Sede de Distritos")
                 for f in gj_sede.get("features", []):
                     x, y = f["geometry"]["coordinates"]
                     nome = f.get("properties", {}).get("Name", "Sede")
@@ -680,7 +775,7 @@ with aba2:
 
             # Obras
             if show_obras and not df_map.empty:
-                lyr_obras = folium.FeatureGroup(name="Obras")
+                lyr_obras = folium.FeatureGroup(name="🧱 Obras")
                 ignore_cols = {"__LAT__", "__LON__"}
                 for _, r in df_map.iterrows():
                     nome   = str(r.get(c_obra, "Obra")) if c_obra else "Obra"
@@ -757,7 +852,7 @@ with aba3:
     if "m3_should_fit" not in st.session_state:
         st.session_state["m3_should_fit"] = True
 
-    # Carregar dados GeoJSON - ATUALIZADO COM ESPELHOS D'ÁGUA
+    # Carregar dados GeoJSON
     base_dir_candidates = ["dados", "/mnt/data"]
     files = {
         "Distritos": "milha_dist_polig.geojson",
@@ -770,7 +865,7 @@ with aba3:
         "Poços Zona Rural": "pocos_rural_mil.geojson",
         "Estradas": "estradas_milha.geojson",
         "Outorgas Vigentes": "outorgas_milha.geojson",
-        "Espelhos d'Água": "espelhos_dagua.geojson",  # NOVA CAMADA ADICIONADA
+        "Espelhos d'Água": "espelhos_dagua.geojson",
     }
     data_geo = {
         name: load_geojson_any([os.path.join(b, fname) for b in base_dir_candidates])
@@ -780,7 +875,7 @@ with aba3:
     # Layout do mapa/painel (Fixo)
     col_map, col_panel = st.columns([5, 2], gap="large")
 
-    # Painel de camadas (Fixo) - ATUALIZADO COM ESPELHOS D'ÁGUA
+    # Painel de camadas (Fixo)
     with col_panel:
         st.markdown('<div class="sticky-panel">', unsafe_allow_html=True)
         st.markdown('<div class="panel-title">🎯 Camadas do Mapa</div>', unsafe_allow_html=True)
@@ -799,7 +894,7 @@ with aba3:
         with st.expander("💧 Recursos Hídricos", expanded=False):
             show_tecnologias = st.checkbox("Tecnologias Sociais", value=False, key="lyr_tec")
             show_outorgas = st.checkbox("Outorgas Vigentes", value=False, key="lyr_outorgas")
-            show_espelhos_agua = st.checkbox("Espelhos d'Água", value=False, key="lyr_espelhos")  # NOVO CHECKBOX
+            show_espelhos_agua = st.checkbox("Espelhos d'Água", value=False, key="lyr_espelhos")
             st.markdown("**Poços**")
             show_pocos_cidade = st.checkbox("Poços Cidade", value=False, key="lyr_pc")
             show_pocos_rural = st.checkbox("Poços Zona Rural", value=False, key="lyr_pr")
@@ -807,10 +902,11 @@ with aba3:
         st.markdown('</div>', unsafe_allow_html=True)
 
     # =======================
-    # MAPA (usando mesma abordagem da aba Obras)
+    # MAPA
     # =======================
     with col_map:
         st.markdown("### 🗺️ Mapa Interativo")
+        inject_layercontrol_css()  # <<< estilo do LayerControl
 
         # Usa SEMPRE o último centro/zoom salvo
         center = st.session_state["m3_view"]["center"]
@@ -824,52 +920,15 @@ with aba3:
         )
         add_base_tiles(m3)
         
-        # --- FERRAMENTAS DO MAPA ORGANIZADAS POR POSIÇÃO ---
-        
-        # LADO ESQUERDO (TOPLEFT)
-        
-        # 1. Fullscreen - AGORA EM 'topleft'
-        Fullscreen(
-            position='topleft', 
-            title='Tela Cheia', 
-            title_cancel='Sair', 
-            force_separate_button=True
-        ).add_to(m3)
-        
-        # LADO DIREITO (TOPRIGHT)
-        
-        # 2. Ferramentas de Desenho - AGORA EM 'topright'
+        # Ferramentas
+        Fullscreen(position='topleft', title='Tela Cheia', title_cancel='Sair', force_separate_button=True).add_to(m3)
         Draw(
             export=True,
             position='topright',
-            draw_options={
-                'marker': True,
-                'circle': True,
-                'polyline': True,
-                'polygon': True,
-                'rectangle': True
-            }
+            draw_options={'marker': True,'circle': True,'polyline': True,'polygon': True,'rectangle': True}
         ).add_to(m3)
-        
-        # 3. Controle de Medidas - AGORA EM 'topright'
-        m3.add_child(MeasureControl(
-            primary_length_unit="meters", 
-            secondary_length_unit="kilometers", 
-            primary_area_unit="hectares",
-            position='topright'
-        ))
-        
-        # LADO INFERIOR ESQUERDO (BOTTOMLEFT)
-        
-        # 4. Posição do Mouse - BOTTOMLEFT (posição mantida)
-        MousePosition(
-            position='bottomleft',
-            separator=' | ',
-            empty_string='Coordenadas indisponíveis',
-            lng_first=True,
-            num_digits=4,
-            prefix='Coordenadas:'
-        ).add_to(m3)
+        m3.add_child(MeasureControl(primary_length_unit="meters", secondary_length_unit="kilometers", primary_area_unit="hectares", position='topright'))
+        MousePosition(position='bottomleft', separator=' | ', empty_string='Coordenadas indisponíveis', lng_first=True, num_digits=4, prefix='Coordenadas:').add_to(m3)
         
         # Fit somente na primeira carga para centralizar
         if st.session_state["m3_should_fit"] and data_geo.get("Distritos"):
@@ -880,17 +939,16 @@ with aba3:
             st.session_state["m3_should_fit"] = False
 
         # --- Camadas ---
-        # Território
         if show_distritos and data_geo.get("Distritos"):
             folium.GeoJson(
                 data_geo["Distritos"],
-                name="Distritos",
+                name="🏞️ Distritos",
                 style_function=lambda x: {"fillColor": "#9fe2fc", "fillOpacity": 0.2, "color": "#000000", "weight": 1},
                 tooltip=folium.GeoJsonTooltip(fields=list(data_geo["Distritos"]["features"][0]["properties"].keys())[:3])
             ).add_to(m3)
 
         if show_sede_distritos and data_geo.get("Sede Distritos"):
-            layer_sd = folium.FeatureGroup(name="Sede Distritos")
+            layer_sd = folium.FeatureGroup(name="🏠 Sede Distritos")
             for ftr in data_geo["Sede Distritos"]["features"]:
                 x, y = ftr["geometry"]["coordinates"]
                 nome = ftr["properties"].get("Name", "Sede")
@@ -898,7 +956,7 @@ with aba3:
             layer_sd.add_to(m3)
 
         if show_localidades and data_geo.get("Localidades"):
-            layer_loc = folium.FeatureGroup(name="Localidades")
+            layer_loc = folium.FeatureGroup(name="📍 Localidades")
             for ftr in data_geo["Localidades"]["features"]:
                 x, y = ftr["geometry"]["coordinates"]
                 props = ftr["properties"]
@@ -910,7 +968,7 @@ with aba3:
 
         # Infraestrutura
         if show_escolas and data_geo.get("Escolas"):
-            layer_esc = folium.FeatureGroup(name="Escolas")
+            layer_esc = folium.FeatureGroup(name="🏫 Escolas")
             for ftr in data_geo["Escolas"]["features"]:
                 x, y = ftr["geometry"]["coordinates"]
                 props = ftr["properties"]
@@ -925,7 +983,7 @@ with aba3:
             layer_esc.add_to(m3)
 
         if show_unidades and data_geo.get("Unidades de Saúde"):
-            layer_saude = folium.FeatureGroup(name="Unidades de Saúde")
+            layer_saude = folium.FeatureGroup(name="🩺 Unidades de Saúde")
             for ftr in data_geo["Unidades de Saúde"]["features"]:
                 x, y = ftr["geometry"]["coordinates"]
                 props = ftr["properties"]
@@ -940,27 +998,23 @@ with aba3:
                 folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="green", icon="plus-sign")).add_to(layer_saude)
             layer_saude.add_to(m3)
 
-        # NOVA CAMADA: ESTRADAS
+        # Estradas
         if show_estradas and data_geo.get("Estradas"):
-            layer_estradas = folium.FeatureGroup(name="Estradas")
+            layer_estradas = folium.FeatureGroup(name="🛣️ Estradas")
             folium.GeoJson(
                 data_geo["Estradas"],
-                name="Estradas",
-                style_function=lambda x: {
-                    "color": "#8B4513",  # Cor marrom para estradas
-                    "weight": 2,         # Linha mais grossa
-                    "opacity": 0.8
-                },
+                name="🛣️ Estradas",
+                style_function=lambda x: {"color": "#8B4513","weight": 2,"opacity": 0.8},
                 tooltip=folium.GeoJsonTooltip(
                     fields=list(data_geo["Estradas"]["features"][0]["properties"].keys())[:3],
-                    aliases=["Propriedade:"] * 3  # Rótulos para as propriedades
+                    aliases=["Propriedade:"] * 3
                 )
             ).add_to(layer_estradas)
             layer_estradas.add_to(m3)
 
         # Recursos Hídricos
         if show_tecnologias and data_geo.get("Tecnologias Sociais"):
-            layer_tec = folium.FeatureGroup(name="Tecnologias Sociais")
+            layer_tec = folium.FeatureGroup(name="🔧 Tecnologias Sociais")
             for ftr in data_geo["Tecnologias Sociais"]["features"]:
                 x, y = ftr["geometry"]["coordinates"]
                 props = ftr["properties"]
@@ -969,17 +1023,12 @@ with aba3:
                 folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="orange", icon="tint")).add_to(layer_tec)
             layer_tec.add_to(m3)
 
-        # CAMADA ATUALIZADA: OUTORGAS MILHA
         if show_outorgas and data_geo.get("Outorgas Vigentes"):
-            layer_outorgas = folium.FeatureGroup(name="Outorgas Vigentes")
+            layer_outorgas = folium.FeatureGroup(name="📜 Outorgas Vigentes")
             for ftr in data_geo["Outorgas Vigentes"]["features"]:
                 props = ftr["properties"]
-                
-                # Usar coordenadas geográficas diretamente do GeoJSON
                 coords = ftr["geometry"]["coordinates"]
                 lng, lat = coords[0], coords[1]
-                
-                # Criar popup simplificado conforme solicitado
                 popup_content = f"""
                 <div style='font-family:Arial;font-size:12px;max-width:300px'>
                     <b>Requerente:</b> {props.get('REQUERENTE', 'N/A')}<br>
@@ -990,8 +1039,6 @@ with aba3:
                     <b>Volume Outorgado:</b> {props.get('VOLUME OUTORGADO (m³)', 'N/A')} m³
                 </div>
                 """
-                
-                # Definir cor baseada no tipo de uso
                 tipo_uso = props.get('TIPO DE USO', '').upper()
                 if 'IRRIGACAO' in tipo_uso:
                     icon_color = 'green'
@@ -1003,44 +1050,27 @@ with aba3:
                     icon_color = 'purple'
                 else:
                     icon_color = 'gray'
-                
                 folium.Marker(
                     [lat, lng],
                     tooltip=props.get('REQUERENTE', 'Outorga'),
                     popup=folium.Popup(popup_content, max_width=300),
                     icon=folium.Icon(color=icon_color, icon='file-text', prefix='fa')
                 ).add_to(layer_outorgas)
-            
             layer_outorgas.add_to(m3)
 
-        # NOVA CAMADA: ESPELHOS D'ÁGUA
         if show_espelhos_agua and data_geo.get("Espelhos d'Água"):
-            layer_espelhos = folium.FeatureGroup(name="Espelhos d'Água")
+            layer_espelhos = folium.FeatureGroup(name="💧 Espelhos d'Água")
             folium.GeoJson(
                 data_geo["Espelhos d'Água"],
-                name="Espelhos d'Água",
-                style_function=lambda x: {
-                    "fillColor": "#1E90FF",  # Azul para corpos d'água
-                    "fillOpacity": 0.7,      # Opacidade moderada
-                    "color": "#000080",      # Borda azul escuro
-                    "weight": 2,             # Espessura da borda
-                    "opacity": 0.8
-                },
-                tooltip=folium.GeoJsonTooltip(
-                    fields=["CODIGOES0", "AREA1"],
-                    aliases=["Código:", "Área (ha):"],
-                    style=("font-family: Arial; font-size: 12px;")
-                ),
-                popup=folium.GeoJsonPopup(
-                    fields=["CODIGOES0", "AREA1"],
-                    aliases=["Código:", "Área (ha):"],
-                    style=("font-family: Arial; font-size: 12px; max-width: 300px;")
-                )
+                name="💧 Espelhos d'Água",
+                style_function=lambda x: {"fillColor": "#1E90FF","fillOpacity": 0.7,"color": "#000080","weight": 2,"opacity": 0.8},
+                tooltip=folium.GeoJsonTooltip(fields=["CODIGOES0", "AREA1"], aliases=["Código:", "Área (ha):"], style=("font-family: Arial; font-size: 12px;")),
+                popup=folium.GeoJsonPopup(fields=["CODIGOES0", "AREA1"], aliases=["Código:", "Área (ha):"], style=("font-family: Arial; font-size: 12px; max-width: 300px;"))
             ).add_to(layer_espelhos)
             layer_espelhos.add_to(m3)
 
         if show_pocos_cidade and data_geo.get("Poços Cidade"):
-            layer_pc = folium.FeatureGroup(name="Poços Cidade")
+            layer_pc = folium.FeatureGroup(name="🚰 Poços (Cidade)")
             for ftr in data_geo["Poços Cidade"]["features"]:
                 x, y = ftr["geometry"]["coordinates"]
                 props = ftr["properties"]
@@ -1056,7 +1086,7 @@ with aba3:
             layer_pc.add_to(m3)
 
         if show_pocos_rural and data_geo.get("Poços Zona Rural"):
-            layer_pr = folium.FeatureGroup(name="Poços Zona Rural")
+            layer_pr = folium.FeatureGroup(name="🚰 Poços (Zona Rural)")
             for ftr in data_geo["Poços Zona Rural"]["features"]:
                 x, y = ftr["geometry"]["coordinates"]
                 props = ftr["properties"]
@@ -1071,7 +1101,7 @@ with aba3:
                 folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="cadetblue", icon="tint")).add_to(layer_pr)
             layer_pr.add_to(m3)
 
-        # 5. LayerControl (Controle de Camadas) - AGORA EM 'topleft'
+        # LayerControl estilizado (posição topleft)
         folium.LayerControl(collapsed=True, position='topleft').add_to(m3)
 
         # Render preservando viewport quando possível
@@ -1080,7 +1110,6 @@ with aba3:
                 out = _st_folium(m3, width=1200, height=700)
             except TypeError:
                 out = _st_folium(m3)
-            # Atualiza centro/zoom se a lib fornecer
             if isinstance(out, dict):
                 last_center = out.get("last_center") or out.get("center")
                 zoom_val = out.get("zoom") or out.get("last_zoom")
@@ -1092,9 +1121,7 @@ with aba3:
                     except Exception:
                         pass
         else:
-            # Fallback: sem captura de viewport 
             folium_static(m3, width=1200, height=700)
-
 
 # =====================================================
 # Rodapé
