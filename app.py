@@ -642,7 +642,7 @@ with aba2:
                 lyr_sede = folium.FeatureGroup(name="Sede de Distritos")
                 for f in gj_sede.get("features", []):
                     x, y = f["geometry"]["coordinates"]
-                    nome = f.get("properties", {}).get("Name", "Sede")
+                    nome = f.get("properties", {}).get("nome_do_distrito", "Sede")
                     folium.Marker([y, x], tooltip=nome, icon=folium.Icon(color="darkgreen", icon="home")).add_to(lyr_sede)
                 lyr_sede.add_to(m2)
 
