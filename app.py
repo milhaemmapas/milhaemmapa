@@ -799,6 +799,7 @@ with aba3:
         add_base_tiles(m3)
         
         # --- FERRAMENTAS DO MAPA (m3) - AGORA IGUAIS AO m2 ---
+        # Botão de Tela Cheia: Já estava presente!
         Fullscreen(position='topright', title='Tela Cheia', title_cancel='Sair', force_separate_button=True).add_to(m3)
         m3.add_child(MeasureControl(primary_length_unit="meters", secondary_length_unit="kilometers", primary_area_unit="hectares"))
         MousePosition().add_to(m3)
@@ -915,6 +916,7 @@ with aba3:
                 folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="cadetblue", icon="tint")).add_to(layer_pr)
             layer_pr.add_to(m3)
 
+        # Botão de Controle de Camadas (LayerControl) - Garantido!
         folium.LayerControl(collapsed=True).add_to(m3)
 
         # Render preservando viewport quando possível
