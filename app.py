@@ -339,142 +339,118 @@ def render_card(title_html: str, body_html: str):
     )
 
 def create_sidebar():
-    # ---------- Estado global das camadas (persistente) ----------
-    if "layer_state" not in st.session_state:
-        st.session_state.layer_state = {
-            # Território
-            "show_distritos": True,
-            "show_sede": True,
-            "show_localidades": False,
-            "show_estradas": False,
-            # Infraestrutura
-            "show_escolas": False,
-            "show_unidades_saude": False,
-            "show_obras": False,
-            # Hídricos
-            "show_tecnologias": False,
-            "show_pocos_cidade": False,
-            "show_pocos_rural": False,
-            "show_espelhos": False,
-            "show_outorgas": False,
-        }
-
     with st.sidebar:
-        # ---------- Cabeçalho visual ----------
         st.markdown(
             f"""
             <div class="sidebar-content">
-                <div style="text-align: center; margin-bottom: 1.5rem;">
-                    <img src="https://i.ibb.co/7Nr6N5bm/brasao-milha.png"
-                         alt="Brasão de Milhã"
-                         style="width: 80px; height: 80px; border-radius: 50%;
-                                border: 3px solid rgba(255,255,255,0.3);">
-                    <h3 style="color: {COLORS['sidebar_text']}; margin-top: .8rem;">Controle de Camadas</h3>
-                    <p style="color: {COLORS['sidebar_text']}; opacity: .8; font-size: .9rem;">
-                        Ative/desative o que deseja ver no mapa
-                    </p>
+                <div style="text-align: center; margin-bottom: 2rem;">
+                    <img src="https://i.ibb.co/7Nr6N5bm/brasao-milha.png" alt="Brasão de Milhã" style="width: 80px; height: 80px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.3);">
+                    <h3 style="color: {COLORS['sidebar_text']}; margin-top: 1rem;">Controle de Camadas</h3>
+                    <p style="color: {COLORS['sidebar_text']}; opacity: 0.8; font-size: 0.9rem;">Gerencie as visualizações no mapa</p>
                 </div>
             </div>
             """,
             unsafe_allow_html=True
         )
-
-        # ---------- Presets rápidos ----------
+        
+        # Seção de Camadas Base
         st.markdown('<div class="sidebar-section">', unsafe_allow_html=True)
-        st.markdown('<div class="sidebar-title">⚡ Presets</div>', unsafe_allow_html=True)
-        c1, c2, c3, c4, c5 = st.columns(5)
-        if c1.button("Tudo"):
-            for k in st.session_state.layer_state:
-                st.session_state.layer_state[k] = True
-        if c2.button("Limpar"):
-            for k in st.session_state.layer_state:
-                st.session_state.layer_state[k] = False
-        if c3.button("Territ."):
-            for k in ["show_distritos", "show_sede", "show_localidades"]:
-                st.session_state.layer_state[k] = True
-        if c4.button("Infra"):
-            for k in ["show_escolas", "show_unidades_saude", "show_estradas"]:
-                st.session_state.layer_state[k] = True
-        if c5.button("Hídricos"):
-            for k in ["show_tecnologias", "show_pocos_cidade", "show_pocos_rural", "show_espelhos", "show_outorgas"]:
-                st.session_state.layer_state[k] = True
+        st.markdown('<div class="sidebar-title">🗺️ Camadas Base</div>', unsafe_allow_html=True)
+        
+        base_layer = st.radio(
+            "Mapa Base:",
+            ["CartoDB Positron", "CartoDB Dark", "Esri Satellite", "Open Street Map"],
+            index=0,
+            key="base_layer"
+        )
+        
         st.markdown('</div>', unsafe_allow_html=True)
-
-        # ---------- Território ----------
+        
+        # Seção de Território
         st.markdown('<div class="sidebar-section">', unsafe_allow_html=True)
         st.markdown('<div class="sidebar-title">🗾 Território</div>', unsafe_allow_html=True)
-        t1, t2 = st.columns(2)
-        with t1:
-            st.session_state.layer_state["show_distritos"] = st.checkbox("Distritos", value=st.session_state.layer_state["show_distritos"])
-            st.session_state.layer_state["show_sede"] = st.checkbox("Sede Distritos", value=st.session_state.layer_state["show_sede"])
-        with t2:
-            st.session_state.layer_state["show_localidades"] = st.checkbox("Localidades", value=st.session_state.layer_state["show_localidades"])
-            st.session_state.layer_state["show_estradas"] = st.checkbox("Estradas", value=st.session_state.layer_state["show_estradas"])
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            show_distritos = st.checkbox("Distritos", value=True, key="sidebar_distritos")
+            show_sede = st.checkbox("Sede Distritos", value=True, key="sidebar_sede")
+        with col2:
+            show_localidades = st.checkbox("Localidades", value=False, key="sidebar_localidades")
+            show_estradas = st.checkbox("Estradas", value=False, key="sidebar_estradas")
+        
         st.markdown('</div>', unsafe_allow_html=True)
-
-        # ---------- Infraestrutura ----------
+        
+        # Seção de Infraestrutura
         st.markdown('<div class="sidebar-section">', unsafe_allow_html=True)
         st.markdown('<div class="sidebar-title">🏗️ Infraestrutura</div>', unsafe_allow_html=True)
-        st.session_state.layer_state["show_escolas"] = st.checkbox("Escolas Públicas", value=st.session_state.layer_state["show_escolas"])
-        st.session_state.layer_state["show_unidades_saude"] = st.checkbox("Unidades de Saúde", value=st.session_state.layer_state["show_unidades_saude"])
-        st.session_state.layer_state["show_obras"] = st.checkbox("Obras Municipais", value=st.session_state.layer_state["show_obras"])
+        
+        show_escolas = st.checkbox("Escolas Públicas", value=False, key="sidebar_escolas")
+        show_unidades_saude = st.checkbox("Unidades de Saúde", value=False, key="sidebar_unidades_saude")
+        show_obras = st.checkbox("Obras Municipais", value=False, key="sidebar_obras")
+        
         st.markdown('</div>', unsafe_allow_html=True)
-
-        # ---------- Recursos Hídricos ----------
+        
+        # Seção de Recursos Hídricos
         st.markdown('<div class="sidebar-section">', unsafe_allow_html=True)
         st.markdown('<div class="sidebar-title">💧 Recursos Hídricos</div>', unsafe_allow_html=True)
-        h1, h2 = st.columns(2)
-        with h1:
-            st.session_state.layer_state["show_tecnologias"] = st.checkbox("Tecnologias Sociais", value=st.session_state.layer_state["show_tecnologias"])
-            st.session_state.layer_state["show_pocos_cidade"] = st.checkbox("Poços Cidade", value=st.session_state.layer_state["show_pocos_cidade"])
-        with h2:
-            st.session_state.layer_state["show_pocos_rural"] = st.checkbox("Poços Rural", value=st.session_state.layer_state["show_pocos_rural"])
-            st.session_state.layer_state["show_espelhos"] = st.checkbox("Espelhos d'Água", value=st.session_state.layer_state["show_espelhos"])
-        st.session_state.layer_state["show_outorgas"] = st.checkbox("Outorgas Vigentes", value=st.session_state.layer_state["show_outorgas"])
+        
+        col3, col4 = st.columns(2)
+        with col3:
+            show_tecnologias = st.checkbox("Tecnologias Sociais", value=False, key="sidebar_tecnologias")
+            show_pocos_cidade = st.checkbox("Poços Cidade", value=False, key="sidebar_pocos_cidade")
+        with col4:
+            show_pocos_rural = st.checkbox("Poços Rural", value=False, key="sidebar_pocos_rural")
+            show_espelhos = st.checkbox("Espelhos d'Água", value=False, key="sidebar_espelhos")
+        
+        show_outorgas = st.checkbox("Outorgas Vigentes", value=False, key="sidebar_outorgas")
+        
         st.markdown('</div>', unsafe_allow_html=True)
-
-        # ---------- Ferramentas ----------
+        
+        # Seção de Ferramentas
         st.markdown('<div class="sidebar-section">', unsafe_allow_html=True)
         st.markdown('<div class="sidebar-title">⚙️ Ferramentas</div>', unsafe_allow_html=True)
-        tool1, tool2 = st.columns(2)
-        with tool1:
+        
+        tool_col1, tool_col2 = st.columns(2)
+        with tool_col1:
             enable_measure = st.checkbox("Medir", value=True, key="sidebar_measure")
             enable_draw = st.checkbox("Desenhar", value=True, key="sidebar_draw")
-        with tool2:
+        with tool_col2:
             enable_fullscreen = st.checkbox("Tela Cheia", value=True, key="sidebar_fullscreen")
             show_coords = st.checkbox("Coordenadas", value=True, key="sidebar_coords")
+        
         st.markdown('</div>', unsafe_allow_html=True)
-
-        # ---------- Estatísticas ----------
-        ativos = sum(1 for v in st.session_state.layer_state.values() if isinstance(v, bool) and v)
+        
+        # Estatísticas rápidas
         st.markdown('<div class="sidebar-section">', unsafe_allow_html=True)
         st.markdown('<div class="sidebar-title">📊 Estatísticas</div>', unsafe_allow_html=True)
-        s1, s2 = st.columns(2)
-        with s1:
-            st.metric("Camadas Ativas", f"{ativos}")
-        with s2:
-            st.metric("Dados Carregados", "—")
+        
+        stat_col1, stat_col2 = st.columns(2)
+        with stat_col1:
+            st.metric("Camadas Ativas", "8", "2")
+        with stat_col2:
+            st.metric("Dados Carregados", "156", "12")
+        
         st.markdown('</div>', unsafe_allow_html=True)
 
-    # ---------- Retorno compatível com o restante do app ----------
-    ls = st.session_state.layer_state
+    # Retornar todos os estados dos checkboxes
     return {
-        "show_distritos": ls["show_distritos"],
-        "show_sede": ls["show_sede"],
-        "show_localidades": ls["show_localidades"],
-        "show_estradas": ls["show_estradas"],
-        "show_escolas": ls["show_escolas"],
-        "show_unidades_saude": ls["show_unidades_saude"],
-        "show_obras": ls["show_obras"],
-        "show_tecnologias": ls["show_tecnologias"],
-        "show_pocos_cidade": ls["show_pocos_cidade"],
-        "show_pocos_rural": ls["show_pocos_rural"],
-        "show_espelhos": ls["show_espelhos"],
-        "show_outorgas": ls["show_outorgas"],
+        "base_layer": base_layer,
+        "show_distritos": show_distritos,
+        "show_sede": show_sede,
+        "show_localidades": show_localidades,
+        "show_estradas": show_estradas,
+        "show_escolas": show_escolas,
+        "show_unidades_saude": show_unidades_saude,
+        "show_obras": show_obras,
+        "show_tecnologias": show_tecnologias,
+        "show_pocos_cidade": show_pocos_cidade,
+        "show_pocos_rural": show_pocos_rural,
+        "show_espelhos": show_espelhos,
+        "show_outorgas": show_outorgas,
         "enable_measure": enable_measure,
         "enable_draw": enable_draw,
         "enable_fullscreen": enable_fullscreen,
-        "show_coords": show_coords,
+        "show_coords": show_coords
     }
 
 # =====================================================
@@ -498,19 +474,16 @@ def autodetect_coords(df: pd.DataFrame):
                 return None
     return None
 
-def add_base_tiles(m: folium.Map):
-    """
-    Adiciona TODAS as camadas de mapa base; a escolha fica no LayerControl do mapa.
-    """
-    tiles = [
-        ("CartoDB Positron", "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", "© OpenStreetMap, © CARTO"),
-        ("CartoDB Dark", "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", "© OpenStreetMap, © CARTO"),
-        ("Esri Satellite", "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", "Tiles © Esri"),
-        ("Open Street Map", "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", "© OpenStreetMap contributors"),
-    ]
-    # primeira camada como default (add_to Map), demais com control
-    for i, (name, url, attr) in enumerate(tiles):
-        folium.TileLayer(tiles=url, name=name, attr=attr, control=True, show=(i == 0)).add_to(m)
+def add_base_tiles(m: folium.Map, base_layer: str = "CartoDB Positron"):
+    tiles = {
+        "CartoDB Positron": ("CartoDB Positron", "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", "© OpenStreetMap, © CARTO"),
+        "CartoDB Dark": ("CartoDB Dark", "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", "© OpenStreetMap, © CARTO"),
+        "Esri Satellite": ("Esri Satellite", "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", "Tiles © Esri"),
+        "Open Street Map": ("Open Street Map", "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", "© OpenStreetMap contributors"),
+    }
+    
+    name, url, attr = tiles.get(base_layer, tiles["CartoDB Positron"])
+    folium.TileLayer(tiles=url, name=name, attr=attr).add_to(m)
 
 def load_geojson_any(path_candidates):
     for p in path_candidates:
@@ -820,7 +793,7 @@ with aba2:
                 default_center = [-5.680, -39.200]
 
             m2 = folium.Map(location=default_center, zoom_start=12, tiles=None)
-            add_base_tiles(m2)  # todas as bases; controle no mapa
+            add_base_tiles(m2, sidebar_state["base_layer"])
             
             # Ferramentas do mapa baseadas na sidebar
             if sidebar_state["enable_fullscreen"]:
@@ -907,7 +880,7 @@ with aba2:
                 m2.fit_bounds([[df_map["__LAT__"].min(), df_map["__LON__"].min()],
                                [df_map["__LAT__"].max(), df_map["__LON__"].max()]])
 
-            folium.LayerControl(collapsed=True, position="topleft").add_to(m2)
+            folium.LayerControl(collapsed=True).add_to(m2)
             folium_static(m2, width=800, height=600)
 
         # Tabela de obras
@@ -962,8 +935,8 @@ with aba3:
         control_scale=True
     )
     
-    # Adicionar TODAS as camadas base (controle no mapa)
-    add_base_tiles(m3)
+    # Adicionar camada base selecionada
+    add_base_tiles(m3, sidebar_state["base_layer"])
     
     # Adicionar ferramentas baseadas na sidebar
     if sidebar_state["enable_fullscreen"]:
@@ -1168,8 +1141,8 @@ with aba3:
             folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="cadetblue", icon="tint")).add_to(layer_pr)
         layer_pr.add_to(m3)
 
-    # Controle de camadas (inclui mapas base)
-    folium.LayerControl(collapsed=True, position="topleft").add_to(m3)
+    # Controle de camadas
+    folium.LayerControl(collapsed=True).add_to(m3)
 
     # Renderizar mapa
     folium_static(m3, width=1200, height=700)
