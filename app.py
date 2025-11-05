@@ -77,7 +77,7 @@ def css_global():
             /* KPI */
             .stat-card{{ background: linear-gradient(135deg, {COLORS['primary']}15, {COLORS['secondary']}15); border-radius: 14px; padding: 1rem; text-align: center; border: 1px solid {COLORS['border']}; }}
             .stat-number{{ font-size: 1.6rem; font-weight: 800; color: {COLORS['primary']}; margin-bottom: .2rem; }}
-            .feature-icon{ font-size: 1.4rem; }
+            .feature-icon {{ font-size: 1.4rem; }}
         </style>
         """,
         unsafe_allow_html=True,
