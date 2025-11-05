@@ -14,7 +14,7 @@ import unicodedata
 st.set_page_config(
     page_title="ATLAS • Milhã", 
     layout="wide",
-    initial_sidebar_state="collapsed" # MANTIDO, POIS O PAINEL DE CAMADAS É CUSTOMIZADO NO CORPO
+    initial_sidebar_state="collapsed"
 )
 
 # Paleta de cores baseada na imagem (tons de azul, verde e laranja)
@@ -33,7 +33,7 @@ COLORS = {
 }
 
 # =====================================================
-# CSS Global Atualizado - OTIMIZADO E COM NOVOS ESTILOS
+# CSS Global Atualizado - CORRIGIDO PARA STICKY PANEL
 # =====================================================
 def css_global():
     st.markdown(
@@ -126,9 +126,10 @@ def css_global():
                 border-color: {COLORS["primary"]} !important;
             }}
             
-            /* Painel lateral STICKY - Ajustado para melhor visualização */
-            div[data-testid="column"] > div > .sticky-panel {{
-                position: -webkit-sticky; /* Para compatibilidade com Safari */
+            /* Painel lateral STICKY - CORRIGIDO */
+            .sticky-panel-wrapper {{
+                /* Este é o div que envolve o conteúdo */
+                position: -webkit-sticky; 
                 position: sticky;
                 top: 20px; /* Distância do topo */
                 background: {COLORS["card_bg"]};
@@ -136,16 +137,15 @@ def css_global():
                 border-radius: 16px;
                 padding: 1.5rem;
                 box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-                /* max-height: 80vh; para não quebrar em telas pequenas */
-                overflow-y: auto; /* Para scroll em muito conteúdo */
+                overflow-y: auto; 
             }}
             
             .panel-title {{
                 color: {COLORS["primary"]};
-                font-size: 1.5rem; /* Aumentado */
+                font-size: 1.5rem; 
                 font-weight: 700;
                 margin-bottom: 0.5rem;
-                display: flex; align-items: center; gap: 8px; /* Para alinhar ícone/texto */
+                display: flex; align-items: center; gap: 8px; 
             }}
             
             .panel-subtitle {{
@@ -182,6 +182,8 @@ def css_global():
               transform: translateY(-4px) scale(1.02);
               box-shadow: 0 12px 28px rgba(0,0,0,.15);
             }
+            
+            /* ... (Demais estilos do original) ... */
 
             @keyframes fadeIn {{
                 from {{ opacity: 0; transform: translateY(20px); }}
@@ -192,12 +194,44 @@ def css_global():
                 animation: fadeIn 0.6s ease-out;
             }}
 
-            /* Ajuste para o mapa ser 100% da coluna */
             .stDataFrame, .stPlotlyChart, .stDeckGlChart {{
                 width: 100% !important;
             }}
             .main-svg {{
                 max-width: 100%;
+            }}
+
+            /* Estilos originais preservados para os mapas */
+            .top-banner, .footer-banner {{ 
+                width: 100%; 
+                height: auto; 
+                border-radius: 8px; 
+                margin-bottom: 20px; 
+            }}
+            
+            #toggle-lyr-obras-pulse button, #toggle-panel-pulse button {{
+                background-color: {COLORS["accent"]} !important;
+                border-color: {COLORS["accent"]} !important;
+                color: white !important;
+                font-weight: 600;
+                border-radius: 6px;
+            }}
+            #toggle-lyr-obras button, #toggle-panel button {{
+                background-color: #ffffff !important;
+                border-color: {COLORS["border"]} !important;
+                color: {COLORS["text_light"]} !important;
+                font-weight: 500;
+                border-radius: 6px;
+            }}
+            
+            @keyframes pulseObras {{
+                0%   {{ transform: scale(1);   box-shadow: 0 0 0 0 {COLORS["accent"]}40; }} 
+                70%  {{ transform: scale(1.03); box-shadow: 0 0 0 12px {COLORS["accent"]}00; }}
+                100% {{ transform: scale(1);   box-shadow: 0 0 0 0 {COLORS["accent"]}00; }}
+            }}
+            #toggle-lyr-obras-pulse button {{
+                animation: pulseObras 1.1s ease-in-out 0s 2;
+                border-color: {COLORS["accent"]} !important;
             }}
         </style>
         """,
@@ -237,10 +271,35 @@ def render_card(title_html: str, body_html: str):
 # =====================================================
 # Funções utilitárias (mantidas do código original)
 # =====================================================
-# Mantidas as funções: show_top_banner, show_footer_banner, autodetect_coords, 
-# add_base_tiles, load_geojson_any, br_money, pick, sniff_read_csv, 
-# to_float_series, norm_col, geojson_bounds
-# ... (código das funções utilitárias do original) ...
+def show_top_banner():
+    st.markdown(
+        '<img src="https://i.ibb.co/v4d32PvX/banner.jpg" alt="Banner topo" style="width:100%; border-radius:12px; margin-bottom:2rem;" />',
+        unsafe_allow_html=True,
+    )
+
+def show_footer_banner():
+    st.markdown(
+        '<img src="https://i.ibb.co/8nQQp8pS/barra-inferrior.png" alt="Banner rodapé" style="width:100%; border-radius:12px; margin-top:2rem;" />',
+        unsafe_allow_html=True,
+    )
+
+def autodetect_coords(df: pd.DataFrame):
+    candidates_lat = [c for c in df.columns if re.search(r"(?:^|\b)(lat|latitude|y)(?:\b|$)", c, re.I)]
+    candidates_lon = [c for c in df.columns if re.search(r"(?:^|\b)(lon|long|longitude|x)(?:\b|$)", c, re.I)]
+    if candidates_lat and candidates_lon:
+        return candidates_lat[0], candidates_lon[0]
+    for c in df.columns:
+        if re.search(r"coord|coordenad", c, re.I):
+            try:
+                tmp = df[c].astype(str).str.extract(r"(-?\d+[\.,]?\d*)\s*[,;]\s*(-?\d+[\.,]?\d*)")
+                tmp.columns = ["LATITUDE", "LONGITUDE"]
+                tmp["LATITUDE"] = tmp["LATITUDE"].str.replace(",", ".", regex=False).astype(float)
+                tmp["LONGITUDE"] = tmp["LONGITUDE"].str.replace(",", ".", regex=False).astype(float)
+                df["__LAT__"], df["__LON__"] = tmp["LATITUDE"], tmp["LONGITUDE"]
+                return "__LAT__", "__LON__"
+            except Exception:
+                return None
+    return None
 
 def add_base_tiles(m: folium.Map):
     tiles = [
@@ -311,24 +370,6 @@ def norm_col(c: str) -> str:
     s = re.sub(r"[^a-z0-9]+", "_", s)
     return s.strip("_")
 
-def autodetect_coords(df: pd.DataFrame):
-    candidates_lat = [c for c in df.columns if re.search(r"(?:^|\b)(lat|latitude|y)(?:\b|$)", c, re.I)]
-    candidates_lon = [c for c in df.columns if re.search(r"(?:^|\b)(lon|long|longitude|x)(?:\b|$)", c, re.I)]
-    if candidates_lat and candidates_lon:
-        return candidates_lat[0], candidates_lon[0]
-    for c in df.columns:
-        if re.search(r"coord|coordenad", c, re.I):
-            try:
-                tmp = df[c].astype(str).str.extract(r"(-?\d+[\.,]?\d*)\s*[,;]\s*(-?\d+[\.,]?\d*)")
-                tmp.columns = ["LATITUDE", "LONGITUDE"]
-                tmp["LATITUDE"] = tmp["LATITUDE"].str.replace(",", ".", regex=False).astype(float)
-                tmp["LONGITUDE"] = tmp["LONGITUDE"].str.replace(",", ".", regex=False).astype(float)
-                df["__LAT__"], df["__LON__"] = tmp["LATITUDE"], tmp["LONGITUDE"]
-                return "__LAT__", "__LON__"
-            except Exception:
-                return None
-    return None
-
 def geojson_bounds(gj: dict):
     if not gj:
         return None
@@ -360,6 +401,7 @@ def geojson_bounds(gj: dict):
     if not lats or not lons:
         return None
     return (min(lats), min(lons)), (max(lats), max(lons))
+
 
 # =====================================================
 # Layout Principal
@@ -601,9 +643,9 @@ with aba2:
         # Layout fixo: mapa (5) + painel (2)
         col_map, col_panel = st.columns([5, 2], gap="large")
 
-        # Painel lateral de camadas (sticky) - REAPROVEITADO E MELHORADO
+        # Painel lateral de camadas (sticky) - CORRIGIDO
         with col_panel:
-            st.markdown('<div class="sticky-panel">', unsafe_allow_html=True)
+            st.markdown('<div class="sticky-panel-wrapper">', unsafe_allow_html=True)
             st.markdown('<div class="panel-title">🛠️ Camadas do Mapa</div>', unsafe_allow_html=True)
             st.markdown('<div class="panel-subtitle">Controle a visualização de elementos de contexto e das obras.</div>', unsafe_allow_html=True)
 
@@ -777,9 +819,9 @@ with aba3:
     # Layout do mapa/painel (Fixo)
     col_map, col_panel = st.columns([5, 2], gap="large")
 
-    # Painel de camadas (Fixo/Sticky) - PRINCIPAL ATUALIZAÇÃO SOLICITADA
+    # Painel de camadas (Fixo/Sticky) - CORRIGIDO
     with col_panel:
-        st.markdown('<div class="sticky-panel">', unsafe_allow_html=True)
+        st.markdown('<div class="sticky-panel-wrapper">', unsafe_allow_html=True)
         st.markdown('<div class="panel-title">🎯 Camadas do Mapa</div>', unsafe_allow_html=True)
         st.markdown('<div class="panel-subtitle">Selecione o que deseja visualizar no mapa interativo:</div>', unsafe_allow_html=True)
 
@@ -787,7 +829,7 @@ with aba3:
             show_distritos = st.checkbox("Distritos", value=True, key="lyr_distritos")
             show_sede_distritos = st.checkbox("Sede Distritos", value=False, key="lyr_sede")
             show_localidades = st.checkbox("Localidades", value=False, key="lyr_local")
-            show_estradas = st.checkbox("Estradas", value=False, key="lyr_estradas") # AGORA AQUI
+            show_estradas = st.checkbox("Estradas", value=False, key="lyr_estradas") 
 
         with st.expander("🏥 Infraestrutura Social", expanded=False):
             show_escolas = st.checkbox("Escolas", value=False, key="lyr_escolas")
