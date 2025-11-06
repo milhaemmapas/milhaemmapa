@@ -1199,9 +1199,8 @@ with tab_map["🗺️ Milhã em Mapas"]:
     if sidebar_state["show_pocos_rural"] and data_geo.get("Poços Zona Rural"):
         fg_pr = FG("Poços Zona Rural", True)
         for ftr in data_geo["Poços Zona Rural"]["features"]:
-            x, y = ftr["geometry"]["coordinates"]
+            coords = ftr["geometry"]["coordinates"]
             props = ftr["properties"]
-            nome = props.get("Localidade", props.get("Name", "Poço"))
     
             popup_info = (
                 "<div style='font-family: Arial, sans-serif; border: 2px solid #0059b3; border-radius: 8px; padding: 8px; background-color: #f0f8ff;'>"
@@ -1214,10 +1213,10 @@ with tab_map["🗺️ Milhã em Mapas"]:
             )
     
             folium.Marker(
-                location=[y, x],
+                location=[coords[1], coords[0]],
                 popup=folium.Popup(popup_info, max_width=300),
-                tooltip=nome,
-                icon=folium.Icon(color="cadetblue", icon="tint")
+                tooltip=props.get("Localidade", "Poço Rural"),
+                icon=folium.CustomIcon("https://i.ibb.co/6JrpxXMT/water.png", icon_size=(23, 23))
             ).add_to(fg_pr)
         fg_pr.add_to(m3)
 
