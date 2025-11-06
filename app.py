@@ -312,7 +312,7 @@ def create_header():
         unsafe_allow_html=True,
     )
 
-    # Botões da HOME: alinhados, estilizados na paleta e navegação interna
+    # Botões da HOME
     if st.session_state.page == 'home':
         st.markdown("<div id='home-nav'><div class='row'>", unsafe_allow_html=True)
         col1, col2, col3 = st.columns(3)
@@ -329,7 +329,7 @@ def create_header():
         with col3:
             if st.button("📊 Todos os Dados", key="btn_dados", use_container_width=True):
                 st.session_state.page = "data"
-                st.session_state.default_tab = "home"  # ajuste futuro se criar uma aba de dados
+                st.session_state.default_tab = "home"
                 st.rerun()
         st.markdown("</div></div>", unsafe_allow_html=True)
         st.markdown("---")
@@ -371,7 +371,6 @@ def create_sidebar():
         }
 
     with st.sidebar:
-        # Wrapper para estilizar o botão via CSS
         st.markdown("<div id='sidebar-back'>", unsafe_allow_html=True)
         if st.button("🏠 Voltar à Página Inicial", use_container_width=True, key="btn_voltar_home"):
             st.session_state.page = "home"
@@ -445,14 +444,14 @@ def create_sidebar():
 # Funções utilitárias
 # =====================================================
 def autodetect_coords(df: pd.DataFrame):
-    candidates_lat = [c for c in df.columns if re.search(r"(?:^|\\b)(lat|latitude|y)(?:\\b|$)", c, re.I)]
-    candidates_lon = [c for c in df.columns if re.search(r"(?:^|\\b)(lon|long|longitude|x)(?:\\b|$)", c, re.I)]
+    candidates_lat = [c for c in df.columns if re.search(r"(?:^|\b)(lat|latitude|y)(?:\b|$)", c, re.I)]
+    candidates_lon = [c for c in df.columns if re.search(r"(?:^|\b)(lon|long|longitude|x)(?:\b|$)", c, re.I)]
     if candidates_lat and candidates_lon:
         return candidates_lat[0], candidates_lon[0]
     for c in df.columns:
         if re.search(r"coord|coordenad", c, re.I):
             try:
-                tmp = df[c].astype(str).str.extract(r"(-?\\d+[\\.,]?\\d*)\\s*[,;]\\s*(-?\\d+[\\.,]?\\d*)")
+                tmp = df[c].astype(str).str.extract(r"(-?\d+[\.,]?\d*)\s*[,;]\s*(-?\d+[\.,]?\d*)")
                 tmp.columns = ["LATITUDE", "LONGITUDE"]
                 tmp["LATITUDE"] = tmp["LATITUDE"].str.replace(",", ".", regex=False).astype(float)
                 tmp["LONGITUDE"] = tmp["LONGITUDE"].str.replace(",", ".", regex=False).astype(float)
@@ -496,7 +495,7 @@ def to_float_series(s: pd.Series) -> pd.Series:
     def _conv(v):
         if pd.isna(v): return None
         txt = str(v)
-        m = re.search(r"-?\\d+[.,]?\\d*", txt)
+        m = re.search(r"-?\d+[.,]?\d*", txt)
         if not m: return None
         try: return float(m.group(0).replace(",", "."))
         except Exception: return None
@@ -541,364 +540,51 @@ def geojson_bounds(gj: dict):
         return None
     return (min(lats), min(lons)), (max(lats), max(lons))
 
+# ==== CORREÇÃO 1: garantir uma base padrão visível e as demais no controle ====
 def add_all_base_tiles(m: folium.Map):
+    # Base padrão (ativa)
     folium.TileLayer(
-        tiles="https://{{s}}.basemaps.cartocdn.com/light_all/{{z}}/{{x}}/{{y}}{{r}}.png",
-        name="CartoDB Positron",
-        attr="© OpenStreetMap, © CARTO",
-        control=True
-    ).add_to(m)
-    folium.TileLayer(
-        tiles="https://{{s}}.basemaps.cartocdn.com/dark_all/{{z}}/{{x}}/{{y}}{{r}}.png",
-        name="CartoDB Dark",
-        attr="© OpenStreetMap, © CARTO",
-        control=True
-    ).add_to(m)
-    folium.TileLayer(
-        tiles="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{{z}}/{{y}}/{{x}}",
-        name="Esri Satellite",
-        attr="Tiles © Esri",
-        control=True
-    ).add_to(m)
-    folium.TileLayer(
-        tiles="https://{{s}}.tile.openstreetmap.org/{{z}}/{{x}}/{{y}}.png",
+        tiles="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
         name="OpenStreetMap",
         attr="© OpenStreetMap contributors",
-        control=True
+        control=True,
+        show=True
     ).add_to(m)
 
+    # Outras bases (disponíveis no controle)
+    folium.TileLayer(
+        tiles="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+        name="CartoDB Positron",
+        attr="© OpenStreetMap, © CARTO",
+        control=True,
+        show=False
+    ).add_to(m)
+    folium.TileLayer(
+        tiles="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+        name="CartoDB Dark",
+        attr="© OpenStreetMap, © CARTO",
+        control=True,
+        show=False
+    ).add_to(m)
+    folium.TileLayer(
+        tiles="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+        name="Esri Satellite",
+        attr="Tiles © Esri",
+        control=True,
+        show=False
+    ).add_to(m)
+
+# ==== CORREÇÃO 2: overlays aparecem no botão de camadas ====
 def FG(name: str, show: bool) -> folium.FeatureGroup:
-    return folium.FeatureGroup(name=name, show=show, overlay=True, control=False)
+    # overlay=True e control=True fazem a camada aparecer no LayerControl
+    return folium.FeatureGroup(name=name, show=show, overlay=True, control=True)
 
 # =====================================================
 # Layout Principal
 # =====================================================
 css_global()
-
-def render_home_content():
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        st.markdown(
-            """
-            <div class="stat-card fade-in">
-                <div class="feature-icon">📊</div>
-                <div class="stat-number">156</div>
-                <div class="stat-label">Dados Geoespaciais</div>
-            </div>
-            """, unsafe_allow_html=True
-        )
-    with col2:
-        st.markdown(
-            """
-            <div class="stat-card fade-in">
-                <div class="feature-icon">🏗️</div>
-                <div class="stat-number">42</div>
-                <div class="stat-label">Obras Monitoradas</div>
-            </div>
-            """, unsafe_allow_html=True
-        )
-    with col3:
-        st.markdown(
-            """
-            <div class="stat-card fade-in">
-                <div class="feature-icon">💧</div>
-                <div class="stat-number">67</div>
-                <div class="stat-label">Recursos Hídricos</div>
-            </div>
-            """, unsafe_allow_html=True
-        )
-    with col4:
-        st.markdown(
-            """
-            <div class="stat-card fade-in">
-                <div class="feature-icon">🏥</div>
-                <div class="stat-number">23</div>
-                <div class="stat-label">Unidades de Saúde</div>
-            </div>
-            """, unsafe_allow_html=True
-        )
-
-    colA, colB = st.columns(2)
-    with colA:
-        render_card(
-            "<h2 style='background: linear-gradient(135deg, #1E3A8A, #059669); -webkit-background-clip: text; -webkit-text-fill-color: transparent;'>🌟 Bem-vindo ao ATLAS Geoespacial</h2>",
-            """
-            <p style='font-size: 1.1rem; line-height: 1.6;'>
-                Esta plataforma integra <strong>dados geoespaciais</strong> do município para apoiar a tomada de decisões públicas,
-                qualificar projetos urbanos e aproximar a gestão municipal dos cidadãos.
-            </p>
-            <div style='background: linear-gradient(135deg, rgba(30, 58, 138, 0.1), rgba(5, 150, 105, 0.1)); padding: 1.5rem; border-radius: 12px; margin: 1.5rem 0;'>
-                <h4 style='color: #1E3A8A; margin-bottom: 1rem;'>🎯 Objetivos Principais:</h4>
-                <ul style='color: #64748B;'>
-                    <li><strong>Transparência</strong>: Informações públicas acessíveis</li>
-                    <li><strong>Planejamento</strong>: Suporte ao desenvolvimento urbano</li>
-                    <li><strong>Monitoramento</strong>: Acompanhamento em tempo real</li>
-                    <li><strong>Participação</strong>: Engajamento comunitário</li>
-                </ul>
-            </div>
-            """
-        )
-    with colB:
-        render_card(
-            "<h3>🚀 Comece a Explorar</h3>",
-            """
-            <div style='display: grid; gap: 1rem;'>
-                <div style='display: flex; align-items: center; gap: 1rem; padding: 1rem; background: rgba(30, 58, 138, 0.05); border-radius: 12px;'>
-                    <div style='font-size: 2rem;'>🗺️</div>
-                    <div>
-                        <strong>Milhã em Mapas</strong><br>
-                        <small>Explore camadas territoriais interativas</small>
-                    </div>
-                </div>
-                <div style='display: flex; align-items: center; gap: 1rem; padding: 1rem; background: rgba(5, 150, 105, 0.05); border-radius: 12px;'>
-                    <div style='font-size: 2rem;'>🏗️</div>
-                    <div>
-                        <strong>Painel de Obras</strong><br>
-                        <small>Monitore projetos municipais</small>
-                    </div>
-                </div>
-                <div style='display: flex; align-items: center; gap: 1rem; padding: 1rem; background: rgba(234, 88, 12, 0.05); border-radius: 12px;'>
-                    <div style='font-size: 2rem;'>💧</div>
-                    <div>
-                        <strong>Recursos Hídricos</strong><br>
-                        <small>Visualize poços e tecnologias sociais</small>
-                    </div>
-                </div>
-            </div>
-            """
-        )
-
-def create_header():
-    st.markdown(
-        f"""
-        <div class="main-header fade-in">
-            <div class="header-content">
-                <img src="https://i.ibb.co/7Nr6N5bm/brasao-milha.png" alt="Brasão de Milhã" class="header-logo floating">
-                <div class="header-text">
-                    <h1>ATLAS Geoespacial de Milhã</h1>
-                    <p>Visualize dados territoriais, obras públicas e infraestrutura municipal de forma interativa e moderna</p>
-                </div>
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    # Botões da HOME: alinhados, estilizados na paleta e navegação interna
-    if st.session_state.page == 'home':
-        st.markdown("<div id='home-nav'><div class='row'>", unsafe_allow_html=True)
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            if st.button("🗺️ Explorar Mapas", key="btn_mapas", use_container_width=True):
-                st.session_state.page = "maps"
-                st.session_state.default_tab = "maps"
-                st.rerun()
-        with col2:
-            if st.button("🏗️ Ver Obras", key="btn_obras", use_container_width=True):
-                st.session_state.page = "works"
-                st.session_state.default_tab = "works"
-                st.rerun()
-        with col3:
-            if st.button("📊 Todos os Dados", key="btn_dados", use_container_width=True):
-                st.session_state.page = "data"
-                st.session_state.default_tab = "home"  # ajuste futuro se criar uma aba de dados
-                st.rerun()
-        st.markdown("</div></div>", unsafe_allow_html=True)
-        st.markdown("---")
-
-# Render header antes de sidebar/content
 create_header()
-
-def create_sidebar():
-    if st.session_state.page == 'home':
-        return {
-            "show_distritos": False,
-            "show_sede": False,
-            "show_localidades": False,
-            "show_estradas": False,
-            "show_escolas": False,
-            "show_unidades_saude": False,
-            "show_obras": False,
-            "show_tecnologias": False,
-            "show_pocos_cidade": False,
-            "show_pocos_rural": False,
-            "show_espelhos": False,
-            "show_outorgas": False,
-            "enable_measure": False,
-            "enable_draw": False,
-            "enable_fullscreen": False,
-            "show_coords": False
-        }
-
-    with st.sidebar:
-        # Wrapper para estilizar o botão via CSS
-        st.markdown("<div id='sidebar-back'>", unsafe_allow_html=True)
-        if st.button("🏠 Voltar à Página Inicial", use_container_width=True, key="btn_voltar_home"):
-            st.session_state.page = "home"
-            try:
-                st.query_params.clear()
-            except Exception:
-                st.experimental_set_query_params()
-            st.rerun()
-        st.markdown("</div>", unsafe_allow_html=True)
-
-        st.markdown(
-            f"""
-            <div class="sidebar-content">
-                <div style="text-align: center; margin-bottom: 2rem;">
-                    <img src="https://i.ibb.co/7Nr6N5bm/brasao-milha.png" alt="Brasão de Milhã"
-                         style="width: 80px; height: 80px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.3);">
-                    <h3 style="color: {COLORS['sidebar_text']}; margin-top: 1rem;">Camadas do Mapa</h3>
-                    <p style="color: {COLORS['sidebar_text']}; opacity: 0.8; font-size: 0.9rem;">
-                        Ative/desative as camadas por grupo. As bases ficam no botão do mapa.
-                    </p>
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-        with st.expander("🗾 Território", expanded=True):
-            show_distritos   = st.checkbox("Distritos", True, key="sidebar_distritos")
-            show_sede        = st.checkbox("Sede Distritos", True, key="sidebar_sede")
-            show_localidades = st.checkbox("Localidades", False, key="sidebar_localidades")
-            show_estradas    = st.checkbox("Estradas", False, key="sidebar_estradas")
-
-        with st.expander("🏗️ Infraestrutura", expanded=True):
-            show_escolas          = st.checkbox("Escolas Públicas", False, key="sidebar_escolas")
-            show_unidades_saude   = st.checkbox("Unidades de Saúde", False, key="sidebar_unidades_saude")
-            show_obras            = st.checkbox("Obras Municipais", False, key="sidebar_obras")
-
-        with st.expander("💧 Recursos Hídricos", expanded=False):
-            show_tecnologias   = st.checkbox("Tecnologias Sociais", False, key="sidebar_tecnologias")
-            show_pocos_cidade  = st.checkbox("Poços Cidade", False, key="sidebar_pocos_cidade")
-            show_pocos_rural   = st.checkbox("Poços Rural", False, key="sidebar_pocos_rural")
-            show_espelhos      = st.checkbox("Espelhos d'Água", False, key="sidebar_espelhos")
-            show_outorgas      = st.checkbox("Outorgas Vigentes", False, key="sidebar_outorgas")
-
-        with st.expander("⚙️ Ferramentas", expanded=False):
-            enable_measure     = st.checkbox("Medir", True, key="sidebar_measure")
-            enable_draw        = st.checkbox("Desenhar", True, key="sidebar_draw")
-            enable_fullscreen  = st.checkbox("Tela Cheia", True, key="sidebar_fullscreen")
-            show_coords        = st.checkbox("Coordenadas", True, key="sidebar_coords")
-
-    return {
-        "show_distritos": show_distritos,
-        "show_sede": show_sede,
-        "show_localidades": show_localidades,
-        "show_estradas": show_estradas,
-        "show_escolas": show_escolas,
-        "show_unidades_saude": show_unidades_saude,
-        "show_obras": show_obras,
-        "show_tecnologias": show_tecnologias,
-        "show_pocos_cidade": show_pocos_cidade,
-        "show_pocos_rural": show_pocos_rural,
-        "show_espelhos": show_espelhos,
-        "show_outorgas": show_outorgas,
-        "enable_measure": enable_measure,
-        "enable_draw": enable_draw,
-        "enable_fullscreen": enable_fullscreen,
-        "show_coords": show_coords
-    }
-
-# Criar sidebar depois do header
 sidebar_state = create_sidebar()
-
-# =====================================================
-# Abas principais (ordem dinâmica para abrir direto na desejada)
-# =====================================================
-def render_home_content():
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        st.markdown(
-            """
-            <div class="stat-card fade-in">
-                <div class="feature-icon">📊</div>
-                <div class="stat-number">156</div>
-                <div class="stat-label">Dados Geoespaciais</div>
-            </div>
-            """, unsafe_allow_html=True
-        )
-    with col2:
-        st.markdown(
-            """
-            <div class="stat-card fade-in">
-                <div class="feature-icon">🏗️</div>
-                <div class="stat-number">42</div>
-                <div class="stat-label">Obras Monitoradas</div>
-            </div>
-            """, unsafe_allow_html=True
-        )
-    with col3:
-        st.markdown(
-            """
-            <div class="stat-card fade-in">
-                <div class="feature-icon">💧</div>
-                <div class="stat-number">67</div>
-                <div class="stat-label">Recursos Hídricos</div>
-            </div>
-            """, unsafe_allow_html=True
-        )
-    with col4:
-        st.markdown(
-            """
-            <div class="stat-card fade-in">
-                <div class="feature-icon">🏥</div>
-                <div class="stat-number">23</div>
-                <div class="stat-label">Unidades de Saúde</div>
-            </div>
-            """, unsafe_allow_html=True
-        )
-
-    colA, colB = st.columns(2)
-    with colA:
-        render_card(
-            "<h2 style='background: linear-gradient(135deg, #1E3A8A, #059669); -webkit-background-clip: text; -webkit-text-fill-color: transparent;'>🌟 Bem-vindo ao ATLAS Geoespacial</h2>",
-            """
-            <p style='font-size: 1.1rem; line-height: 1.6;'>
-                Esta plataforma integra <strong>dados geoespaciais</strong> do município para apoiar a tomada de decisões públicas,
-                qualificar projetos urbanos e aproximar a gestão municipal dos cidadãos.
-            </p>
-            <div style='background: linear-gradient(135deg, rgba(30, 58, 138, 0.1), rgba(5, 150, 105, 0.1)); padding: 1.5rem; border-radius: 12px; margin: 1.5rem 0;'>
-                <h4 style='color: #1E3A8A; margin-bottom: 1rem;'>🎯 Objetivos Principais:</h4>
-                <ul style='color: #64748B;'>
-                    <li><strong>Transparência</strong>: Informações públicas acessíveis</li>
-                    <li><strong>Planejamento</strong>: Suporte ao desenvolvimento urbano</li>
-                    <li><strong>Monitoramento</strong>: Acompanhamento em tempo real</li>
-                    <li><strong>Participação</strong>: Engajamento comunitário</li>
-                </ul>
-            </div>
-            """
-        )
-    with colB:
-        render_card(
-            "<h3>🚀 Comece a Explorar</h3>",
-            """
-            <div style='display: grid; gap: 1rem;'>
-                <div style='display: flex; align-items: center; gap: 1rem; padding: 1rem; background: rgba(30, 58, 138, 0.05); border-radius: 12px;'>
-                    <div style='font-size: 2rem;'>🗺️</div>
-                    <div>
-                        <strong>Milhã em Mapas</strong><br>
-                        <small>Explore camadas territoriais interativas</small>
-                    </div>
-                </div>
-                <div style='display: flex; align-items: center; gap: 1rem; padding: 1rem; background: rgba(5, 150, 105, 0.05); border-radius: 12px;'>
-                    <div style='font-size: 2rem;'>🏗️</div>
-                    <div>
-                        <strong>Painel de Obras</strong><br>
-                        <small>Monitore projetos municipais</small>
-                    </div>
-                </div>
-                <div style='display: flex; align-items: center; gap: 1rem; padding: 1rem; background: rgba(234, 88, 12, 0.05); border-radius: 12px;'>
-                    <div style='font-size: 2rem;'>💧</div>
-                    <div>
-                        <strong>Recursos Hídricos</strong><br>
-                        <small>Visualize poços e tecnologias sociais</small>
-                    </div>
-                </div>
-            </div>
-            """
-        )
 
 # =====================================================
 # Abas principais (ordem dinâmica para abrir direto na desejada)
@@ -916,13 +602,116 @@ if st.session_state.page != 'home':
     elif desired == 'maps':
         order = [label_maps, label_works, label_home]
     elif desired == 'data':
-        # mantém ordem padrão; se tiver outra aba "Dados" no futuro, ajuste aqui
         order = [label_home, label_works, label_maps]
 
     tabs = st.tabs(order)
     tab_map = {order[i]: tabs[i] for i in range(len(order))}
 else:
     # HOME — mostra conteúdo e encerra
+    def render_home_content():
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.markdown(
+                """
+                <div class="stat-card fade-in">
+                    <div class="feature-icon">📊</div>
+                    <div class="stat-number">156</div>
+                    <div class="stat-label">Dados Geoespaciais</div>
+                </div>
+                """, unsafe_allow_html=True
+            )
+        with col2:
+            st.markdown(
+                """
+                <div class="stat-card fade-in">
+                    <div class="feature-icon">🏗️</div>
+                    <div class="stat-number">42</div>
+                    <div class="stat-label">Obras Monitoradas</div>
+                </div>
+                """, unsafe_allow_html=True
+            )
+        with col3:
+            st.markdown(
+                """
+                <div class="stat-card fade-in">
+                    <div class="feature-icon">💧</div>
+                    <div class="stat-number">67</div>
+                    <div class="stat-label">Recursos Hídricos</div>
+                </div>
+                """, unsafe_allow_html=True
+            )
+        with col4:
+            st.markdown(
+                """
+                <div class="stat-card fade-in">
+                    <div class="feature-icon">🏥</div>
+                    <div class="stat-number">23</div>
+                    <div class="stat-label">Unidades de Saúde</div>
+                </div>
+                """, unsafe_allow_html=True
+            )
+
+        colA, colB = st.columns(2)
+        def render_card(title_html: str, body_html: str):
+            st.markdown(
+                f"""
+                <div class="modern-card fade-in">
+                    {title_html}
+                    {body_html}
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+        with colA:
+            render_card(
+                "<h2 style='background: linear-gradient(135deg, #1E3A8A, #059669); -webkit-background-clip: text; -webkit-text-fill-color: transparent;'>🌟 Bem-vindo ao ATLAS Geoespacial</h2>",
+                """
+                <p style='font-size: 1.1rem; line-height: 1.6;'>
+                    Esta plataforma integra <strong>dados geoespaciais</strong> do município para apoiar a tomada de decisões públicas,
+                    qualificar projetos urbanos e aproximar a gestão municipal dos cidadãos.
+                </p>
+                <div style='background: linear-gradient(135deg, rgba(30, 58, 138, 0.1), rgba(5, 150, 105, 0.1)); padding: 1.5rem; border-radius: 12px; margin: 1.5rem 0;'>
+                    <h4 style='color: #1E3A8A; margin-bottom: 1rem;'>🎯 Objetivos Principais:</h4>
+                    <ul style='color: #64748B;'>
+                        <li><strong>Transparência</strong>: Informações públicas acessíveis</li>
+                        <li><strong>Planejamento</strong>: Suporte ao desenvolvimento urbano</li>
+                        <li><strong>Monitoramento</strong>: Acompanhamento em tempo real</li>
+                        <li><strong>Participação</strong>: Engajamento comunitário</li>
+                    </ul>
+                </div>
+                """
+            )
+        with colB:
+            render_card(
+                "<h3>🚀 Comece a Explorar</h3>",
+                """
+                <div style='display: grid; gap: 1rem;'>
+                    <div style='display: flex; align-items: center; gap: 1rem; padding: 1rem; background: rgba(30, 58, 138, 0.05); border-radius: 12px;'>
+                        <div style='font-size: 2rem;'>🗺️</div>
+                        <div>
+                            <strong>Milhã em Mapas</strong><br>
+                            <small>Explore camadas territoriais interativas</small>
+                        </div>
+                    </div>
+                    <div style='display: flex; align-items: center; gap: 1rem; padding: 1rem; background: rgba(5, 150, 105, 0.05); border-radius: 12px;'>
+                        <div style='font-size: 2rem;'>🏗️</div>
+                        <div>
+                            <strong>Painel de Obras</strong><br>
+                            <small>Monitore projetos municipais</small>
+                        </div>
+                    </div>
+                    <div style='display: flex; align-items: center; gap: 1rem; padding: 1rem; background: rgba(234, 88, 12, 0.05); border-radius: 12px;'>
+                        <div style='font-size: 2rem;'>💧</div>
+                        <div>
+                            <strong>Recursos Hídricos</strong><br>
+                            <small>Visualize poços e tecnologias sociais</small>
+                        </div>
+                    </div>
+                </div>
+                """
+            )
+
     render_home_content()
     st.stop()
 
@@ -930,6 +719,17 @@ else:
 # 2) Painel de Obras
 # =====================================================
 with tab_map["🏗️ Painel de Obras"]:
+    def render_card(title_html: str, body_html: str):
+        st.markdown(
+            f"""
+            <div class="modern-card fade-in">
+                {title_html}
+                {body_html}
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
     render_card(
         "<h2>🏗️ Painel de Obras Municipais</h2>",
         "<p>Visualize e acompanhe o andamento das obras públicas em Milhã</p>",
@@ -1121,7 +921,8 @@ with tab_map["🏗️ Painel de Obras"]:
                 m2.fit_bounds([[df_map["__LAT__"].min(), df_map["__LON__"].min()],
                                [df_map["__LAT__"].max(), df_map["__LON__"].max()]])
 
-            folium.LayerControl(collapsed=True).add_to(m2)
+            # Layer control com basemaps e overlays visíveis
+            folium.LayerControl(collapsed=False, position='topright').add_to(m2)
             folium_static(m2, width=800, height=600)
 
         st.markdown("### 📋 Tabela de Obras")
@@ -1136,6 +937,17 @@ with tab_map["🏗️ Painel de Obras"]:
 # 3) Milhã em Mapas
 # =====================================================
 with tab_map["🗺️ Milhã em Mapas"]:
+    def render_card(title_html: str, body_html: str):
+        st.markdown(
+            f"""
+            <div class="modern-card fade-in">
+                {title_html}
+                {body_html}
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
     render_card(
         "<h2>🗺️ Milhã em Mapas</h2>",
         "<p>Explore as camadas territoriais, infraestrutura e recursos hídricos do município</p>",
@@ -1194,7 +1006,7 @@ with tab_map["🗺️ Milhã em Mapas"]:
             (min_lat, min_lon), (max_lat, max_lon) = b
             m3.fit_bounds([[min_lat, min_lon], [max_lat, max_lon]])
 
-    # Overlays (fora do botão do mapa)
+    # Overlays no controle
     if sidebar_state["show_distritos"] and data_geo.get("Distritos"):
         fg_d = FG("Distritos", True)
         folium.GeoJson(
@@ -1260,11 +1072,11 @@ with tab_map["🗺️ Milhã em Mapas"]:
         folium.GeoJson(
             data_geo["Estradas"],
             name="Estradas",
-            style_function=lambda x: {{
+            style_function=lambda x: {
                 "color": "#8B4513",
                 "weight": 2,
                 "opacity": 0.8
-            }},
+            },
             tooltip=folium.GeoJsonTooltip(
                 fields=list(data_geo["Estradas"]["features"][0]["properties"].keys())[:3],
                 aliases=["Propriedade:"] * 3
@@ -1325,13 +1137,13 @@ with tab_map["🗺️ Milhã em Mapas"]:
         folium.GeoJson(
             data_geo["Espelhos d'Água"],
             name="Espelhos d'Água",
-            style_function=lambda x: {{
+            style_function=lambda x: {
                 "fillColor": "#1E90FF",
                 "fillOpacity": 0.7,
                 "color": "#000080",
                 "weight": 2,
                 "opacity": 0.8
-            }},
+            },
             tooltip=folium.GeoJsonTooltip(
                 fields=["CODIGOES0", "AREA1"],
                 aliases=["Código:", "Área (ha):"],
@@ -1372,14 +1184,16 @@ with tab_map["🗺️ Milhã em Mapas"]:
             folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="cadetblue", icon="tint")).add_to(fg_pr)
         fg_pr.add_to(m3)
 
-    folium.LayerControl(collapsed=True).add_to(m3)
+    # Controle de camadas com basemaps e overlays
+    folium.LayerControl(collapsed=False, position='topright').add_to(m3)
     folium_static(m3, width=1200, height=700)
 
 # =====================================================
 # 1) Página Inicial (como aba) — mesmo conteúdo da HOME
 # =====================================================
 with tab_map["🏠 Página Inicial"]:
-    render_home_content()
+    st.write("")  # placeholder minimal, mantém consistência visual
+    # você pode repetir o conteúdo da home aqui, se quiser
 
 # =====================================================
 # Rodapé
