@@ -1206,8 +1206,8 @@ with tab_map["🗺️ Milhã em Mapas"]:
                 "<div style='font-family: Arial, sans-serif; border: 2px solid #0059b3; border-radius: 8px; padding: 8px; background-color: #f0f8ff;'>"
                 "<h4 style='margin-top: 0; margin-bottom: 8px; color: #0059b3; border-bottom: 1px solid #ccc;'>💧 Poço Rural</h4>"
                 "<p style='margin: 4px 0;'><strong>📍 Localidade:</strong> " + str(props.get("Localidade", "Não informado")) + "</p>"
-                "<p style='margin: 4px 0;'><strong>📏 Profundidade:</strong> " + str(props.get("Profundida", "Não informado")) + "</p>"
-                "<p style='margin: 4px 0;'><strong>💦 Vazão (L/h):</strong> " + str(props.get("Vazão_LH_2", "Não informado")) + "</p>"
+                "<p style='margin: 4px 0;'><strong>📏 Profundidade:</strong> " + str(props.get("Profundida_m", "Não informado")) + "</p>"
+                "<p style='margin: 4px 0;'><strong>💦 Vazão (L/h):</strong> " + str(props.get("Vazão_LH", "Não informado")) + "</p>"
                 "<p style='margin: 4px 0;'><strong>⚡ Energia:</strong> " + str(props.get("Energia", "Não informado")) + "</p>"
                 "</div>"
             )
