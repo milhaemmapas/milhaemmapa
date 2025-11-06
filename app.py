@@ -1036,12 +1036,25 @@ with tab_map["🗺️ Milhã em Mapas"]:
     if sidebar_state["show_localidades"] and data_geo.get("Localidades"):
         fg_loc = FG("Localidades", True)
         for ftr in data_geo["Localidades"]["features"]:
-            x, y = ftr["geometry"]["coordinates"]
+            coords = ftr["geometry"]["coordinates"]
             props = ftr["properties"]
             nome = props.get("Localidade", "Localidade")
-            distrito = props.get("Distrito", "-")
-            popup = f"<b>Localidade:</b> {nome}<br><b>Distrito:</b> {distrito}"
-            folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="purple", icon="flag")).add_to(fg_loc)
+            distrito = props.get("Distrito", "Não informado")
+            
+            popup_info = f"""
+            <div style='font-family: Arial, sans-serif; border: 2px solid #4CAF50; border-radius: 8px; padding: 8px; background-color: #f0fff0;'>
+            <h4 style='margin-top: 0; margin-bottom: 8px; color: #2E7D32;'>🏘️ Localidade</h4>
+            <p style='margin: 4px 0;'><strong>📛 Nome:</strong> {nome}</p>
+            <p style='margin: 4px 0;'><strong>📍 Distrito:</strong> {distrito}</p>
+            </div>
+            """
+            
+            folium.Marker(
+                location=[coords[1], coords[0]],
+                tooltip=nome,
+                popup=folium.Popup(popup_info, max_width=300),
+                icon=folium.CustomIcon("https://i.ibb.co/kgbmmjWc/location-icon-242304.png", icon_size=(18, 18))
+            ).add_to(fg_loc)
         fg_loc.add_to(m3)
 
     if sidebar_state["show_urbanas"] and data_geo.get("Áreas Urbanas"):
