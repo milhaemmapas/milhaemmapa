@@ -11,10 +11,17 @@ import unicodedata
 # =====================================================
 # Configuração inicial com tema moderno
 # =====================================================
+# Inicializa estado da página
+if 'page' not in st.session_state:
+    st.session_state.page = 'home'
+
+# Configura sidebar baseado na página atual
+sidebar_state = "collapsed" if st.session_state.page == 'home' else "expanded"
+
 st.set_page_config(
     page_title="ATLAS • Milhã",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state=sidebar_state,
     menu_items={
         'Get Help': 'https://www.milha.ce.gov.br',
         'Report a bug': None,
@@ -236,6 +243,24 @@ def css_global():
             ::-webkit-scrollbar-thumb:hover {{
                 background: linear-gradient(135deg, {COLORS["secondary"]}, {COLORS["primary"]});
             }}
+
+            /* Botões de navegação */
+            .nav-button {{
+                background: linear-gradient(135deg, {COLORS["primary"]}, {COLORS["secondary"]});
+                color: white;
+                border: none;
+                padding: 1rem 2rem;
+                border-radius: 12px;
+                font-weight: 600;
+                font-size: 1.1rem;
+                transition: all 0.3s ease;
+                cursor: pointer;
+                margin: 0.5rem 0;
+            }}
+            .nav-button:hover {{
+                transform: translateY(-2px);
+                box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            }}
         </style>
         """,
         unsafe_allow_html=True,
@@ -256,6 +281,24 @@ def create_header():
         """,
         unsafe_allow_html=True,
     )
+    
+    # Botões de navegação apenas na home
+    if st.session_state.page == 'home':
+        st.markdown("<div style='height: 20px'></div>", unsafe_allow_html=True)
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            if st.button("🗺️ Explorar Mapas", use_container_width=True, type="primary"):
+                st.session_state.page = "maps"
+                st.rerun()
+        with col2:
+            if st.button("🏗️ Ver Obras", use_container_width=True, type="primary"):
+                st.session_state.page = "works"
+                st.rerun()
+        with col3:
+            if st.button("📊 Todos os Dados", use_container_width=True, type="primary"):
+                st.session_state.page = "data"
+                st.rerun()
+        st.markdown("---")
 
 # =====================================================
 # Componentes Modernos
@@ -272,7 +315,33 @@ def render_card(title_html: str, body_html: str):
     )
 
 def create_sidebar():
+    # Só mostra sidebar se não for a página inicial
+    if st.session_state.page == 'home':
+        return {
+            "show_distritos": False,
+            "show_sede": False,
+            "show_localidades": False,
+            "show_estradas": False,
+            "show_escolas": False,
+            "show_unidades_saude": False,
+            "show_obras": False,
+            "show_tecnologias": False,
+            "show_pocos_cidade": False,
+            "show_pocos_rural": False,
+            "show_espelhos": False,
+            "show_outorgas": False,
+            "enable_measure": False,
+            "enable_draw": False,
+            "enable_fullscreen": False,
+            "show_coords": False
+        }
+    
     with st.sidebar:
+        # Botão para voltar à home
+        if st.button("🏠 Voltar à Página Inicial", use_container_width=True):
+            st.session_state.page = "home"
+            st.rerun()
+            
         st.markdown(
             f"""
             <div class="sidebar-content">
@@ -291,13 +360,10 @@ def create_sidebar():
 
         # -------- Território --------
         with st.expander("🗾 Território", expanded=True):
-            col1, col2 = st.columns(2)
-            with col1:
-                show_distritos   = st.checkbox("Distritos", True, key="sidebar_distritos")
-                show_sede        = st.checkbox("Sede Distritos", True, key="sidebar_sede")
-            with col2:
-                show_localidades = st.checkbox("Localidades", False, key="sidebar_localidades")
-                show_estradas    = st.checkbox("Estradas", False, key="sidebar_estradas")
+            show_distritos   = st.checkbox("Distritos", True, key="sidebar_distritos")
+            show_sede        = st.checkbox("Sede Distritos", True, key="sidebar_sede")
+            show_localidades = st.checkbox("Localidades", False, key="sidebar_localidades")
+            show_estradas    = st.checkbox("Estradas", False, key="sidebar_estradas")
 
         # -------- Infraestrutura --------
         with st.expander("🏗️ Infraestrutura", expanded=True):
@@ -307,24 +373,18 @@ def create_sidebar():
 
         # -------- Recursos Hídricos --------
         with st.expander("💧 Recursos Hídricos", expanded=False):
-            col3, col4 = st.columns(2)
-            with col3:
-                show_tecnologias   = st.checkbox("Tecnologias Sociais", False, key="sidebar_tecnologias")
-                show_pocos_cidade  = st.checkbox("Poços Cidade", False, key="sidebar_pocos_cidade")
-            with col4:
-                show_pocos_rural   = st.checkbox("Poços Rural", False, key="sidebar_pocos_rural")
-                show_espelhos      = st.checkbox("Espelhos d'Água", False, key="sidebar_espelhos")
-            show_outorgas          = st.checkbox("Outorgas Vigentes", False, key="sidebar_outorgas")
+            show_tecnologias   = st.checkbox("Tecnologias Sociais", False, key="sidebar_tecnologias")
+            show_pocos_cidade  = st.checkbox("Poços Cidade", False, key="sidebar_pocos_cidade")
+            show_pocos_rural   = st.checkbox("Poços Rural", False, key="sidebar_pocos_rural")
+            show_espelhos      = st.checkbox("Espelhos d'Água", False, key="sidebar_espelhos")
+            show_outorgas      = st.checkbox("Outorgas Vigentes", False, key="sidebar_outorgas")
 
         # -------- Ferramentas --------
         with st.expander("⚙️ Ferramentas", expanded=False):
-            tool_col1, tool_col2 = st.columns(2)
-            with tool_col1:
-                enable_measure     = st.checkbox("Medir", True, key="sidebar_measure")
-                enable_draw        = st.checkbox("Desenhar", True, key="sidebar_draw")
-            with tool_col2:
-                enable_fullscreen  = st.checkbox("Tela Cheia", True, key="sidebar_fullscreen")
-                show_coords        = st.checkbox("Coordenadas", True, key="sidebar_coords")
+            enable_measure     = st.checkbox("Medir", True, key="sidebar_measure")
+            enable_draw        = st.checkbox("Desenhar", True, key="sidebar_draw")
+            enable_fullscreen  = st.checkbox("Tela Cheia", True, key="sidebar_fullscreen")
+            show_coords        = st.checkbox("Coordenadas", True, key="sidebar_coords")
 
     return {
         "show_distritos": show_distritos,
@@ -486,13 +546,11 @@ create_header()
 # Criar sidebar e obter estados
 sidebar_state = create_sidebar()
 
-# Abas principais
-aba1, aba2, aba3 = st.tabs(["🏠 Página Inicial", "🏗️ Painel de Obras", "🗺️ Milhã em Mapas"])
-
-# =====================================================
-# 1) Página Inicial
-# =====================================================
-with aba1:
+# Abas principais - mostradas apenas quando não está na home
+if st.session_state.page != 'home':
+    aba1, aba2, aba3 = st.tabs(["🏠 Página Inicial", "🏗️ Painel de Obras", "🗺️ Milhã em Mapas"])
+else:
+    # Conteúdo da página inicial
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
@@ -585,6 +643,9 @@ with aba1:
             </div>
             """
         )
+    
+    # Não mostrar o resto do conteúdo na home
+    st.stop()
 
 # =====================================================
 # 2) Painel de Obras
