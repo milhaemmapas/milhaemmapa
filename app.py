@@ -689,6 +689,10 @@ else:
             render_card(
                 "<h3>🚀 Comece a Explorar</h3>",
                 """
+                <p style='font-size: 1.1rem; line-height: 1.6;'>
+                    Esta plataforma integra <strong>dados geoespaciais</strong> do município para apoiar a tomada de decisões públicas,
+                    qualificar projetos urbanos e aproximar a gestão municipal dos cidadãos.
+                </p>
                 <div style='display: grid; gap: 1rem;'>
                     <div style='display: flex; align-items: center; gap: 1rem; padding: 1rem; background: rgba(30, 58, 138, 0.05); border-radius: 12px;'>
                         <div style='font-size: 2rem;'>🗺️</div>
