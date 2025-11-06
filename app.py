@@ -372,16 +372,6 @@ def create_sidebar():
         }
 
     with st.sidebar:
-        st.markdown("<div id='sidebar-back'>", unsafe_allow_html=True)
-        if st.button("🏠 Voltar à Página Inicial", use_container_width=True, key="btn_voltar_home"):
-            st.session_state.page = "home"
-            try:
-                st.query_params.clear()
-            except Exception:
-                st.experimental_set_query_params()
-            st.rerun()
-        st.markdown("</div>", unsafe_allow_html=True)
-
         st.markdown(
             f"""
             <div class="sidebar-content">
@@ -423,6 +413,20 @@ def create_sidebar():
             enable_fullscreen  = st.checkbox("Tela Cheia", True, key="sidebar_fullscreen")
             show_coords        = st.checkbox("Coordenadas", True, key="sidebar_coords")
 
+        # Espaço flexível para empurrar o botão para baixo
+        st.markdown("<div style='flex-grow: 1;'></div>", unsafe_allow_html=True)
+        
+        # Botão na parte inferior
+        st.markdown("<div id='sidebar-back'>", unsafe_allow_html=True)
+        if st.button("🏠 Voltar à Página Inicial", use_container_width=True, key="btn_voltar_home"):
+            st.session_state.page = "home"
+            try:
+                st.query_params.clear()
+            except Exception:
+                st.experimental_set_query_params()
+            st.rerun()
+        st.markdown("</div>", unsafe_allow_html=True)
+
     return {
         "show_distritos": show_distritos,
         "show_sede": show_sede,
@@ -442,7 +446,6 @@ def create_sidebar():
         "enable_fullscreen": enable_fullscreen,
         "show_coords": show_coords
     }
-
 # =====================================================
 # Funções utilitárias
 # =====================================================
