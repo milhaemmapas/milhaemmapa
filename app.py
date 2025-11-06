@@ -296,22 +296,6 @@ def css_global():
         unsafe_allow_html=True,
     )
 
-def render_footer():
-    st.markdown("---")
-    st.markdown(
-        f"""
-        <div style='text-align: center; color: {COLORS["text_light"]}; padding: 3rem;'>
-            <div style='font-size: 2rem; margin-bottom: 1rem;'>
-                <span style='color: {COLORS["primary"]};'>ATLAS</span>
-                <span style='color: {COLORS["secondary"]};'>Geoespacial</span>
-            </div>
-            <p style='font-size: 1.1rem; margin-bottom: 1rem;'><strong>Milhã - Ceará</strong></p>
-            <p style='font-size: 0.9rem; opacity: 0.7;'>Desenvolvido para transparência e gestão pública eficiente • © 2024 Prefeitura Municipal de Milhã</p>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
 def create_header():
     st.markdown(
         f"""
@@ -345,7 +329,7 @@ def create_header():
         with col3:
             if st.button("📊 Todos os Dados", key="btn_dados", use_container_width=True):
                 st.session_state.page = "data"
-                st.session_state.default_tab = "data"  # <- corrigido
+                st.session_state.default_tab = "home"
                 st.rerun()
         st.markdown("</div></div>", unsafe_allow_html=True)
         st.markdown("---")
@@ -388,31 +372,21 @@ def create_sidebar():
         }
 
     with st.sidebar:
-        st.markdown("<div id='sidebar-back'>", unsafe_allow_html=True)
-        if st.button("🏠 Voltar à Página Inicial", use_container_width=True, key="btn_voltar_home"):
-            st.session_state.page = "home"
-            try:
-                st.query_params.clear()
-            except Exception:
-                st.experimental_set_query_params()
-            st.rerun()
-        st.markdown("</div>", unsafe_allow_html=True)
-
         st.markdown(
-            f"""
-            <div class="sidebar-content">
-                <div style="text-align: center; margin-bottom: 2rem;">
-                    <img src="https://i.ibb.co/7Nr6N5bm/brasao-milha.png" alt="Brasão de Milhã"
-                         style="width: 80px; height: 80px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.3);">
-                    <h3 style="color: {COLORS['sidebar_text']}; margin-top: 1rem;">Camadas do Mapa</h3>
-                    <p style="color: {COLORS['sidebar_text']}; opacity: 0.8; font-size: 0.9rem;">
-                        Ative/desative as camadas por grupo. As bases ficam no botão do mapa.
-                    </p>
-                </div>
+        f"""
+        <div class="sidebar-content">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <img src="https://i.ibb.co/7Nr6N5bm/brasao-milha.png" alt="Brasão de Milhã"
+                     style="width: 80px; height: 80px; border-radius: 50%; border: 3px solid #1E3A8A55;">
+                <h3 style="color: #1E3A8A; margin-top: 1rem; font-weight: 700;">Camadas do Mapa</h3>
+                <p style="color: #059669; font-size: 0.9rem; font-weight: 500;">
+                    As camadas estão separadas por categorias.
+                </p>
             </div>
-            """,
-            unsafe_allow_html=True
-        )
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
         with st.expander("🗾 Território", expanded=True):
             show_distritos   = st.checkbox("Distritos", True, key="sidebar_distritos")
@@ -439,6 +413,20 @@ def create_sidebar():
             enable_fullscreen  = st.checkbox("Tela Cheia", True, key="sidebar_fullscreen")
             show_coords        = st.checkbox("Coordenadas", True, key="sidebar_coords")
 
+        # Espaço flexível para empurrar o botão para baixo
+        st.markdown("<div style='flex-grow: 1;'></div>", unsafe_allow_html=True)
+        
+        # Botão na parte inferior
+        st.markdown("<div id='sidebar-back'>", unsafe_allow_html=True)
+        if st.button("🏠 Voltar à Página Inicial", use_container_width=True, key="btn_voltar_home"):
+            st.session_state.page = "home"
+            try:
+                st.query_params.clear()
+            except Exception:
+                st.experimental_set_query_params()
+            st.rerun()
+        st.markdown("</div>", unsafe_allow_html=True)
+
     return {
         "show_distritos": show_distritos,
         "show_sede": show_sede,
@@ -458,7 +446,6 @@ def create_sidebar():
         "enable_fullscreen": enable_fullscreen,
         "show_coords": show_coords
     }
-
 # =====================================================
 # Funções utilitárias
 # =====================================================
@@ -559,8 +546,9 @@ def geojson_bounds(gj: dict):
         return None
     return (min(lats), min(lons)), (max(lats), max(lons))
 
-# ==== garantir basemaps ====
+# ==== CORREÇÃO 1: garantir uma base padrão visível e as demais no controle ====
 def add_all_base_tiles(m: folium.Map):
+    # Base padrão (ativa)
     folium.TileLayer(
         tiles="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
         name="OpenStreetMap",
@@ -568,6 +556,8 @@ def add_all_base_tiles(m: folium.Map):
         control=True,
         show=True
     ).add_to(m)
+
+    # Outras bases (disponíveis no controle)
     folium.TileLayer(
         tiles="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
         name="CartoDB Positron",
@@ -590,7 +580,9 @@ def add_all_base_tiles(m: folium.Map):
         show=False
     ).add_to(m)
 
+# ==== CORREÇÃO 2: overlays aparecem no botão de camadas ====
 def FG(name: str, show: bool) -> folium.FeatureGroup:
+    # overlay=True e control=True fazem a camada aparecer no LayerControl
     return folium.FeatureGroup(name=name, show=show, overlay=True, control=True)
 
 # =====================================================
@@ -601,30 +593,27 @@ create_header()
 sidebar_state = create_sidebar()
 
 # =====================================================
-# Abas principais (agora com 4 abas)
+# Abas principais (ordem dinâmica para abrir direto na desejada)
 # =====================================================
 if st.session_state.page != 'home':
     label_home  = "🏠 Página Inicial"
     label_works = "🏗️ Painel de Obras"
     label_maps  = "🗺️ Milhã em Mapas"
-    label_data  = "📊 Todos os Dados"
 
     desired = st.session_state.default_tab
+    order = [label_home, label_works, label_maps]
 
-    # Ordem depende da aba desejada
     if desired == 'works':
-        order = [label_works, label_maps, label_data, label_home]
+        order = [label_works, label_maps, label_home]
     elif desired == 'maps':
-        order = [label_maps, label_works, label_data, label_home]
+        order = [label_maps, label_works, label_home]
     elif desired == 'data':
-        order = [label_data, label_works, label_maps, label_home]
-    else:
-        order = [label_home, label_works, label_maps, label_data]
+        order = [label_home, label_works, label_maps]
 
     tabs = st.tabs(order)
     tab_map = {order[i]: tabs[i] for i in range(len(order))}
 else:
-    # HOME — mostra conteúdo e encerra (agora com rodapé antes do stop)
+    # HOME — mostra conteúdo e encerra
     def render_home_content():
         col1, col2, col3, col4 = st.columns(4)
         with col1:
@@ -669,7 +658,7 @@ else:
             )
 
         colA, colB = st.columns(2)
-        def _render_card(title_html: str, body_html: str):
+        def render_card(title_html: str, body_html: str):
             st.markdown(
                 f"""
                 <div class="modern-card fade-in">
@@ -681,7 +670,7 @@ else:
             )
 
         with colA:
-            _render_card(
+            render_card(
                 "<h2 style='background: linear-gradient(135deg, #1E3A8A, #059669); -webkit-background-clip: text; -webkit-text-fill-color: transparent;'>🌟 Bem-vindo ao ATLAS Geoespacial</h2>",
                 """
                 <p style='font-size: 1.1rem; line-height: 1.6;'>
@@ -700,7 +689,7 @@ else:
                 """
             )
         with colB:
-            _render_card(
+            render_card(
                 "<h3>🚀 Comece a Explorar</h3>",
                 """
                 <p style='font-size: 1.1rem; line-height: 1.6;'>
@@ -733,19 +722,14 @@ else:
                 """
             )
 
-    css_global()
-    create_header()  # garante header na Home após re-run
     render_home_content()
-    render_footer()   # <- rodapé agora aparece na Home
     st.stop()
-
-# ============== A PARTIR DAQUI: conteúdo das abas quando não é Home ==============
 
 # =====================================================
 # 2) Painel de Obras
 # =====================================================
 with tab_map["🏗️ Painel de Obras"]:
-    def _render_card(title_html: str, body_html: str):
+    def render_card(title_html: str, body_html: str):
         st.markdown(
             f"""
             <div class="modern-card fade-in">
@@ -756,7 +740,7 @@ with tab_map["🏗️ Painel de Obras"]:
             unsafe_allow_html=True,
         )
 
-    _render_card(
+    render_card(
         "<h2>🏗️ Painel de Obras Municipais</h2>",
         "<p>Visualize e acompanhe o andamento das obras públicas em Milhã</p>",
     )
@@ -950,6 +934,7 @@ with tab_map["🏗️ Painel de Obras"]:
                 m2.fit_bounds([[df_map["__LAT__"].min(), df_map["__LON__"].min()],
                                [df_map["__LAT__"].max(), df_map["__LON__"].max()]])
 
+            # Layer control com basemaps e overlays visíveis
             folium.LayerControl(collapsed=True, position='topleft').add_to(m2)
             folium_static(m2, width=800, height=600)
 
@@ -965,7 +950,7 @@ with tab_map["🏗️ Painel de Obras"]:
 # 3) Milhã em Mapas
 # =====================================================
 with tab_map["🗺️ Milhã em Mapas"]:
-    def _render_card(title_html: str, body_html: str):
+    def render_card(title_html: str, body_html: str):
         st.markdown(
             f"""
             <div class="modern-card fade-in">
@@ -976,7 +961,7 @@ with tab_map["🗺️ Milhã em Mapas"]:
             unsafe_allow_html=True,
         )
 
-    _render_card(
+    render_card(
         "<h2>🗺️ Milhã em Mapas</h2>",
         "<p>Explore as camadas territoriais, infraestrutura e recursos hídricos do município</p>",
     )
@@ -1036,6 +1021,7 @@ with tab_map["🗺️ Milhã em Mapas"]:
             (min_lat, min_lon), (max_lat, max_lon) = b
             m3.fit_bounds([[min_lat, min_lon], [max_lat, max_lon]])
 
+    # Overlays no controle
     if sidebar_state["show_distritos"] and data_geo.get("Distritos"):
         fg_d = FG("Distritos", True)
         folium.GeoJson(
@@ -1061,6 +1047,7 @@ with tab_map["🗺️ Milhã em Mapas"]:
             props = ftr["properties"]
             nome = props.get("Localidade", "Localidade")
             distrito = props.get("Distrito", "Não informado")
+            
             popup_info = f"""
             <div style='font-family: Arial, sans-serif; border: 2px solid #4CAF50; border-radius: 8px; padding: 8px; background-color: #f0fff0;'>
             <h4 style='margin-top: 0; margin-bottom: 8px; color: #2E7D32;'>🏘️ Localidade</h4>
@@ -1068,6 +1055,7 @@ with tab_map["🗺️ Milhã em Mapas"]:
             <p style='margin: 4px 0;'><strong>📍 Distrito:</strong> {distrito}</p>
             </div>
             """
+            
             folium.Marker(
                 location=[coords[1], coords[0]],
                 tooltip=nome,
@@ -1101,7 +1089,11 @@ with tab_map["🗺️ Milhã em Mapas"]:
         folium.GeoJson(
             data_geo["Estradas"],
             name="Estradas",
-            style_function=lambda x: {"color": "#8B4513", "weight": 2, "opacity": 0.8},
+            style_function=lambda x: {
+                "color": "#8B4513",
+                "weight": 2,
+                "opacity": 0.8
+            },
             tooltip=folium.GeoJsonTooltip(
                 fields=list(data_geo["Estradas"]["features"][0]["properties"].keys())[:3],
                 aliases=["Propriedade:"] * 3
@@ -1156,6 +1148,7 @@ with tab_map["🗺️ Milhã em Mapas"]:
             props = ftr["properties"]
             coords = ftr["geometry"]["coordinates"]
             lng, lat = coords[0], coords[1]
+
             popup_content = f"""
             <div style='font-family:Arial;font-size:12px;max-width:300px'>
                 <b>Requerente:</b> {props.get('REQUERENTE', 'N/A')}<br>
@@ -1166,6 +1159,7 @@ with tab_map["🗺️ Milhã em Mapas"]:
                 <b>Volume Outorgado:</b> {props.get('VOLUME OUTORGADO (m³)', 'N/A')} m³
             </div>
             """
+
             tipo_uso = props.get('TIPO DE USO', '').upper()
             if 'IRRIGACAO' in tipo_uso:
                 icon_color = 'green'
@@ -1177,6 +1171,7 @@ with tab_map["🗺️ Milhã em Mapas"]:
                 icon_color = 'purple'
             else:
                 icon_color = 'gray'
+
             folium.Marker(
                 [lat, lng],
                 tooltip=props.get('REQUERENTE', 'Outorga'),
@@ -1226,6 +1221,7 @@ with tab_map["🗺️ Milhã em Mapas"]:
         for ftr in data_geo["Poços Zona Rural"]["features"]:
             coords = ftr["geometry"]["coordinates"]
             props = ftr["properties"]
+    
             popup_info = (
                 "<div style='font-family: Arial, sans-serif; border: 2px solid #0059b3; border-radius: 8px; padding: 8px; background-color: #f0f8ff;'>"
                 "<h4 style='margin-top: 0; margin-bottom: 8px; color: #0059b3; border-bottom: 1px solid #ccc;'>💧 Poço Rural</h4>"
@@ -1235,6 +1231,7 @@ with tab_map["🗺️ Milhã em Mapas"]:
                 "<p style='margin: 4px 0;'><strong>⚡ Energia:</strong> " + str(props.get("Energia", "Não informado")) + "</p>"
                 "</div>"
             )
+    
             folium.Marker(
                 location=[coords[1], coords[0]],
                 popup=folium.Popup(popup_info, max_width=300),
@@ -1243,32 +1240,31 @@ with tab_map["🗺️ Milhã em Mapas"]:
             ).add_to(fg_pr)
         fg_pr.add_to(m3)
 
+    # Controle de camadas com basemaps e overlays
     folium.LayerControl(collapsed=True, position='topleft').add_to(m3)
     folium_static(m3, width=1200, height=700)
 
 # =====================================================
-# 4) 📊 Todos os Dados — NOVA ABA
-# =====================================================
-with tab_map["📊 Todos os Dados"]:
-    render_card(
-        "<h2>📊 Todos os Dados</h2>",
-        """
-        <p style='font-size:1.05rem; line-height:1.7;'>
-        <strong>O MUNICÍPIO DE MILHÃ</strong><br><br>
-        O município de Milhã, localizado no Sertão Central, microrregião de Senador Pompeu. Possui uma população de
-        13.078 habitantes, área de 502,04 km² e localiza-se a 300 km de Fortaleza. Segundo dados do (IBGE, 2010).
-        </p>
-        """
-    )
-    # Caso queira adicionar tabelas/arquivos, pode ler CSVs aqui e exibir com st.dataframe().
-
-# =====================================================
-# 1) Página Inicial (como aba) — placeholder
+# 1) Página Inicial (como aba) — mesmo conteúdo da HOME
 # =====================================================
 with tab_map["🏠 Página Inicial"]:
-    st.write("")  # mantém consistência visual
+    st.write("")  # placeholder minimal, mantém consistência visual
+    # você pode repetir o conteúdo da home aqui, se quiser
 
 # =====================================================
-# Rodapé (páginas com abas)
+# Rodapé
 # =====================================================
-render_footer()
+st.markdown("---")
+st.markdown(
+    f"""
+    <div style='text-align: center; color: {COLORS["text_light"]}; padding: 3rem;'>
+        <div style='font-size: 2rem; margin-bottom: 1rem;'>
+            <span style='color: {COLORS["primary"]};'>ATLAS</span>
+            <span style='color: {COLORS["secondary"]};'>Geoespacial</span>
+        </div>
+        <p style='font-size: 1.1rem; margin-bottom: 1rem;'><strong>Milhã - Ceará</strong></p>
+        <p style='font-size: 0.9rem; opacity: 0.7;'>Desenvolvido para transparência e gestão pública eficiente • © 2024 Prefeitura Municipal de Milhã</p>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
