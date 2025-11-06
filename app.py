@@ -373,20 +373,20 @@ def create_sidebar():
 
     with st.sidebar:
         st.markdown(
-            f"""
-            <div class="sidebar-content">
-                <div style="text-align: center; margin-bottom: 2rem;">
-                    <img src="https://i.ibb.co/7Nr6N5bm/brasao-milha.png" alt="Brasão de Milhã"
-                         style="width: 80px; height: 80px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.3);">
-                    <h3 style="color: {COLORS['sidebar_text']}; margin-top: 1rem;">Camadas do Mapa</h3>
-                    <p style="color: {COLORS['sidebar_text']}; opacity: 0.8; font-size: 0.9rem;">
-                        Ative/desative as camadas por grupo. As bases ficam no botão do mapa.
-                    </p>
-                </div>
+        f"""
+        <div class="sidebar-content">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <img src="https://i.ibb.co/7Nr6N5bm/brasao-milha.png" alt="Brasão de Milhã"
+                     style="width: 80px; height: 80px; border-radius: 50%; border: 3px solid {COLORS['primary']}55;">
+                <h3 style="color: {COLORS['sidebar_text']}; margin-top: 1rem;">Camadas do Mapa</h3>
+                <p style="color: {COLORS['sidebar_text']}CC; font-size: 0.9rem;">
+                    As camadas estão separadas por categorias.
+                </p>
             </div>
-            """,
-            unsafe_allow_html=True
-        )
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
         with st.expander("🗾 Território", expanded=True):
             show_distritos   = st.checkbox("Distritos", True, key="sidebar_distritos")
