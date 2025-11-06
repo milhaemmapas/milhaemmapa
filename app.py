@@ -356,6 +356,7 @@ def create_sidebar():
             "show_sede": False,
             "show_localidades": False,
             "show_estradas": False,
+            "show_urbanas": False,
             "show_escolas": False,
             "show_unidades_saude": False,
             "show_obras": False,
@@ -402,6 +403,7 @@ def create_sidebar():
             show_sede        = st.checkbox("Sede Distritos", True, key="sidebar_sede")
             show_localidades = st.checkbox("Localidades", False, key="sidebar_localidades")
             show_estradas    = st.checkbox("Estradas", False, key="sidebar_estradas")
+            show_urbanas     = st.checkbox("Áreas Urbanas", False, key="sidebar_urbanas")
 
         with st.expander("🏗️ Infraestrutura", expanded=True):
             show_escolas          = st.checkbox("Escolas Públicas", False, key="sidebar_escolas")
@@ -426,6 +428,7 @@ def create_sidebar():
         "show_sede": show_sede,
         "show_localidades": show_localidades,
         "show_estradas": show_estradas,
+        "show_urbanas": show_urbanas,
         "show_escolas": show_escolas,
         "show_unidades_saude": show_unidades_saude,
         "show_obras": show_obras,
@@ -846,7 +849,7 @@ with tab_map["🏗️ Painel de Obras"]:
                     position='topleft'
                 ).add_to(m2)
             if sidebar_state["enable_draw"]:
-                Draw(export=True, position='topright').add_to(m2)
+                Draw(export=True, position='topleft').add_to(m2)
             if sidebar_state["show_coords"]:
                 MousePosition(position='bottomleft').add_to(m2)
 
@@ -964,6 +967,7 @@ with tab_map["🗺️ Milhã em Mapas"]:
         "Distritos": "milha_dist_polig.geojson",
         "Sede Distritos": "Distritos_pontos.geojson",
         "Localidades": "Localidades.geojson",
+        "Áreas Urbanas": "milha_urbanas.geojson",
         "Escolas": "Escolas_publicas.geojson",
         "Unidades de Saúde": "Unidades_saude.geojson",
         "Tecnologias Sociais": "teclogias_sociais.geojson",
@@ -1000,7 +1004,7 @@ with tab_map["🗺️ Milhã em Mapas"]:
             position='topleft'
         ).add_to(m3)
     if sidebar_state["enable_draw"]:
-        Draw(export=True, position='topright').add_to(m3)
+        Draw(export=True, position='topleft').add_to(m3)
     if sidebar_state["show_coords"]:
         MousePosition(position='bottomleft').add_to(m3)
 
@@ -1040,6 +1044,43 @@ with tab_map["🗺️ Milhã em Mapas"]:
             folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="purple", icon="flag")).add_to(fg_loc)
         fg_loc.add_to(m3)
 
+    if sidebar_state["show_urbanas"] and data_geo.get("Áreas Urbanas"):
+        fg_urbanas = FG("Áreas Urbanas", True)
+        folium.GeoJson(
+            data_geo["Áreas Urbanas"],
+            name="Áreas Urbanas",
+            style_function=lambda x: {
+                "fillColor": "#FF69B4",
+                "fillOpacity": 0.3,
+                "color": "#8B008B",
+                "weight": 2,
+                "opacity": 0.8
+            },
+            tooltip=folium.GeoJsonTooltip(
+                fields=list(data_geo["Áreas Urbanas"]["features"][0]["properties"].keys())[:3],
+                aliases=["Propriedade:"] * 3,
+                style=("font-family: Arial; font-size: 12px;")
+            )
+        ).add_to(fg_urbanas)
+        fg_urbanas.add_to(m3)
+
+    if sidebar_state["show_estradas"] and data_geo.get("Estradas"):
+        fg_estr = FG("Estradas", True)
+        folium.GeoJson(
+            data_geo["Estradas"],
+            name="Estradas",
+            style_function=lambda x: {
+                "color": "#8B4513",
+                "weight": 2,
+                "opacity": 0.8
+            },
+            tooltip=folium.GeoJsonTooltip(
+                fields=list(data_geo["Estradas"]["features"][0]["properties"].keys())[:3],
+                aliases=["Propriedade:"] * 3
+            )
+        ).add_to(fg_estr)
+        fg_estr.add_to(m3)
+
     if sidebar_state["show_escolas"] and data_geo.get("Escolas"):
         fg_esc = FG("Escolas Públicas", True)
         for ftr in data_geo["Escolas"]["features"]:
@@ -1070,23 +1111,6 @@ with tab_map["🗺️ Milhã em Mapas"]:
             )
             folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="green", icon="plus-sign")).add_to(fg_saude)
         fg_saude.add_to(m3)
-
-    if sidebar_state["show_estradas"] and data_geo.get("Estradas"):
-        fg_estr = FG("Estradas", True)
-        folium.GeoJson(
-            data_geo["Estradas"],
-            name="Estradas",
-            style_function=lambda x: {
-                "color": "#8B4513",
-                "weight": 2,
-                "opacity": 0.8
-            },
-            tooltip=folium.GeoJsonTooltip(
-                fields=list(data_geo["Estradas"]["features"][0]["properties"].keys())[:3],
-                aliases=["Propriedade:"] * 3
-            )
-        ).add_to(fg_estr)
-        fg_estr.add_to(m3)
 
     if sidebar_state["show_tecnologias"] and data_geo.get("Tecnologias Sociais"):
         fg_tec = FG("Tecnologias Sociais", True)
