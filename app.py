@@ -837,13 +837,16 @@ with tab_map["🏗️ Painel de Obras"]:
             add_all_base_tiles(m2)
 
             if sidebar_state["enable_fullscreen"]:
-                Fullscreen(position='topright').add_to(m2)
+                Fullscreen(position='topleft').add_to(m2)
             if sidebar_state["enable_measure"]:
-                m2.add_child(MeasureControl(primary_length_unit="meters",
-                                            secondary_length_unit="kilometers",
-                                            primary_area_unit="hectares"))
+                MeasureControl(
+                    primary_length_unit="meters",
+                    secondary_length_unit="kilometers", 
+                    primary_area_unit="hectares",
+                    position='topleft'
+                ).add_to(m2)
             if sidebar_state["enable_draw"]:
-                Draw(export=True, position='topright').add_to(m2)
+                Draw(export=True, position='topleft').add_to(m2)
             if sidebar_state["show_coords"]:
                 MousePosition(position='bottomleft').add_to(m2)
 
@@ -922,7 +925,7 @@ with tab_map["🏗️ Painel de Obras"]:
                                [df_map["__LAT__"].max(), df_map["__LON__"].max()]])
 
             # Layer control com basemaps e overlays visíveis
-            folium.LayerControl(collapsed=True, position='topright').add_to(m2)
+            folium.LayerControl(collapsed=True, position='topleft').add_to(m2)
             folium_static(m2, width=800, height=600)
 
         st.markdown("### 📋 Tabela de Obras")
@@ -988,15 +991,16 @@ with tab_map["🗺️ Milhã em Mapas"]:
     add_all_base_tiles(m3)
 
     if sidebar_state["enable_fullscreen"]:
-        Fullscreen(position='topright').add_to(m3)
+        Fullscreen(position='topleft').add_to(m3)
     if sidebar_state["enable_measure"]:
-        m3.add_child(MeasureControl(
+        MeasureControl(
             primary_length_unit="meters",
             secondary_length_unit="kilometers",
-            primary_area_unit="hectares"
-        ))
+            primary_area_unit="hectares",
+            position='topleft'
+        ).add_to(m3)
     if sidebar_state["enable_draw"]:
-        Draw(export=True, position='topright').add_to(m3)
+        Draw(export=True, position='topleft').add_to(m3)
     if sidebar_state["show_coords"]:
         MousePosition(position='bottomleft').add_to(m3)
 
@@ -1185,7 +1189,7 @@ with tab_map["🗺️ Milhã em Mapas"]:
         fg_pr.add_to(m3)
 
     # Controle de camadas com basemaps e overlays
-    folium.LayerControl(collapsed=True, position='topright').add_to(m3)
+    folium.LayerControl(collapsed=True, position='topleft').add_to(m3)
     folium_static(m3, width=1200, height=700)
 
 # =====================================================
