@@ -1197,29 +1197,29 @@ with tab_map["🗺️ Milhã em Mapas"]:
         fg_pc.add_to(m3)
 
     if sidebar_state["show_pocos_rural"] and data_geo.get("Poços Zona Rural"):
-    fg_pr = FG("Poços Zona Rural", True)
-    for ftr in data_geo["Poços Zona Rural"]["features"]:
-        x, y = ftr["geometry"]["coordinates"]
-        props = ftr["properties"]
-        nome = props.get("Localidade", props.get("Name", "Poço"))
-
-        popup_info = (
-            "<div style='font-family: Arial, sans-serif; border: 2px solid #0059b3; border-radius: 8px; padding: 8px; background-color: #f0f8ff;'>"
-            "<h4 style='margin-top: 0; margin-bottom: 8px; color: #0059b3; border-bottom: 1px solid #ccc;'>💧 Poço Rural</h4>"
-            "<p style='margin: 4px 0;'><strong>📍 Localidade:</strong> " + str(props.get("Localidade", "Não informado")) + "</p>"
-            "<p style='margin: 4px 0;'><strong>📏 Profundidade:</strong> " + str(props.get("Profundida", "Não informado")) + "</p>"
-            "<p style='margin: 4px 0;'><strong>💦 Vazão (L/h):</strong> " + str(props.get("Vazão_LH_2", "Não informado")) + "</p>"
-            "<p style='margin: 4px 0;'><strong>⚡ Energia:</strong> " + str(props.get("Energia", "Não informado")) + "</p>"
-            "</div>"
-        )
-
-        folium.Marker(
-            location=[y, x],
-            popup=folium.Popup(popup_info, max_width=300),
-            tooltip=nome,
-            icon=folium.Icon(color="cadetblue", icon="tint")
-        ).add_to(fg_pr)
-    fg_pr.add_to(m3)
+        fg_pr = FG("Poços Zona Rural", True)
+        for ftr in data_geo["Poços Zona Rural"]["features"]:
+            x, y = ftr["geometry"]["coordinates"]
+            props = ftr["properties"]
+            nome = props.get("Localidade", props.get("Name", "Poço"))
+    
+            popup_info = (
+                "<div style='font-family: Arial, sans-serif; border: 2px solid #0059b3; border-radius: 8px; padding: 8px; background-color: #f0f8ff;'>"
+                "<h4 style='margin-top: 0; margin-bottom: 8px; color: #0059b3; border-bottom: 1px solid #ccc;'>💧 Poço Rural</h4>"
+                "<p style='margin: 4px 0;'><strong>📍 Localidade:</strong> " + str(props.get("Localidade", "Não informado")) + "</p>"
+                "<p style='margin: 4px 0;'><strong>📏 Profundidade:</strong> " + str(props.get("Profundida", "Não informado")) + "</p>"
+                "<p style='margin: 4px 0;'><strong>💦 Vazão (L/h):</strong> " + str(props.get("Vazão_LH_2", "Não informado")) + "</p>"
+                "<p style='margin: 4px 0;'><strong>⚡ Energia:</strong> " + str(props.get("Energia", "Não informado")) + "</p>"
+                "</div>"
+            )
+    
+            folium.Marker(
+                location=[y, x],
+                popup=folium.Popup(popup_info, max_width=300),
+                tooltip=nome,
+                icon=folium.Icon(color="cadetblue", icon="tint")
+            ).add_to(fg_pr)
+        fg_pr.add_to(m3)
 
     # Controle de camadas com basemaps e overlays
     folium.LayerControl(collapsed=True, position='topleft').add_to(m3)
