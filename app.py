@@ -377,9 +377,9 @@ def create_sidebar():
         <div class="sidebar-content">
             <div style="text-align: center; margin-bottom: 2rem;">
                 <img src="https://i.ibb.co/7Nr6N5bm/brasao-milha.png" alt="Brasão de Milhã"
-                     style="width: 80px; height: 80px; border-radius: 50%; border: 3px solid {COLORS['primary']}55;">
-                <h3 style="color: {COLORS['sidebar_text']}; margin-top: 1rem;">Camadas do Mapa</h3>
-                <p style="color: {COLORS['sidebar_text']}CC; font-size: 0.9rem;">
+                     style="width: 80px; height: 80px; border-radius: 50%; border: 3px solid #1E3A8A55;">
+                <h3 style="color: #1E3A8A; margin-top: 1rem; font-weight: 700;">Camadas do Mapa</h3>
+                <p style="color: #059669; font-size: 0.9rem; font-weight: 500;">
                     As camadas estão separadas por categorias.
                 </p>
             </div>
