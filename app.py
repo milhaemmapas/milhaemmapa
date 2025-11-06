@@ -278,26 +278,52 @@ def create_header():
         unsafe_allow_html=True,
     )
 
-    # Botões de navegação com links (paleta do app + direcionamento direto à aba)
+    # Botões estilizados, mas mantendo navegação interna (sem redirecionar via link)
     if st.session_state.page == 'home':
         st.markdown("<div style='height: 20px'></div>", unsafe_allow_html=True)
         col1, col2, col3 = st.columns(3)
         with col1:
-            st.markdown(
-                '<a class="nav-button" href="?page=maps&tab=maps">🗺️ Explorar Mapas</a>',
-                unsafe_allow_html=True
-            )
+            if st.markdown(
+                f"""
+                <style>
+                div[data-testid="stButton"] button.nav-btn {{
+                    background: linear-gradient(135deg, {COLORS["primary"]}, {COLORS["secondary"]});
+                    color: white;
+                    border: none;
+                    padding: 1rem 2rem;
+                    border-radius: 12px;
+                    font-weight: 700;
+                    font-size: 1.05rem;
+                    width: 100%;
+                    transition: all 0.3s ease;
+                    cursor: pointer;
+                    box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+                }}
+                div[data-testid="stButton"] button.nav-btn:hover {{
+                    transform: translateY(-2px);
+                    box-shadow: 0 10px 28px rgba(0,0,0,0.2);
+                }}
+                </style>
+                """,
+                unsafe_allow_html=True,
+            ):
+                pass
+            if st.button("🗺️ Explorar Mapas", key="btn_mapas", type="secondary"):
+                st.session_state.page = "maps"
+                st.session_state.default_tab = "maps"
+                st.rerun()
         with col2:
-            st.markdown(
-                '<a class="nav-button" href="?page=works&tab=works">🏗️ Ver Obras</a>',
-                unsafe_allow_html=True
-            )
+            if st.button("🏗️ Ver Obras", key="btn_obras", type="secondary"):
+                st.session_state.page = "works"
+                st.session_state.default_tab = "works"
+                st.rerun()
         with col3:
-            st.markdown(
-                '<a class="nav-button" href="?page=data&tab=data">📊 Todos os Dados</a>',
-                unsafe_allow_html=True
-            )
+            if st.button("📊 Todos os Dados", key="btn_dados", type="secondary"):
+                st.session_state.page = "data"
+                st.session_state.default_tab = "home"  # Pode ajustar futuramente se quiser uma aba de dados
+                st.rerun()
         st.markdown("---")
+
 
 # =====================================================
 # Componentes Modernos
