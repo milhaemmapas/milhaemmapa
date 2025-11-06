@@ -922,7 +922,7 @@ with tab_map["🏗️ Painel de Obras"]:
                                [df_map["__LAT__"].max(), df_map["__LON__"].max()]])
 
             # Layer control com basemaps e overlays visíveis
-            folium.LayerControl(collapsed=False, position='topright').add_to(m2)
+            folium.LayerControl(collapsed=True, position='topright').add_to(m2)
             folium_static(m2, width=800, height=600)
 
         st.markdown("### 📋 Tabela de Obras")
@@ -1185,7 +1185,7 @@ with tab_map["🗺️ Milhã em Mapas"]:
         fg_pr.add_to(m3)
 
     # Controle de camadas com basemaps e overlays
-    folium.LayerControl(collapsed=False, position='topright').add_to(m3)
+    folium.LayerControl(collapsed=True, position='topright').add_to(m3)
     folium_static(m3, width=1200, height=700)
 
 # =====================================================
