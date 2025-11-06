@@ -837,7 +837,7 @@ with tab_map["🏗️ Painel de Obras"]:
             add_all_base_tiles(m2)
 
             if sidebar_state["enable_fullscreen"]:
-                Fullscreen(position='topleft').add_to(m2)
+                Fullscreen(position='topright').add_to(m2)
             if sidebar_state["enable_measure"]:
                 MeasureControl(
                     primary_length_unit="meters",
