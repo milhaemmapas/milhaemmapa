@@ -406,7 +406,7 @@ def create_sidebar():
         with st.expander("🏗️ Infraestrutura", expanded=True):
             show_escolas          = st.checkbox("Escolas Públicas", False, key="sidebar_escolas")
             show_unidades_saude   = st.checkbox("Unidades de Saúde", False, key="sidebar_unidades_saude")
-            show_obras            = st.checkbox("Obras Municipais", False, key="sidebar_obras")
+            show_obras            = st.checkbox("Obras Municipais", True, key="sidebar_obras")
 
         with st.expander("💧 Recursos Hídricos", expanded=False):
             show_tecnologias   = st.checkbox("Tecnologias Sociais", False, key="sidebar_tecnologias")
