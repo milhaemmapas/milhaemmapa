@@ -14,6 +14,8 @@ import unicodedata
 # Inicializa estado da página
 if 'page' not in st.session_state:
     st.session_state.page = 'home'
+if 'active_tab' not in st.session_state:
+    st.session_state.active_tab = "🏠 Página Inicial"
 
 # Configura sidebar baseado na página atual
 sidebar_state = "collapsed" if st.session_state.page == 'home' else "expanded"
@@ -244,22 +246,24 @@ def css_global():
                 background: linear-gradient(135deg, {COLORS["secondary"]}, {COLORS["primary"]});
             }}
 
-            /* Botões de navegação */
+            /* Botões de navegação na paleta de cores */
             .nav-button {{
                 background: linear-gradient(135deg, {COLORS["primary"]}, {COLORS["secondary"]});
                 color: white;
                 border: none;
-                padding: 1rem 2rem;
-                border-radius: 12px;
-                font-weight: 600;
-                font-size: 1.1rem;
+                padding: 1.5rem 1rem;
+                border-radius: 16px;
+                font-weight: 700;
+                font-size: 1.2rem;
                 transition: all 0.3s ease;
                 cursor: pointer;
                 margin: 0.5rem 0;
+                width: 100%;
+                box-shadow: 0 4px 15px rgba(30, 58, 138, 0.3);
             }}
             .nav-button:hover {{
-                transform: translateY(-2px);
-                box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+                transform: translateY(-5px);
+                box-shadow: 0 8px 25px rgba(0,0,0,0.2);
             }}
         </style>
         """,
@@ -288,15 +292,18 @@ def create_header():
         col1, col2, col3 = st.columns(3)
         with col1:
             if st.button("🗺️ Explorar Mapas", use_container_width=True, type="primary"):
-                st.session_state.page = "maps"
+                st.session_state.page = "app"
+                st.session_state.active_tab = "🗺️ Milhã em Mapas"
                 st.rerun()
         with col2:
             if st.button("🏗️ Ver Obras", use_container_width=True, type="primary"):
-                st.session_state.page = "works"
+                st.session_state.page = "app"
+                st.session_state.active_tab = "🏗️ Painel de Obras"
                 st.rerun()
         with col3:
             if st.button("📊 Todos os Dados", use_container_width=True, type="primary"):
-                st.session_state.page = "data"
+                st.session_state.page = "app"
+                st.session_state.active_tab = "🏠 Página Inicial"
                 st.rerun()
         st.markdown("---")
 
@@ -340,6 +347,7 @@ def create_sidebar():
         # Botão para voltar à home
         if st.button("🏠 Voltar à Página Inicial", use_container_width=True):
             st.session_state.page = "home"
+            st.session_state.active_tab = "🏠 Página Inicial"
             st.rerun()
             
         st.markdown(
@@ -538,19 +546,9 @@ def FG(name: str, show: bool) -> folium.FeatureGroup:
     return folium.FeatureGroup(name=name, show=show, overlay=True, control=False)
 
 # =====================================================
-# Layout Principal Atualizado
+# Conteúdo da Página Inicial
 # =====================================================
-css_global()
-create_header()
-
-# Criar sidebar e obter estados
-sidebar_state = create_sidebar()
-
-# Abas principais - mostradas apenas quando não está na home
-if st.session_state.page != 'home':
-    aba1, aba2, aba3 = st.tabs(["🏠 Página Inicial", "🏗️ Painel de Obras", "🗺️ Milhã em Mapas"])
-else:
-    # Conteúdo da página inicial
+def render_home_content():
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
@@ -643,484 +641,504 @@ else:
             </div>
             """
         )
+
+# =====================================================
+# Layout Principal Atualizado
+# =====================================================
+css_global()
+create_header()
+
+# Criar sidebar e obter estados
+sidebar_state = create_sidebar()
+
+# Lógica principal de navegação
+if st.session_state.page == 'home':
+    # Página inicial standalone
+    render_home_content()
+else:
+    # Aplicação com abas - usando uma abordagem mais simples
+    tab1, tab2, tab3 = st.tabs(["🏠 Página Inicial", "🏗️ Painel de Obras", "🗺️ Milhã em Mapas"])
     
-    # Não mostrar o resto do conteúdo na home
-    st.stop()
+    # Controle manual das abas baseado no estado
+    if st.session_state.active_tab == "🏠 Página Inicial":
+        with tab1:
+            render_home_content()
+    elif st.session_state.active_tab == "🏗️ Painel de Obras":
+        with tab2:
+            # =====================================================
+            # 2) Painel de Obras (CÓDIGO COMPLETO)
+            # =====================================================
+            render_card(
+                "<h2>🏗️ Painel de Obras Municipais</h2>",
+                "<p>Visualize e acompanhe o andamento das obras públicas em Milhã</p>",
+            )
 
-# =====================================================
-# 2) Painel de Obras
-# =====================================================
-with aba2:
-    render_card(
-        "<h2>🏗️ Painel de Obras Municipais</h2>",
-        "<p>Visualize e acompanhe o andamento das obras públicas em Milhã</p>",
-    )
+            CSV_OBRAS_CANDIDATES = ["dados/milha_obras.csv", "/mnt/data/milha_obras.csv"]
+            CSV_OBRAS = next((p for p in CSV_OBRAS_CANDIDATES if os.path.exists(p)), CSV_OBRAS_CANDIDATES[0])
 
-    CSV_OBRAS_CANDIDATES = ["dados/milha_obras.csv", "/mnt/data/milha_obras.csv"]
-    CSV_OBRAS = next((p for p in CSV_OBRAS_CANDIDATES if os.path.exists(p)), CSV_OBRAS_CANDIDATES[0])
+            df_obras_raw = sniff_read_csv(CSV_OBRAS)
 
-    df_obras_raw = sniff_read_csv(CSV_OBRAS)
+            if not df_obras_raw.empty:
+                # Normaliza colunas
+                colmap = {c: norm_col(c) for c in df_obras_raw.columns}
+                df_obras = df_obras_raw.rename(columns=colmap).copy()
 
-    if not df_obras_raw.empty:
-        # Normaliza colunas
-        colmap = {c: norm_col(c) for c in df_obras_raw.columns}
-        df_obras = df_obras_raw.rename(columns=colmap).copy()
+                # Detecta lat/lon
+                lat_col = next((c for c in df_obras.columns if c in {"latitude","lat"}), None)
+                lon_col = next((c for c in df_obras.columns if c in {"longitude","long","lon"}), None)
+                if not lat_col or not lon_col:
+                    coords = autodetect_coords(df_obras_raw.copy())
+                    if coords:
+                        lat_col, lon_col = coords
 
-        # Detecta lat/lon
-        lat_col = next((c for c in df_obras.columns if c in {"latitude","lat"}), None)
-        lon_col = next((c for c in df_obras.columns if c in {"longitude","long","lon"}), None)
-        if not lat_col or not lon_col:
-            coords = autodetect_coords(df_obras_raw.copy())
-            if coords:
-                lat_col, lon_col = coords
+                if not lat_col or not lon_col:
+                    st.error("Não foi possível localizar colunas de latitude/longitude.")
+                    st.stop()
 
-        if not lat_col or not lon_col:
-            st.error("Não foi possível localizar colunas de latitude/longitude.")
-            st.stop()
+                df_obras["__LAT__"] = to_float_series(df_obras[lat_col])
+                df_obras["__LON__"] = to_float_series(df_obras[lon_col])
 
-        df_obras["__LAT__"] = to_float_series(df_obras[lat_col])
-        df_obras["__LON__"] = to_float_series(df_obras[lon_col])
+                # Heurística para corrigir inversão e sinal (região de Milhã)
+                lat_s = pd.to_numeric(df_obras["__LAT__"], errors="coerce")
+                lon_s = pd.to_numeric(df_obras["__LON__"], errors="coerce")
 
-        # Heurística para corrigir inversão e sinal (região de Milhã)
-        lat_s = pd.to_numeric(df_obras["__LAT__"], errors="coerce")
-        lon_s = pd.to_numeric(df_obras["__LON__"], errors="coerce")
+                def _pct_inside(a, b):
+                    try:
+                        m = (a.between(-6.5, -4.5)) & (b.between(-40.5, -38.0))
+                        return float(m.mean())
+                    except Exception:
+                        return 0.0
 
-        def _pct_inside(a, b):
-            try:
-                m = (a.between(-6.5, -4.5)) & (b.between(-40.5, -38.0))
-                return float(m.mean())
-            except Exception:
-                return 0.0
+                cands = [
+                    ("orig", lat_s, lon_s, _pct_inside(lat_s, lon_s)),
+                    ("swap", lon_s, lat_s, _pct_inside(lon_s, lat_s)),
+                    ("neg_lon", lat_s, lon_s.mul(-1.0), _pct_inside(lat_s, lon_s.mul(-1.0))),
+                    ("swap_neg", lon_s, lat_s.mul(-1.0), _pct_inside(lon_s, lat_s.mul(-1.0))),
+                ]
+                best = max(cands, key=lambda x: x[3])
+                if best[0] != "orig" and best[3] >= cands[0][3]:
+                    df_obras["__LAT__"], df_obras["__LON__"] = best[1], best[2]
 
-        cands = [
-            ("orig", lat_s, lon_s, _pct_inside(lat_s, lon_s)),
-            ("swap", lon_s, lat_s, _pct_inside(lon_s, lat_s)),
-            ("neg_lon", lat_s, lon_s.mul(-1.0), _pct_inside(lat_s, lon_s.mul(-1.0))),
-            ("swap_neg", lon_s, lat_s.mul(-1.0), _pct_inside(lon_s, lat_s.mul(-1.0))),
-        ]
-        best = max(cands, key=lambda x: x[3])
-        if best[0] != "orig" and best[3] >= cands[0][3]:
-            df_obras["__LAT__"], df_obras["__LON__"] = best[1], best[2]
+                df_map = df_obras.dropna(subset=["__LAT__", "__LON__"]).copy()
 
-        df_map = df_obras.dropna(subset=["__LAT__", "__LON__"]).copy()
+                # Campos para popup/tabela
+                cols = list(df_obras.columns)
+                def pick_norm(*options):
+                    return next((c for c in cols if c in [norm_col(o) for o in options]), None)
 
-        # Campos para popup/tabela
-        cols = list(df_obras.columns)
-        def pick_norm(*options):
-            return next((c for c in cols if c in [norm_col(o) for o in options]), None)
+                c_obra    = pick_norm("Obra", "Nome", "Projeto", "Descrição")
+                c_status  = pick_norm("Status", "Situação")
+                c_empresa = pick_norm("Empresa", "Contratada")
+                c_valor   = pick_norm("Valor", "Valor Total", "Custo")
+                c_bairro  = pick_norm("Bairro", "Localidade")
+                c_dtini   = pick_norm("Início", "Data Início", "Inicio")
+                c_dtfim   = pick_norm("Término", "Data Fim", "Termino")
 
-        c_obra    = pick_norm("Obra", "Nome", "Projeto", "Descrição")
-        c_status  = pick_norm("Status", "Situação")
-        c_empresa = pick_norm("Empresa", "Contratada")
-        c_valor   = pick_norm("Valor", "Valor Total", "Custo")
-        c_bairro  = pick_norm("Bairro", "Localidade")
-        c_dtini   = pick_norm("Início", "Data Início", "Inicio")
-        c_dtfim   = pick_norm("Término", "Data Fim", "Termino")
+                st.success(f"✅ **{len(df_map)} obra(s)** com coordenadas válidas encontradas")
 
-        st.success(f"✅ **{len(df_map)} obra(s)** com coordenadas válidas encontradas")
+                # Carregar dados GeoJSON
+                base_dir_candidates = ["dados", "/mnt/data"]
+                gj_distritos = load_geojson_any([os.path.join(b, "milha_dist_polig.geojson") for b in base_dir_candidates])
+                gj_sede      = load_geojson_any([os.path.join(b, "Distritos_pontos.geojson") for b in base_dir_candidates])
 
-        # Carregar dados GeoJSON
-        base_dir_candidates = ["dados", "/mnt/data"]
-        gj_distritos = load_geojson_any([os.path.join(b, "milha_dist_polig.geojson") for b in base_dir_candidates])
-        gj_sede      = load_geojson_any([os.path.join(b, "Distritos_pontos.geojson") for b in base_dir_candidates])
+                # Layout do mapa
+                col_map, col_info = st.columns([3, 1])
 
-        # Layout do mapa
-        col_map, col_info = st.columns([3, 1])
+                with col_info:
+                    st.markdown('<div class="sticky-panel">', unsafe_allow_html=True)
+                    st.markdown('<div class="panel-title">📊 Informações</div>', unsafe_allow_html=True)
 
-        with col_info:
-            st.markdown('<div class="sticky-panel">', unsafe_allow_html=True)
-            st.markdown('<div class="panel-title">📊 Informações</div>', unsafe_allow_html=True)
+                    total_obras = len(df_obras)
+                    obras_com_coords = len(df_map)
+                    status_counts = df_obras[c_status].value_counts() if c_status else pd.Series()
 
-            total_obras = len(df_obras)
-            obras_com_coords = len(df_map)
-            status_counts = df_obras[c_status].value_counts() if c_status else pd.Series()
+                    st.metric("Total de Obras", total_obras)
+                    st.metric("Com Coordenadas", obras_com_coords)
 
-            st.metric("Total de Obras", total_obras)
-            st.metric("Com Coordenadas", obras_com_coords)
+                    if not status_counts.empty:
+                        st.markdown("**Status das Obras:**")
+                        for status, count in status_counts.head(5).items():
+                            st.write(f"• {status}: {count}")
 
-            if not status_counts.empty:
-                st.markdown("**Status das Obras:**")
-                for status, count in status_counts.head(5).items():
-                    st.write(f"• {status}: {count}")
+                    st.markdown('</div>', unsafe_allow_html=True)
 
-            st.markdown('</div>', unsafe_allow_html=True)
+                with col_map:
+                    # Centralização
+                    bounds = None
+                    if gj_distritos:
+                        b = geojson_bounds(gj_distritos)
+                        if b:
+                            bounds = b
+                            (min_lat, min_lon), (max_lat, max_lon) = b
+                            center_lat = (min_lat + max_lat) / 2.0
+                            center_lon = (min_lon + max_lon) / 2.0
+                            default_center = [center_lat, center_lon]
+                        else:
+                            default_center = [-5.680, -39.200]
+                    else:
+                        default_center = [-5.680, -39.200]
 
-        with col_map:
-            # Centralização
-            bounds = None
-            if gj_distritos:
-                b = geojson_bounds(gj_distritos)
-                if b:
-                    bounds = b
-                    (min_lat, min_lon), (max_lat, max_lon) = b
-                    center_lat = (min_lat + max_lat) / 2.0
-                    center_lon = (min_lon + max_lon) / 2.0
-                    default_center = [center_lat, center_lon]
-                else:
-                    default_center = [-5.680, -39.200]
+                    m2 = folium.Map(location=default_center, zoom_start=12, tiles=None, control_scale=True)
+
+                    # Bases no botão do mapa
+                    add_all_base_tiles(m2)
+
+                    # Ferramentas conforme sidebar
+                    if sidebar_state["enable_fullscreen"]:
+                        Fullscreen(position='topright').add_to(m2)
+                    if sidebar_state["enable_measure"]:
+                        m2.add_child(MeasureControl(primary_length_unit="meters",
+                                                    secondary_length_unit="kilometers",
+                                                    primary_area_unit="hectares"))
+                    if sidebar_state["enable_draw"]:
+                        Draw(export=True, position='topright').add_to(m2)
+                    if sidebar_state["show_coords"]:
+                        MousePosition(position='bottomleft').add_to(m2)
+
+                    # Overlays (fora do botão do mapa)
+                    if sidebar_state["show_distritos"] and gj_distritos:
+                        fg_dist = FG("Distritos", True)
+                        folium.GeoJson(
+                            gj_distritos,
+                            name="Distritos",
+                            style_function=lambda x: {"fillColor": "#9fe2fc", "fillOpacity": 0.1, "color": "#000000", "weight": 1},
+                        ).add_to(fg_dist)
+                        fg_dist.add_to(m2)
+
+                    if sidebar_state["show_sede"] and gj_sede:
+                        fg_sede = FG("Sede Distritos", True)
+                        for f in gj_sede.get("features", []):
+                            x, y = f["geometry"]["coordinates"]
+                            nome = f.get("properties", {}).get("nome_do_distrito", "Sede")
+                            folium.Marker([y, x], tooltip=nome, icon=folium.Icon(color="darkgreen", icon="home")).add_to(fg_sede)
+                        fg_sede.add_to(m2)
+
+                    if sidebar_state["show_obras"] and not df_map.empty:
+                        def status_icon_color(status_val: str):
+                            s = (str(status_val) if status_val is not None else "").strip().lower()
+                            if any(k in s for k in ["conclu", "finaliz"]):     return "green"
+                            if any(k in s for k in ["execu", "andamento"]):    return "orange"
+                            if any(k in s for k in ["paralis", "suspens"]):    return "red"
+                            if any(k in s for k in ["planej", "licita", "proj"]): return "blue"
+                            return "gray"
+
+                        fg_obras = FG("Obras Municipais", True)
+                        ignore_cols = {"__LAT__", "__LON__"}
+                        for _, r in df_map.iterrows():
+                            nome   = str(r.get(c_obra, "Obra")) if c_obra else "Obra"
+                            status = str(r.get(c_status, "-")) if c_status else "-"
+                            empresa= str(r.get(c_empresa, "-")) if c_empresa else "-"
+                            valor  = br_money(r.get(c_valor)) if c_valor else "-"
+                            bairro = str(r.get(c_bairro, "-")) if c_bairro else "-"
+                            dtini  = str(r.get(c_dtini, "-")) if c_dtini else "-"
+                            dtfim  = str(r.get(c_dtfim, "-")) if c_dtfim else "-"
+
+                            extra_rows = []
+                            for c in df_obras.columns:
+                                if c in ignore_cols or c in {c_obra, c_status, c_empresa, c_valor, c_bairro, c_dtini, c_dtfim}:
+                                    continue
+                                val = r.get(c, "")
+                                if pd.notna(val) and str(val).strip() != "":
+                                    extra_rows.append(f"<tr><td><b>{c}</b></td><td>{val}</td></tr>")
+                            extra_html = "".join(extra_rows)
+
+                            popup_html = (
+                                "<div style='font-family:Arial; font-size:13px'>"
+                                f"<h4 style='margin:4px 0 8px 0'>🧱 {nome}</h4>"
+                                f"<p style='margin:0 0 6px'><b>Status:</b> {status}</p>"
+                                f"<p style='margin:0 0 6px'><b>Empresa:</b> {empresa}</p>"
+                                f"<p style='margin:0 0 6px'><b>Valor:</b> {valor}</p>"
+                                f"<p style='margin:0 0 6px'><b>Bairro/Localidade:</b> {bairro}</p>"
+                                f"<p style='margin:0 0 6px'><b>Início:</b> {dtini} &nbsp; <b>Término:</b> {dtfim}</p>"
+                                + (f"<table border='1' cellpadding='4' cellspacing='0' style='border-collapse:collapse; margin-top:6px'>{extra_html}</table>" if extra_html else "")
+                                + "</div>"
+                            )
+
+                            folium.Marker(
+                                location=[r["__LAT__"], r["__LON__"]],
+                                tooltip=nome,
+                                popup=folium.Popup(popup_html, max_width=420),
+                                icon=folium.Icon(color=status_icon_color(status), icon="info-sign")
+                            ).add_to(fg_obras)
+
+                        fg_obras.add_to(m2)
+
+                    # Ajustar visão do mapa
+                    if bounds:
+                        (min_lat, min_lon), (max_lat, max_lon) = bounds
+                        m2.fit_bounds([[min_lat, min_lon], [max_lat, max_lon]])
+                    elif not df_map.empty:
+                        m2.fit_bounds([[df_map["__LAT__"].min(), df_map["__LON__"].min()],
+                                       [df_map["__LAT__"].max(), df_map["__LON__"].max()]])
+
+                    # Controle apenas das bases
+                    folium.LayerControl(collapsed=True).add_to(m2)
+                    folium_static(m2, width=800, height=600)
+
+                # Tabela de obras
+                st.markdown("### 📋 Tabela de Obras")
+                priority = [c_obra, c_status, c_empresa, c_valor, c_bairro, c_dtini, c_dtfim]
+                ordered = [c for c in priority if c and c in df_obras.columns]
+                rest = [c for c in df_obras.columns if c not in ordered]
+                st.dataframe(df_obras[ordered + rest] if ordered else df_obras, use_container_width=True)
             else:
-                default_center = [-5.680, -39.200]
+                st.error(f"❌ Não foi possível carregar o CSV de obras em: {CSV_OBRAS}")
+    
+    elif st.session_state.active_tab == "🗺️ Milhã em Mapas":
+        with tab3:
+            # =====================================================
+            # 3) Milhã em Mapas (CÓDIGO COMPLETO)
+            # =====================================================
+            render_card(
+                "<h2>🗺️ Milhã em Mapas</h2>",
+                "<p>Explore as camadas territoriais, infraestrutura e recursos hídricos do município</p>",
+            )
 
-            m2 = folium.Map(location=default_center, zoom_start=12, tiles=None, control_scale=True)
+            if "m3_view" not in st.session_state:
+                st.session_state["m3_view"] = {"center": [-5.680, -39.200], "zoom": 11}
+
+            # Carregar dados GeoJSON
+            base_dir_candidates = ["dados", "/mnt/data"]
+            files = {
+                "Distritos": "milha_dist_polig.geojson",
+                "Sede Distritos": "Distritos_pontos.geojson",
+                "Localidades": "Localidades.geojson",
+                "Escolas": "Escolas_publicas.geojson",
+                "Unidades de Saúde": "Unidades_saude.geojson",
+                "Tecnologias Sociais": "teclogias_sociais.geojson",
+                "Poços Cidade": "pocos_cidade_mil.geojson",
+                "Poços Zona Rural": "pocos_rural_mil.geojson",
+                "Estradas": "estradas_milha.geojson",
+                "Outorgas Vigentes": "outorgas_milha.geojson",
+                "Espelhos d'Água": "espelhos_dagua.geojson",
+            }
+            data_geo = {
+                name: load_geojson_any([os.path.join(b, fname) for b in base_dir_candidates])
+                for name, fname in files.items()
+            }
+
+            # Criar mapa
+            center = st.session_state["m3_view"]["center"]
+            zoom = st.session_state["m3_view"]["zoom"]
+
+            m3 = folium.Map(
+                location=center,
+                zoom_start=zoom,
+                tiles=None,
+                control_scale=True
+            )
 
             # Bases no botão do mapa
-            add_all_base_tiles(m2)
+            add_all_base_tiles(m3)
 
-            # Ferramentas conforme sidebar
+            # Ferramentas
             if sidebar_state["enable_fullscreen"]:
-                Fullscreen(position='topright').add_to(m2)
+                Fullscreen(position='topright').add_to(m3)
             if sidebar_state["enable_measure"]:
-                m2.add_child(MeasureControl(primary_length_unit="meters",
-                                            secondary_length_unit="kilometers",
-                                            primary_area_unit="hectares"))
+                m3.add_child(MeasureControl(
+                    primary_length_unit="meters",
+                    secondary_length_unit="kilometers",
+                    primary_area_unit="hectares"
+                ))
             if sidebar_state["enable_draw"]:
-                Draw(export=True, position='topright').add_to(m2)
+                Draw(export=True, position='topright').add_to(m3)
             if sidebar_state["show_coords"]:
-                MousePosition(position='bottomleft').add_to(m2)
+                MousePosition(position='bottomleft').add_to(m3)
 
-            # Overlays (fora do botão do mapa)
-            if sidebar_state["show_distritos"] and gj_distritos:
-                fg_dist = FG("Distritos", True)
+            # Ajustar visão inicial
+            if data_geo.get("Distritos"):
+                b = geojson_bounds(data_geo["Distritos"])
+                if b:
+                    (min_lat, min_lon), (max_lat, max_lon) = b
+                    m3.fit_bounds([[min_lat, min_lon], [max_lat, max_lon]])
+
+            # --------- Overlays controlados pela sidebar (fora do botão do mapa) ---------
+
+            # Território
+            if sidebar_state["show_distritos"] and data_geo.get("Distritos"):
+                fg_d = FG("Distritos", True)
                 folium.GeoJson(
-                    gj_distritos,
+                    data_geo["Distritos"],
                     name="Distritos",
-                    style_function=lambda x: {"fillColor": "#9fe2fc", "fillOpacity": 0.1, "color": "#000000", "weight": 1},
-                ).add_to(fg_dist)
-                fg_dist.add_to(m2)
+                    style_function=lambda x: {"fillColor": "#9fe2fc", "fillOpacity": 0.2, "color": "#000000", "weight": 1},
+                    tooltip=folium.GeoJsonTooltip(fields=list(data_geo["Distritos"]["features"][0]["properties"].keys())[:3])
+                ).add_to(fg_d)
+                fg_d.add_to(m3)
 
-            if sidebar_state["show_sede"] and gj_sede:
-                fg_sede = FG("Sede Distritos", True)
-                for f in gj_sede.get("features", []):
-                    x, y = f["geometry"]["coordinates"]
-                    nome = f.get("properties", {}).get("nome_do_distrito", "Sede")
-                    folium.Marker([y, x], tooltip=nome, icon=folium.Icon(color="darkgreen", icon="home")).add_to(fg_sede)
-                fg_sede.add_to(m2)
+            if sidebar_state["show_sede"] and data_geo.get("Sede Distritos"):
+                fg_sd = FG("Sede Distritos", True)
+                for ftr in data_geo["Sede Distritos"]["features"]:
+                    x, y = ftr["geometry"]["coordinates"]
+                    nome = ftr["properties"].get("nome_do_distrito", "Sede")
+                    folium.Marker([y, x], tooltip=nome, icon=folium.Icon(color="green", icon="home")).add_to(fg_sd)
+                fg_sd.add_to(m3)
 
-            if sidebar_state["show_obras"] and not df_map.empty:
-                def status_icon_color(status_val: str):
-                    s = (str(status_val) if status_val is not None else "").strip().lower()
-                    if any(k in s for k in ["conclu", "finaliz"]):     return "green"
-                    if any(k in s for k in ["execu", "andamento"]):    return "orange"
-                    if any(k in s for k in ["paralis", "suspens"]):    return "red"
-                    if any(k in s for k in ["planej", "licita", "proj"]): return "blue"
-                    return "gray"
+            if sidebar_state["show_localidades"] and data_geo.get("Localidades"):
+                fg_loc = FG("Localidades", True)
+                for ftr in data_geo["Localidades"]["features"]:
+                    x, y = ftr["geometry"]["coordinates"]
+                    props = ftr["properties"]
+                    nome = props.get("Localidade", "Localidade")
+                    distrito = props.get("Distrito", "-")
+                    popup = f"<b>Localidade:</b> {nome}<br><b>Distrito:</b> {distrito}"
+                    folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="purple", icon="flag")).add_to(fg_loc)
+                fg_loc.add_to(m3)
 
-                fg_obras = FG("Obras Municipais", True)
-                ignore_cols = {"__LAT__", "__LON__"}
-                for _, r in df_map.iterrows():
-                    nome   = str(r.get(c_obra, "Obra")) if c_obra else "Obra"
-                    status = str(r.get(c_status, "-")) if c_status else "-"
-                    empresa= str(r.get(c_empresa, "-")) if c_empresa else "-"
-                    valor  = br_money(r.get(c_valor)) if c_valor else "-"
-                    bairro = str(r.get(c_bairro, "-")) if c_bairro else "-"
-                    dtini  = str(r.get(c_dtini, "-")) if c_dtini else "-"
-                    dtfim  = str(r.get(c_dtfim, "-")) if c_dtfim else "-"
-
-                    extra_rows = []
-                    for c in df_obras.columns:
-                        if c in ignore_cols or c in {c_obra, c_status, c_empresa, c_valor, c_bairro, c_dtini, c_dtfim}:
-                            continue
-                        val = r.get(c, "")
-                        if pd.notna(val) and str(val).strip() != "":
-                            extra_rows.append(f"<tr><td><b>{c}</b></td><td>{val}</td></tr>")
-                    extra_html = "".join(extra_rows)
-
-                    popup_html = (
-                        "<div style='font-family:Arial; font-size:13px'>"
-                        f"<h4 style='margin:4px 0 8px 0'>🧱 {nome}</h4>"
-                        f"<p style='margin:0 0 6px'><b>Status:</b> {status}</p>"
-                        f"<p style='margin:0 0 6px'><b>Empresa:</b> {empresa}</p>"
-                        f"<p style='margin:0 0 6px'><b>Valor:</b> {valor}</p>"
-                        f"<p style='margin:0 0 6px'><b>Bairro/Localidade:</b> {bairro}</p>"
-                        f"<p style='margin:0 0 6px'><b>Início:</b> {dtini} &nbsp; <b>Término:</b> {dtfim}</p>"
-                        + (f"<table border='1' cellpadding='4' cellspacing='0' style='border-collapse:collapse; margin-top:6px'>{extra_html}</table>" if extra_html else "")
-                        + "</div>"
+            # Infraestrutura
+            if sidebar_state["show_escolas"] and data_geo.get("Escolas"):
+                fg_esc = FG("Escolas Públicas", True)
+                for ftr in data_geo["Escolas"]["features"]:
+                    x, y = ftr["geometry"]["coordinates"]
+                    props = ftr["properties"]
+                    nome = props.get("no_entidad", props.get("Name", "Escola"))
+                    popup = (
+                        "<div style='font-family:Arial;font-size:13px'>"
+                        f"<b>Escola:</b> {nome}<br>"
+                        f"<b>Endereço:</b> {props.get('endereco','-')}"
+                        "</div>"
                     )
+                    folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="red", icon="education")).add_to(fg_esc)
+                fg_esc.add_to(m3)
+
+            if sidebar_state["show_unidades_saude"] and data_geo.get("Unidades de Saúde"):
+                fg_saude = FG("Unidades de Saúde", True)
+                for ftr in data_geo["Unidades de Saúde"]["features"]:
+                    x, y = ftr["geometry"]["coordinates"]
+                    props = ftr["properties"]
+                    nome = props.get("nome", props.get("Name", "Unidade"))
+                    popup = (
+                        "<div style='font-family:Arial;font-size:13px'>"
+                        f"<b>Unidade:</b> {nome}<br>"
+                        f"<b>Bairro:</b> {props.get('bairro','-')}<br>"
+                        f"<b>Município:</b> {props.get('municipio','-')}"
+                        "</div>"
+                    )
+                    folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="green", icon="plus-sign")).add_to(fg_saude)
+                fg_saude.add_to(m3)
+
+            if sidebar_state["show_estradas"] and data_geo.get("Estradas"):
+                fg_estr = FG("Estradas", True)
+                folium.GeoJson(
+                    data_geo["Estradas"],
+                    name="Estradas",
+                    style_function=lambda x: {
+                        "color": "#8B4513",
+                        "weight": 2,
+                        "opacity": 0.8
+                    },
+                    tooltip=folium.GeoJsonTooltip(
+                        fields=list(data_geo["Estradas"]["features"][0]["properties"].keys())[:3],
+                        aliases=["Propriedade:"] * 3
+                    )
+                ).add_to(fg_estr)
+                fg_estr.add_to(m3)
+
+            # Recursos Hídricos
+            if sidebar_state["show_tecnologias"] and data_geo.get("Tecnologias Sociais"):
+                fg_tec = FG("Tecnologias Sociais", True)
+                for ftr in data_geo["Tecnologias Sociais"]["features"]:
+                    x, y = ftr["geometry"]["coordinates"]
+                    props = ftr["properties"]
+                    nome = props.get("Comunidade", props.get("Name", "Tecnologia Social"))
+                    popup = "<div style='font-family:Arial;font-size:13px'><b>Local:</b> {}</div>".format(nome)
+                    folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="orange", icon="tint")).add_to(fg_tec)
+                fg_tec.add_to(m3)
+
+            if sidebar_state["show_outorgas"] and data_geo.get("Outorgas Vigentes"):
+                fg_out = FG("Outorgas Vigentes", True)
+                for ftr in data_geo["Outorgas Vigentes"]["features"]:
+                    props = ftr["properties"]
+                    coords = ftr["geometry"]["coordinates"]
+                    lng, lat = coords[0], coords[1]
+
+                    popup_content = f"""
+                    <div style='font-family:Arial;font-size:12px;max-width:300px'>
+                        <b>Requerente:</b> {props.get('REQUERENTE', 'N/A')}<br>
+                        <b>Tipo Manancial:</b> {props.get('TIPO MANANCIAL', 'N/A')}<br>
+                        <b>Tipo de Uso:</b> {props.get('TIPO DE USO', 'N/A')}<br>
+                        <b>Manancial:</b> {props.get('MANANCIAL', 'N/A')}<br>
+                        <b>Fim da Vigência:</b> {props.get('FIM DA VIGÊNCIA', 'N/A')}<br>
+                        <b>Volume Outorgado:</b> {props.get('VOLUME OUTORGADO (m³)', 'N/A')} m³
+                    </div>
+                    """
+
+                    tipo_uso = props.get('TIPO DE USO', '').upper()
+                    if 'IRRIGACAO' in tipo_uso:
+                        icon_color = 'green'
+                    elif 'ABASTECIMENTO_HUMANO' in tipo_uso:
+                        icon_color = 'blue'
+                    elif 'INDUSTRIA' in tipo_uso:
+                        icon_color = 'red'
+                    elif 'SERVICO_E_COMERCIO' in tipo_uso:
+                        icon_color = 'purple'
+                    else:
+                        icon_color = 'gray'
 
                     folium.Marker(
-                        location=[r["__LAT__"], r["__LON__"]],
-                        tooltip=nome,
-                        popup=folium.Popup(popup_html, max_width=420),
-                        icon=folium.Icon(color=status_icon_color(status), icon="info-sign")
-                    ).add_to(fg_obras)
+                        [lat, lng],
+                        tooltip=props.get('REQUERENTE', 'Outorga'),
+                        popup=folium.Popup(popup_content, max_width=300),
+                        icon=folium.Icon(color=icon_color, icon='file-text', prefix='fa')
+                    ).add_to(fg_out)
+                fg_out.add_to(m3)
 
-                fg_obras.add_to(m2)
+            if sidebar_state["show_espelhos"] and data_geo.get("Espelhos d'Água"):
+                fg_esp = FG("Espelhos d'Água", True)
+                folium.GeoJson(
+                    data_geo["Espelhos d'Água"],
+                    name="Espelhos d'Água",
+                    style_function=lambda x: {
+                        "fillColor": "#1E90FF",
+                        "fillOpacity": 0.7,
+                        "color": "#000080",
+                        "weight": 2,
+                        "opacity": 0.8
+                    },
+                    tooltip=folium.GeoJsonTooltip(
+                        fields=["CODIGOES0", "AREA1"],
+                        aliases=["Código:", "Área (ha):"],
+                        style=("font-family: Arial; font-size: 12px;")
+                    )
+                ).add_to(fg_esp)
+                fg_esp.add_to(m3)
 
-            # Ajustar visão do mapa
-            if bounds:
-                (min_lat, min_lon), (max_lat, max_lon) = bounds
-                m2.fit_bounds([[min_lat, min_lon], [max_lat, max_lon]])
-            elif not df_map.empty:
-                m2.fit_bounds([[df_map["__LAT__"].min(), df_map["__LON__"].min()],
-                               [df_map["__LAT__"].max(), df_map["__LON__"].max()]])
+            if sidebar_state["show_pocos_cidade"] and data_geo.get("Poços Cidade"):
+                fg_pc = FG("Poços Cidade", True)
+                for ftr in data_geo["Poços Cidade"]["features"]:
+                    x, y = ftr["geometry"]["coordinates"]
+                    props = ftr["properties"]
+                    nome = props.get("Localidade", props.get("Name", "Poço"))
+                    popup = (
+                        "<div style='font-family:Arial;font-size:13px'>"
+                        f"<b>Localidade:</b> {nome}<br>"
+                        f"<b>Profundidade:</b> {props.get('Profundida','-')}<br>"
+                        f"<b>Vazão (L/h):</b> {props.get('Vazão_LH_2','-')}"
+                        "</div>"
+                    )
+                    folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="blue", icon="tint")).add_to(fg_pc)
+                fg_pc.add_to(m3)
+
+            if sidebar_state["show_pocos_rural"] and data_geo.get("Poços Zona Rural"):
+                fg_pr = FG("Poços Zona Rural", True)
+                for ftr in data_geo["Poços Zona Rural"]["features"]:
+                    x, y = ftr["geometry"]["coordinates"]
+                    props = ftr["properties"]
+                    nome = props.get("Localidade", props.get("Name", "Poço"))
+                    popup = (
+                        "<div style='font-family:Arial;font-size:13px'>"
+                        f"<b>Localidade:</b> {nome}<br>"
+                        f"<b>Profundidade:</b> {props.get('Profundida','-')}<br>"
+                        f"<b>Vazão (L/h):</b> {props.get('Vazão_LH_2','-')}"
+                        "</div>"
+                    )
+                    folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="cadetblue", icon="tint")).add_to(fg_pr)
+                fg_pr.add_to(m3)
 
             # Controle apenas das bases
-            folium.LayerControl(collapsed=True).add_to(m2)
-            folium_static(m2, width=800, height=600)
+            folium.LayerControl(collapsed=True).add_to(m3)
 
-        # Tabela de obras
-        st.markdown("### 📋 Tabela de Obras")
-        priority = [c_obra, c_status, c_empresa, c_valor, c_bairro, c_dtini, c_dtfim]
-        ordered = [c for c in priority if c and c in df_obras.columns]
-        rest = [c for c in df_obras.columns if c not in ordered]
-        st.dataframe(df_obras[ordered + rest] if ordered else df_obras, use_container_width=True)
-    else:
-        st.error(f"❌ Não foi possível carregar o CSV de obras em: {CSV_OBRAS}")
-
-# =====================================================
-# 3) Milhã em Mapas
-# =====================================================
-with aba3:
-    render_card(
-        "<h2>🗺️ Milhã em Mapas</h2>",
-        "<p>Explore as camadas territoriais, infraestrutura e recursos hídricos do município</p>",
-    )
-
-    if "m3_view" not in st.session_state:
-        st.session_state["m3_view"] = {"center": [-5.680, -39.200], "zoom": 11}
-
-    # Carregar dados GeoJSON
-    base_dir_candidates = ["dados", "/mnt/data"]
-    files = {
-        "Distritos": "milha_dist_polig.geojson",
-        "Sede Distritos": "Distritos_pontos.geojson",
-        "Localidades": "Localidades.geojson",
-        "Escolas": "Escolas_publicas.geojson",
-        "Unidades de Saúde": "Unidades_saude.geojson",
-        "Tecnologias Sociais": "teclogias_sociais.geojson",
-        "Poços Cidade": "pocos_cidade_mil.geojson",
-        "Poços Zona Rural": "pocos_rural_mil.geojson",
-        "Estradas": "estradas_milha.geojson",
-        "Outorgas Vigentes": "outorgas_milha.geojson",
-        "Espelhos d'Água": "espelhos_dagua.geojson",
-    }
-    data_geo = {
-        name: load_geojson_any([os.path.join(b, fname) for b in base_dir_candidates])
-        for name, fname in files.items()
-    }
-
-    # Criar mapa
-    center = st.session_state["m3_view"]["center"]
-    zoom = st.session_state["m3_view"]["zoom"]
-
-    m3 = folium.Map(
-        location=center,
-        zoom_start=zoom,
-        tiles=None,
-        control_scale=True
-    )
-
-    # Bases no botão do mapa
-    add_all_base_tiles(m3)
-
-    # Ferramentas
-    if sidebar_state["enable_fullscreen"]:
-        Fullscreen(position='topright').add_to(m3)
-    if sidebar_state["enable_measure"]:
-        m3.add_child(MeasureControl(
-            primary_length_unit="meters",
-            secondary_length_unit="kilometers",
-            primary_area_unit="hectares"
-        ))
-    if sidebar_state["enable_draw"]:
-        Draw(export=True, position='topright').add_to(m3)
-    if sidebar_state["show_coords"]:
-        MousePosition(position='bottomleft').add_to(m3)
-
-    # Ajustar visão inicial
-    if data_geo.get("Distritos"):
-        b = geojson_bounds(data_geo["Distritos"])
-        if b:
-            (min_lat, min_lon), (max_lat, max_lon) = b
-            m3.fit_bounds([[min_lat, min_lon], [max_lat, max_lon]])
-
-    # --------- Overlays controlados pela sidebar (fora do botão do mapa) ---------
-
-    # Território
-    if sidebar_state["show_distritos"] and data_geo.get("Distritos"):
-        fg_d = FG("Distritos", True)
-        folium.GeoJson(
-            data_geo["Distritos"],
-            name="Distritos",
-            style_function=lambda x: {"fillColor": "#9fe2fc", "fillOpacity": 0.2, "color": "#000000", "weight": 1},
-            tooltip=folium.GeoJsonTooltip(fields=list(data_geo["Distritos"]["features"][0]["properties"].keys())[:3])
-        ).add_to(fg_d)
-        fg_d.add_to(m3)
-
-    if sidebar_state["show_sede"] and data_geo.get("Sede Distritos"):
-        fg_sd = FG("Sede Distritos", True)
-        for ftr in data_geo["Sede Distritos"]["features"]:
-            x, y = ftr["geometry"]["coordinates"]
-            nome = ftr["properties"].get("nome_do_distrito", "Sede")
-            folium.Marker([y, x], tooltip=nome, icon=folium.Icon(color="green", icon="home")).add_to(fg_sd)
-        fg_sd.add_to(m3)
-
-    if sidebar_state["show_localidades"] and data_geo.get("Localidades"):
-        fg_loc = FG("Localidades", True)
-        for ftr in data_geo["Localidades"]["features"]:
-            x, y = ftr["geometry"]["coordinates"]
-            props = ftr["properties"]
-            nome = props.get("Localidade", "Localidade")
-            distrito = props.get("Distrito", "-")
-            popup = f"<b>Localidade:</b> {nome}<br><b>Distrito:</b> {distrito}"
-            folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="purple", icon="flag")).add_to(fg_loc)
-        fg_loc.add_to(m3)
-
-    # Infraestrutura
-    if sidebar_state["show_escolas"] and data_geo.get("Escolas"):
-        fg_esc = FG("Escolas Públicas", True)
-        for ftr in data_geo["Escolas"]["features"]:
-            x, y = ftr["geometry"]["coordinates"]
-            props = ftr["properties"]
-            nome = props.get("no_entidad", props.get("Name", "Escola"))
-            popup = (
-                "<div style='font-family:Arial;font-size:13px'>"
-                f"<b>Escola:</b> {nome}<br>"
-                f"<b>Endereço:</b> {props.get('endereco','-')}"
-                "</div>"
-            )
-            folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="red", icon="education")).add_to(fg_esc)
-        fg_esc.add_to(m3)
-
-    if sidebar_state["show_unidades_saude"] and data_geo.get("Unidades de Saúde"):
-        fg_saude = FG("Unidades de Saúde", True)
-        for ftr in data_geo["Unidades de Saúde"]["features"]:
-            x, y = ftr["geometry"]["coordinates"]
-            props = ftr["properties"]
-            nome = props.get("nome", props.get("Name", "Unidade"))
-            popup = (
-                "<div style='font-family:Arial;font-size:13px'>"
-                f"<b>Unidade:</b> {nome}<br>"
-                f"<b>Bairro:</b> {props.get('bairro','-')}<br>"
-                f"<b>Município:</b> {props.get('municipio','-')}"
-                "</div>"
-            )
-            folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="green", icon="plus-sign")).add_to(fg_saude)
-        fg_saude.add_to(m3)
-
-    if sidebar_state["show_estradas"] and data_geo.get("Estradas"):
-        fg_estr = FG("Estradas", True)
-        folium.GeoJson(
-            data_geo["Estradas"],
-            name="Estradas",
-            style_function=lambda x: {
-                "color": "#8B4513",
-                "weight": 2,
-                "opacity": 0.8
-            },
-            tooltip=folium.GeoJsonTooltip(
-                fields=list(data_geo["Estradas"]["features"][0]["properties"].keys())[:3],
-                aliases=["Propriedade:"] * 3
-            )
-        ).add_to(fg_estr)
-        fg_estr.add_to(m3)
-
-    # Recursos Hídricos
-    if sidebar_state["show_tecnologias"] and data_geo.get("Tecnologias Sociais"):
-        fg_tec = FG("Tecnologias Sociais", True)
-        for ftr in data_geo["Tecnologias Sociais"]["features"]:
-            x, y = ftr["geometry"]["coordinates"]
-            props = ftr["properties"]
-            nome = props.get("Comunidade", props.get("Name", "Tecnologia Social"))
-            popup = "<div style='font-family:Arial;font-size:13px'><b>Local:</b> {}</div>".format(nome)
-            folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="orange", icon="tint")).add_to(fg_tec)
-        fg_tec.add_to(m3)
-
-    if sidebar_state["show_outorgas"] and data_geo.get("Outorgas Vigentes"):
-        fg_out = FG("Outorgas Vigentes", True)
-        for ftr in data_geo["Outorgas Vigentes"]["features"]:
-            props = ftr["properties"]
-            coords = ftr["geometry"]["coordinates"]
-            lng, lat = coords[0], coords[1]
-
-            popup_content = f"""
-            <div style='font-family:Arial;font-size:12px;max-width:300px'>
-                <b>Requerente:</b> {props.get('REQUERENTE', 'N/A')}<br>
-                <b>Tipo Manancial:</b> {props.get('TIPO MANANCIAL', 'N/A')}<br>
-                <b>Tipo de Uso:</b> {props.get('TIPO DE USO', 'N/A')}<br>
-                <b>Manancial:</b> {props.get('MANANCIAL', 'N/A')}<br>
-                <b>Fim da Vigência:</b> {props.get('FIM DA VIGÊNCIA', 'N/A')}<br>
-                <b>Volume Outorgado:</b> {props.get('VOLUME OUTORGADO (m³)', 'N/A')} m³
-            </div>
-            """
-
-            tipo_uso = props.get('TIPO DE USO', '').upper()
-            if 'IRRIGACAO' in tipo_uso:
-                icon_color = 'green'
-            elif 'ABASTECIMENTO_HUMANO' in tipo_uso:
-                icon_color = 'blue'
-            elif 'INDUSTRIA' in tipo_uso:
-                icon_color = 'red'
-            elif 'SERVICO_E_COMERCIO' in tipo_uso:
-                icon_color = 'purple'
-            else:
-                icon_color = 'gray'
-
-            folium.Marker(
-                [lat, lng],
-                tooltip=props.get('REQUERENTE', 'Outorga'),
-                popup=folium.Popup(popup_content, max_width=300),
-                icon=folium.Icon(color=icon_color, icon='file-text', prefix='fa')
-            ).add_to(fg_out)
-        fg_out.add_to(m3)
-
-    if sidebar_state["show_espelhos"] and data_geo.get("Espelhos d'Água"):
-        fg_esp = FG("Espelhos d'Água", True)
-        folium.GeoJson(
-            data_geo["Espelhos d'Água"],
-            name="Espelhos d'Água",
-            style_function=lambda x: {
-                "fillColor": "#1E90FF",
-                "fillOpacity": 0.7,
-                "color": "#000080",
-                "weight": 2,
-                "opacity": 0.8
-            },
-            tooltip=folium.GeoJsonTooltip(
-                fields=["CODIGOES0", "AREA1"],
-                aliases=["Código:", "Área (ha):"],
-                style=("font-family: Arial; font-size: 12px;")
-            )
-        ).add_to(fg_esp)
-        fg_esp.add_to(m3)
-
-    if sidebar_state["show_pocos_cidade"] and data_geo.get("Poços Cidade"):
-        fg_pc = FG("Poços Cidade", True)
-        for ftr in data_geo["Poços Cidade"]["features"]:
-            x, y = ftr["geometry"]["coordinates"]
-            props = ftr["properties"]
-            nome = props.get("Localidade", props.get("Name", "Poço"))
-            popup = (
-                "<div style='font-family:Arial;font-size:13px'>"
-                f"<b>Localidade:</b> {nome}<br>"
-                f"<b>Profundidade:</b> {props.get('Profundida','-')}<br>"
-                f"<b>Vazão (L/h):</b> {props.get('Vazão_LH_2','-')}"
-                "</div>"
-            )
-            folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="blue", icon="tint")).add_to(fg_pc)
-        fg_pc.add_to(m3)
-
-    if sidebar_state["show_pocos_rural"] and data_geo.get("Poços Zona Rural"):
-        fg_pr = FG("Poços Zona Rural", True)
-        for ftr in data_geo["Poços Zona Rural"]["features"]:
-            x, y = ftr["geometry"]["coordinates"]
-            props = ftr["properties"]
-            nome = props.get("Localidade", props.get("Name", "Poço"))
-            popup = (
-                "<div style='font-family:Arial;font-size:13px'>"
-                f"<b>Localidade:</b> {nome}<br>"
-                f"<b>Profundidade:</b> {props.get('Profundida','-')}<br>"
-                f"<b>Vazão (L/h):</b> {props.get('Vazão_LH_2','-')}"
-                "</div>"
-            )
-            folium.Marker([y, x], tooltip=nome, popup=popup, icon=folium.Icon(color="cadetblue", icon="tint")).add_to(fg_pr)
-        fg_pr.add_to(m3)
-
-    # Controle apenas das bases
-    folium.LayerControl(collapsed=True).add_to(m3)
-
-    # Renderizar mapa
-    folium_static(m3, width=1200, height=700)
+            # Renderizar mapa
+            folium_static(m3, width=1200, height=700)
 
 # =====================================================
 # Rodapé Moderno
