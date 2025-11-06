@@ -1004,7 +1004,7 @@ with tab_map["🗺️ Milhã em Mapas"]:
             position='topleft'
         ).add_to(m3)
     if sidebar_state["enable_draw"]:
-        Draw(export=True, position='topleft').add_to(m3)
+        Draw(export=True, position='topright').add_to(m3)
     if sidebar_state["show_coords"]:
         MousePosition(position='bottomleft').add_to(m3)
 
