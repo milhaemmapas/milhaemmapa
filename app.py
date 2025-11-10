@@ -1126,8 +1126,8 @@ with tab_map["🗺️ Milhã em Mapas"]:
             popup = (
                 "<div style='font-family: Arial, sans-serif; border: 2px solid #2A4D9B; border-radius: 8px; padding: 8px; background-color: #f9f9f9;'>"
                 "<h4 style='margin-top: 0; margin-bottom: 8px; color: #2A4D9B; border-bottom: 1px solid #ccc;'>🏥 Unidades de Saúde</h4>"
-                "<p style='margin: 4px 0;'><span style='color: #2A4D9B; font-weight: bold;'>📛 Unidade:</span> " + nome + "</p>"
-                "<p style='margin: 4px 0;'><span style='color: #2A4D9B; font-weight: bold;'>📍 Endereço:</span> " + props.get("endereco", "Não informado") + "</p>"
+                "<p style='margin: 4px 0;'><span style='color: #2A4D9B; font-weight: bold;'>📛 Unidade:</span> " + props.get("unidade"", "Não informado") + "</p>"
+                "<p style='margin: 4px 0;'><span style='color: #2A4D9B; font-weight: bold;'>📍 Endereço:</span> " + props.get("endereeo", "Não informado") + "</p>"
                 "<p style='margin: 4px 0;'><span style='color: #2A4D9B; font-weight: bold;'>📞 Bairro:</span> " + str(props.get("bairro", "Não informado")) + "</p>"
                 "<p style='margin: 4px 0;'><span style='color: #2A4D9B; font-weight: bold;'>🧭 Município:</span> " + props.get("municipio", "Não informado") + "</p>"
                 "</div>"
