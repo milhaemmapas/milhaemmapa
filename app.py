@@ -1021,14 +1021,14 @@ with tab_map["🗺️ Milhã em Mapas"]:
             (min_lat, min_lon), (max_lat, max_lon) = b
             m3.fit_bounds([[min_lat, min_lon], [max_lat, max_lon]])
 
-    # Overlays no controle
+# Overlays no controle
     if sidebar_state["show_distritos"] and data_geo.get("Distritos"):
         fg_d = FG("Distritos", True)
         folium.GeoJson(
             data_geo["Distritos"],
             name="Distritos",
             style_function=lambda x: {"fillColor": "#9fe2fc", "fillOpacity": 0.2, "color": "#000000", "weight": 1},
-            tooltip=folium.GeoJsonTooltip(fields=list(data_geo["Distritos"]["features"][0]["properties"].keys())[:3])
+            
         ).add_to(fg_d)
         fg_d.add_to(m3)
 
