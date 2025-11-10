@@ -802,6 +802,107 @@ with tab_map["🏗️ Painel de Obras"]:
         c_dtini   = pick_norm("Início", "Data Início", "Inicio")
         c_dtfim   = pick_norm("Término", "Data Fim", "Termino")
 
+        # =====================================================
+        # KPIs NO TOPO - VALORES E QUANTIDADE DE OBRAS
+        # =====================================================
+        st.markdown("---")
+        st.markdown("### 📊 Indicadores das Obras")
+        
+        # Calcular métricas para os KPIs
+        total_obras = len(df_obras)
+        obras_com_coords = len(df_map)
+        
+        # Calcular valor total das obras
+        valor_total = 0
+        if c_valor:
+            try:
+                # Converter valores para numérico, removendo caracteres não numéricos
+                valores = df_obras[c_valor].apply(lambda x: 
+                    float(re.sub(r'[^\d,]', '', str(x)).replace(',', '.')) 
+                    if pd.notna(x) and str(x).strip() != '' else 0
+                )
+                valor_total = valores.sum()
+            except:
+                valor_total = 0
+        
+        # Contar obras por status
+        status_counts = df_obras[c_status].value_counts() if c_status else pd.Series()
+        obras_concluidas = status_counts.get('Concluído', 0) + status_counts.get('Concluída', 0) if not status_counts.empty else 0
+        obras_andamento = status_counts.get('Em Andamento', 0) + status_counts.get('Execução', 0) if not status_counts.empty else 0
+        
+        # Criar colunas para os KPIs
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            st.metric(
+                label="💰 Valor Total Investido",
+                value=f"R$ {valor_total:,.2f}" if valor_total > 0 else "R$ 0,00",
+                help="Soma do valor de todas as obras"
+            )
+        
+        with col2:
+            st.metric(
+                label="📋 Total de Obras",
+                value=total_obras,
+                help="Número total de obras cadastradas"
+            )
+        
+        with col3:
+            st.metric(
+                label="📍 Obras com Localização",
+                value=obras_com_coords,
+                delta=f"{obras_com_coords - total_obras}" if obras_com_coords != total_obras else None,
+                help="Obras com coordenadas válidas para mapeamento"
+            )
+        
+        with col4:
+            st.metric(
+                label="✅ Obras Concluídas",
+                value=obras_concluidas,
+                help="Obras com status de concluído"
+            )
+        
+        # Segunda linha de KPIs
+        col5, col6, col7, col8 = st.columns(4)
+        
+        with col5:
+            st.metric(
+                label="🚧 Obras em Andamento",
+                value=obras_andamento,
+                help="Obras em execução atualmente"
+            )
+        
+        with col6:
+            # Calcular percentual de conclusão
+            percent_concluidas = (obras_concluidas / total_obras * 100) if total_obras > 0 else 0
+            st.metric(
+                label="📈 Taxa de Conclusão",
+                value=f"{percent_concluidas:.1f}%",
+                help="Percentual de obras concluídas"
+            )
+        
+        with col7:
+            # Valor médio por obra
+            valor_medio = valor_total / total_obras if total_obras > 0 else 0
+            st.metric(
+                label="📊 Valor Médio por Obra",
+                value=f"R$ {valor_medio:,.2f}" if valor_medio > 0 else "R$ 0,00",
+                help="Valor médio investido por obra"
+            )
+        
+        with col8:
+            # Obras sem localização
+            obras_sem_coords = total_obras - obras_com_coords
+            st.metric(
+                label="❌ Obras sem Localização",
+                value=obras_sem_coords,
+                delta=f"-{obras_sem_coords}" if obras_sem_coords > 0 else None,
+                delta_color="inverse",
+                help="Obras que precisam de georreferenciamento"
+            )
+        
+        st.markdown("---")
+
         st.success(f"✅ **{len(df_map)} obra(s)** com coordenadas válidas encontradas")
 
         base_dir_candidates = ["dados", "/mnt/data"]
@@ -813,10 +914,6 @@ with tab_map["🏗️ Painel de Obras"]:
         with col_info:
             st.markdown('<div class="sticky-panel">', unsafe_allow_html=True)
             st.markdown('<div class="panel-title">📊 Informações</div>', unsafe_allow_html=True)
-
-            total_obras = len(df_obras)
-            obras_com_coords = len(df_map)
-            status_counts = df_obras[c_status].value_counts() if c_status else pd.Series()
 
             st.metric("Total de Obras", total_obras)
             st.metric("Com Coordenadas", obras_com_coords)
