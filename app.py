@@ -1124,7 +1124,7 @@ with tab_map["🗺️ Milhã em Mapas"]:
                 tooltip=nome,
                 icon=folium.CustomIcon(
                     "https://i.ibb.co/pBsQcQws/education.png",
-                    icon_size=(25, 25)
+                    icon_size=(35, 35)
                 )
             ).add_to(fg_esc)
         fg_esc.add_to(m3)
@@ -1152,7 +1152,7 @@ with tab_map["🗺️ Milhã em Mapas"]:
                 tooltip=nome,
                 icon=folium.CustomIcon(
                     "https://i.ibb.co/rGdw6d71/hospital.png",
-                    icon_size=(25, 25)
+                    icon_size=(35, 35)
                 )
             ).add_to(fg_saude)
         fg_saude.add_to(m3)
