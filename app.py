@@ -1198,7 +1198,7 @@ with tab_map["🏗️ Painel de Obras"]:
                     paper_bgcolor='rgba(0,0,0,0)',
                     font=dict(color='#2c3e50'),
                     showlegend=False,
-                    height=400
+                    height=480
                 )
                 
                 fig_contagem.update_traces(
