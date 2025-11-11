@@ -1567,11 +1567,88 @@ with tab_map["🗺️ Milhã em Mapas"]:
     folium_static(m3, width=1200, height=700)
 
 # =====================================================
-# 1) Página Inicial (como aba) — mesmo conteúdo da HOME
+# 1) Página Inicial
 # =====================================================
 with tab_map["🏠 Página Inicial"]:
-    st.write("")  # placeholder minimal, mantém consistência visual
-    # você pode repetir o conteúdo da home aqui, se quiser
+    st.markdown("""
+    <div style='text-align: center; padding: 2rem;'>
+        <h1 style='color: #2A4D9B; margin-bottom: 1rem;'>🗺️ Portal GeoMilhã</h1>
+        <h3 style='color: #555; font-weight: normal;'>Plataforma de Geoinformação do Município de Milhã</h3>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Cards de apresentação
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        st.markdown("""
+        <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                    padding: 1.5rem; border-radius: 15px; color: white; text-align: center;'>
+            <h3>🎯 Missão</h3>
+            <p>Disponibilizar informações geoespaciais de forma transparente e acessível</p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col2:
+        st.markdown("""
+        <div style='background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); 
+                    padding: 1.5rem; border-radius: 15px; color: white; text-align: center;'>
+            <h3>📊 Dados</h3>
+            <p>Mapas temáticos e informações territoriais atualizadas</p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col3:
+        st.markdown("""
+        <div style='background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); 
+                    padding: 1.5rem; border-radius: 15px; color: white; text-align: center;'>
+            <h3>🌐 Acesso</h3>
+            <p>Plataforma aberta para cidadãos, gestores e pesquisadores</p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    st.markdown("---")
+    
+    # Seção de funcionalidades
+    st.markdown("### 🛠️ Funcionalidades Disponíveis")
+    
+    func_col1, func_col2 = st.columns(2)
+    
+    with func_col1:
+        st.markdown("""
+        **🏗️ Painel de Obras**
+        - Monitoramento de obras municipais
+        - Investimentos e andamento
+        - Localização geográfica
+        
+        **🏥 Saúde Pública**
+        - Unidades de saúde
+        - Postos médicos
+        - Distribuição territorial
+        """)
+    
+    with func_col2:
+        st.markdown("""
+        **🎓 Educação**
+        - Escolas municipais
+        - Infraestrutura educacional
+        - Mapeamento de unidades
+        
+        **🗺️ Território**
+        - Distritos e localidades
+        - Limites administrativos
+        - Base cartográfica
+        """)
+    
+    st.markdown("---")
+    
+    # Chamada para ação
+    st.markdown("""
+    <div style='background-color: #f8f9fa; padding: 2rem; border-radius: 10px; text-align: center;'>
+        <h4 style='color: #2A4D9B;'>🚀 Explore os Dados</h4>
+        <p>Navegue pelas abas superiores para acessar os mapas e informações específicas do município</p>
+    </div>
+    """, unsafe_allow_html=True)
 
 # =====================================================
 # Rodapé
