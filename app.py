@@ -1740,7 +1740,7 @@ with tab_map["🏠 Página Inicial"]:
       .cta p{{ color:var(--muted); margin:0}}
 
       /* Download panel: borda em todo o container */
-      .download-title{{ display:flex; align-items:center; gap:12px; margin:0 0 10px 6px; color:#1f2937; }}
+      .download-title{{ display:flex; align-items:center; gap:12px; margin:0 0 10px 16px; color:#1f2937; }}
       .download-title span{{font-size:1.8rem}}
       .formatos-grid{{ display:grid; grid-template-columns: repeat(5,1fr); gap:12px; margin:6px 0 12px }}
       @media (max-width: 1000px){{ .formatos-grid{{ grid-template-columns: repeat(3,1fr);}} }}
