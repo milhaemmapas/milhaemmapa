@@ -4,6 +4,9 @@ import folium
 from streamlit_folium import folium_static
 from folium.plugins import MeasureControl, Fullscreen, Draw, MousePosition
 import matplotlib.pyplot as plt
+import plotly.express as px
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 import json
 import re
 import os
