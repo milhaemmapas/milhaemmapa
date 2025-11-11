@@ -1165,7 +1165,7 @@ with tab_map["🏗️ Painel de Obras"]:
                     plot_bgcolor='rgba(0,0,0,0)',
                     paper_bgcolor='rgba(0,0,0,0)',
                     font=dict(color='#2c3e50'),
-                    height=400,
+                    height=460,
                     showlegend=True
                 )
                 
