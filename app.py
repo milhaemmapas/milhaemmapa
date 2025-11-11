@@ -3,6 +3,7 @@ import pandas as pd
 import folium
 from streamlit_folium import folium_static
 from folium.plugins import MeasureControl, Fullscreen, Draw, MousePosition
+import matplotlib.pyplot as plt
 import json
 import re
 import os
