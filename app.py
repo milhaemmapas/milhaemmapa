@@ -366,16 +366,16 @@ def create_header():
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
             border: none !important;
             border-radius: 15px !important;
-            padding: 25px 15px !important;
+            padding: 30px 20px !important;
             color: white !important;
             font-weight: bold !important;
-            font-size: 1.1em !important;
+            font-size: 1.3em !important;
             transition: all 0.3s ease !important;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
             text-align: center !important;
-            min-height: 120px !important;
+            min-height: 140px !important;
             white-space: pre-wrap !important;
-            line-height: 1.4 !important;
+            line-height: 1.5 !important;
         }
         .stButton > button:hover {
             transform: translateY(-5px) !important;
@@ -389,16 +389,18 @@ def create_header():
             }
             .stButton > button {
                 width: 100% !important;
-                max-width: 300px !important;
+                max-width: 350px !important;
+                font-size: 1.2em !important;
+                min-height: 130px !important;
             }
         }
         </style>
         """, unsafe_allow_html=True)
         
         st.markdown("""
-        <div style='text-align: center; margin-bottom: 2rem;'>
-            <h2 style='color: #2A4D9B;'>🚀 Navegação Rápida</h2>
-            <p style='color: #666;'>Escolha uma das opções abaixo para explorar os dados</p>
+        <div style='text-align: center; margin-bottom: 3rem;'>
+            <h1 style='color: #2A4D9B; font-size: 2.8em; margin-bottom: 0.5rem;'>🚀 Navegação Rápida</h1>
+            <p style='color: #666; font-size: 1.3em;'>Escolha uma das opções abaixo para explorar os dados</p>
         </div>
         """, unsafe_allow_html=True)
         
@@ -406,7 +408,7 @@ def create_header():
         
         with col1:
             if st.button(
-                "🗺️\n\n**Milhã em Mapas**\n\nVisualize dados geoespaciais do município", 
+                "🗺️\n\n**MILHÃ EM MAPAS**\n\nVisualize dados geoespaciais do município", 
                 key="btn_mapas", 
                 use_container_width=True
             ):
@@ -416,7 +418,7 @@ def create_header():
         
         with col2:
             if st.button(
-                "🏗️\n\n**Painel de Obras**\n\nAcompanhe investimentos municipais", 
+                "🏗️\n\n**PAINEL DE OBRAS**\n\nAcompanhe investimentos municipais", 
                 key="btn_obras", 
                 use_container_width=True
             ):
@@ -426,7 +428,7 @@ def create_header():
         
         with col3:
             if st.button(
-                "📊\n\n**Todos os Dados**\n\nAcesse todas as informações", 
+                "📊\n\n**TODOS OS DADOS**\n\nAcesse todas as informações", 
                 key="btn_dados", 
                 use_container_width=True
             ):
