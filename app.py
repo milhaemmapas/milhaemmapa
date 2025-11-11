@@ -399,7 +399,7 @@ def create_header():
         
         st.markdown("""
         <div style='text-align: center; margin-bottom: 3rem;'>
-            <h1 style='color: #2A4D9B; font-size: 2.8em; margin-bottom: 0.5rem;'>🚀 Navegação Rápida</h1>
+            <h1 style='color: #2A4D9B; font-size: 2.3em; margin-bottom: 0.5rem;'>🚀 Navegação Rápida</h1>
             <p style='color: #666; font-size: 1.3em;'>Escolha uma das opções abaixo para explorar os dados</p>
         </div>
         """, unsafe_allow_html=True)
