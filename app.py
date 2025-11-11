@@ -1667,23 +1667,29 @@ with tab_map["🗺️ Milhã em Mapas"]:
     folium_static(m3, width=1200, height=700)
 
 # =====================================================
-# 1) Página Inicial — versão moderna
+# 1) Página Inicial — versão moderna com paleta unificada
 # =====================================================
 with tab_map["🏠 Página Inicial"]:
-    # ---------- CSS global da Home ----------
-    st.markdown("""
+    # ---------- Paleta ----------
+    PRIMARY = "#2A4D9B"     # azul principal do app
+    PRIMARY_2 = "#1a326a"   # variação escura
+    TEXT = "#1f2937"
+    MUTED = "#6b7280"
+
+    # ---------- CSS ----------
+    st.markdown(f"""
     <style>
-      :root{
-        --primary:#2A4D9B;
-        --primary-2:#1a326a;
-        --text:#1f2937;
-        --muted:#6b7280;
+      :root{{
+        --primary:{PRIMARY};
+        --primary-2:{PRIMARY_2};
+        --text:{TEXT};
+        --muted:{MUTED};
         --bg-grad: linear-gradient(135deg,#e8eeff 0%, #f6f9ff 60%, #fdfdfd 100%);
         --glass-bg: rgba(255,255,255,0.75);
         --glass-br: 16px;
         --shadow: 0 10px 30px rgba(0,0,0,.10);
-      }
-      .home-hero{
+      }}
+      .home-hero{{
         background: var(--bg-grad);
         border-radius: 18px;
         padding: 3.2rem 2rem;
@@ -1691,19 +1697,20 @@ with tab_map["🏠 Página Inicial"]:
         position: relative;
         overflow: hidden;
         box-shadow: var(--shadow);
-      }
-      .home-hero:before,.home-hero:after{
+      }}
+      .home-hero:before,.home-hero:after{{
         content:""; position:absolute; inset:auto;
         width:260px; height:260px; border-radius:50%;
         filter: blur(60px); opacity:.25;
         animation: float 9s ease-in-out infinite;
-      }
-      .home-hero:before{ background:#7aa2ff; top:-60px; left:-40px;}
-      .home-hero:after{ background:#f093fb; bottom:-80px; right:-40px; animation-delay:1.8s;}
-      @keyframes float{ 0%,100%{transform: translateY(0)} 50%{transform: translateY(-16px)}}
-      .home-title{ color:var(--primary); font-size:2.2rem; margin:0 0 .4rem 0}
-      .home-sub{ color:var(--muted); font-size:1.1rem; margin:0}
-      .glass-card{
+      }}
+      .home-hero:before{{ background:#7aa2ff; top:-60px; left:-40px;}}
+      .home-hero:after{{ background:#f093fb; bottom:-80px; right:-40px; animation-delay:1.8s;}}
+      @keyframes float{{ 0%,100%{{transform: translateY(0)}} 50%{{transform: translateY(-16px)}}}}
+      .home-title{{ color:var(--primary); font-size:2.4rem; margin:0 0 .4rem 0}}
+      .home-sub{{ color:var(--muted); font-size:1.05rem; margin:0}}
+
+      .glass-card{{
         background: var(--glass-bg);
         border: 1px solid rgba(255,255,255,.6);
         border-radius: var(--glass-br);
@@ -1712,48 +1719,46 @@ with tab_map["🏠 Página Inicial"]:
         backdrop-filter: blur(10px);
         transition: transform .25s ease, box-shadow .25s ease;
         height: 100%;
-      }
-      .glass-card:hover{ transform: translateY(-4px); box-shadow: 0 16px 40px rgba(0,0,0,.12)}
-      .glass-card h3{ color:#fff; margin:.2rem 0 .6rem 0; font-size:1.05rem}
-      .glass-card p{ color:#f8fafc; margin:0; font-size:.95rem}
-      .grad-1{ background: linear-gradient(135deg,#667eea 0%, #764ba2 100%); }
-      .grad-2{ background: linear-gradient(135deg,#f093fb 0%, #f5576c 100%); }
-      .grad-3{ background: linear-gradient(135deg,#4facfe 0%, #00f2fe 100%); }
+      }}
+      .glass-card:hover{{ transform: translateY(-4px); box-shadow: 0 16px 40px rgba(0,0,0,.12)}}
+      .glass-card h3{{ color:#fff; margin:.2rem 0 .6rem 0; font-size:1.05rem}}
+      .glass-card p{{ color:#f8fafc; margin:0; font-size:.95rem}}
+      .grad-1{{ background: linear-gradient(135deg,#667eea 0%, #764ba2 100%); }}
+      .grad-2{{ background: linear-gradient(135deg,#f093fb 0%, #f5576c 100%); }}
+      .grad-3{{ background: linear-gradient(135deg,#4facfe 0%, #00f2fe 100%); }}
 
-      /* Métricas */
-      .kpis{ display:grid; grid-template-columns: repeat(3,1fr); gap:14px; margin:18px 0 6px}
-      .kpi{ background:#fff; border-radius:14px; padding:14px; box-shadow: var(--shadow); border:1px solid #eef2ff}
-      .kpi .lbl{ color:var(--muted); font-size:.82rem}
-      .kpi .val{ color:var(--primary); font-size:1.4rem; font-weight:700; line-height:1; margin-top:4px}
+      /* KPIs com paleta */
+      .kpis{{ display:grid; grid-template-columns: repeat(3,1fr); gap:14px; margin:18px 0 6px}}
+      .kpi{{ background:#fff; border-radius:14px; padding:14px; box-shadow: var(--shadow); border:1px solid #eef2ff}}
+      .kpi .lbl{{ color:var(--muted); font-size:.82rem}}
+      .kpi .val{{ color:var(--primary); font-size:1.4rem; font-weight:700; line-height:1; margin-top:4px}}
 
       /* Seções */
-      .sec-title{ color:var(--text); font-size:1.2rem; margin:.3rem 0 .8rem 0}
-      .cta{ background:#f8f9fa; border:1px solid #edf0f7; border-radius:14px; padding:1.4rem; text-align:center}
-      .cta h4{ color:var(--primary); margin:.2rem 0 .4rem 0}
-      .cta p{ color:var(--muted); margin:0}
+      .sec-title{{ color:var(--text); font-size:1.2rem; margin:.3rem 0 .8rem 0}}
+      .cta{{ background:#f8f9fa; border:1px solid #edf0f7; border-radius:14px; padding:1.4rem; text-align:center}}
+      .cta h4{{ color:var(--primary); margin:.2rem 0 .4rem 0}}
+      .cta p{{ color:var(--muted); margin:0}}
 
-      /* Formatos de download */
-      .formatos-container{
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-        padding: 1.5rem; border-radius: 16px; box-shadow: var(--shadow);
-      }
-      .formatos-grid{ display:grid; grid-template-columns: repeat(5,1fr); gap:10px; }
-      @media (max-width: 1000px){ .formatos-grid{ grid-template-columns: repeat(3,1fr);} }
-      @media (max-width: 768px){ .formatos-grid{ grid-template-columns: repeat(2,1fr);} }
-      .stButton>button{
+      /* Download panel: borda em todo o container */
+      .download-title{{ display:flex; align-items:center; gap:12px; margin:0 0 10px 6px; color:#1f2937; }}
+      .download-title span{{font-size:1.8rem}}
+      .formatos-grid{{ display:grid; grid-template-columns: repeat(5,1fr); gap:12px; margin:6px 0 12px }}
+      @media (max-width: 1000px){{ .formatos-grid{{ grid-template-columns: repeat(3,1fr);}} }}
+      @media (max-width: 768px){{ .formatos-grid{{ grid-template-columns: repeat(2,1fr);}} }}
+
+      /* Botões de formato */
+      .stButton>button{{
         width:100% !important; height:100%;
-        border-radius:12px; padding:14px 10px !important; border:2px solid transparent;
-        background:#fff; box-shadow: var(--shadow);
-        transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease, background .2s ease;
-        white-space: normal;
-      }
-      .stButton>button:hover{ transform: translateY(-3px); border-color: var(--primary)}
-      .desc-box{
-        background:#fff; border-left:5px solid var(--primary);
-        border-radius:12px; padding:1.1rem 1rem; box-shadow: var(--shadow);
-      }
-      .desc-title{ color:var(--primary); font-weight:700; margin-bottom:.4rem; font-size:1.05rem}
-      .desc-text{ color:#4b5563; line-height:1.6; margin:0}
+        background:#fff; border-radius:14px; border:1px solid #eef2ff;
+        box-shadow: 0 6px 18px rgba(0,0,0,.06);
+        padding:16px 12px !important; white-space:normal;
+        transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+      }}
+      .stButton>button:hover{{ transform: translateY(-3px); border-color:var(--primary); box-shadow: 0 12px 26px rgba(0,0,0,.10) }}
+
+      .desc-box{{ background:#fff; border-left:5px solid var(--primary); border-radius:14px; padding:14px; box-shadow: 0 8px 22px rgba(0,0,0,.08); }}
+      .desc-title{{ color:var(--primary); font-weight:700; margin-bottom:.4rem }}
+      .desc-text{{ color:#4b5563; line-height:1.6; margin:0 }}
     </style>
     """, unsafe_allow_html=True)
 
@@ -1765,8 +1770,8 @@ with tab_map["🏠 Página Inicial"]:
     </div>
     """, unsafe_allow_html=True)
 
-    # ---------- KPIs rápidos (preencha os valores reais no Python e formate aqui via f-string se quiser) ----------
-    # Exemplo: k_camadas, k_mapas, k_update = 42, 12, "10/11/2025"
+    # ---------- KPIs ----------
+    # Troque pelos seus valores dinâmicos se quiser
     k_camadas, k_mapas, k_update = 42, 12, "10/11/2025"
     st.markdown(f"""
     <div class="kpis">
@@ -1776,7 +1781,7 @@ with tab_map["🏠 Página Inicial"]:
     </div>
     """, unsafe_allow_html=True)
 
-    # ---------- Cards (glass) ----------
+    # ---------- Cards ----------
     c1, c2, c3 = st.columns(3)
     with c1:
         st.markdown("""
@@ -1831,7 +1836,7 @@ with tab_map["🏠 Página Inicial"]:
         """)
 
     # ---------- CTA ----------
-    st.markdown("""
+    st.markdown(f"""
     <div class="cta">
       <h4>🚀 Explore os dados</h4>
       <p>Navegue nas abas para acessar mapas e informações do município.</p>
@@ -1839,73 +1844,60 @@ with tab_map["🏠 Página Inicial"]:
     """, unsafe_allow_html=True)
 
     # =====================================================
-    # SEÇÃO: FORMATOS DE MAPAS PARA DOWNLOAD
+    # SEÇÃO: FORMATOS DE MAPAS PARA DOWNLOAD com contorno total
     # =====================================================
-    st.markdown("## 🗂️ Formatos de Mapas para Download")
+    with st.container(border=True):
+        # cabeçalho
+        st.markdown("""
+          <div class="download-title">
+            <span>🗂️</span><h2 style="margin:0">Formatos de Mapas para Download</h2>
+          </div>
+        """, unsafe_allow_html=True)
 
-    # Estado do formato
-    if 'formato_selecionado' not in st.session_state:
-        st.session_state.formato_selecionado = 'SHAPE'
+        # Estado
+        if 'formato_selecionado' not in st.session_state:
+            st.session_state.formato_selecionado = 'GEOJSON'
 
-    formatos = [
-        {'id':'SHAPE','nome':'Shapefile','extensao':'.shp .shx .dbf','icon':'🗺️'},
-        {'id':'KML','nome':'KML','extensao':'.kml .kmz','icon':'🌍'},
-        {'id':'CSV','nome':'CSV','extensao':'.csv','icon':'📊'},
-        {'id':'PDF','nome':'PDF','extensao':'.pdf','icon':'📄'},
-        {'id':'GEOJSON','nome':'GeoJSON','extensao':'.geojson','icon':'⚡'},
-    ]
+        formatos = [
+            {'id':'SHAPE','nome':'Shapefile','extensao':'.shp .shx .dbf','icon':'🧭'},
+            {'id':'KML','nome':'KML','extensao':'.kml .kmz','icon':'🌍'},
+            {'id':'CSV','nome':'CSV','extensao':'.csv','icon':'📊'},
+            {'id':'PDF','nome':'PDF','extensao':'.pdf','icon':'📄'},
+            {'id':'GEOJSON','nome':'GeoJSON','extensao':'.geojson','icon':'⚡'},
+        ]
 
-    st.markdown('<div class="formatos-container">', unsafe_allow_html=True)
+        # Grid de botões
+        st.markdown('<div class="formatos-grid">', unsafe_allow_html=True)
+        cols = st.columns(5, gap="small")
+        for i, f in enumerate(formatos):
+            with cols[i]:
+                if st.button(f"{f['icon']}  \n**{f['nome']}**  \n{f['extensao']}",
+                             key=f"btn_{f['id']}", use_container_width=True):
+                    st.session_state.formato_selecionado = f['id']
+        st.markdown('</div>', unsafe_allow_html=True)
 
-    # Grid responsivo de botões
-    cols = st.columns(5, gap="small")
-    for i, formato in enumerate(formatos):
-        with cols[i]:
-            clicked = st.button(
-                f"{formato['icon']}  \n**{formato['nome']}**  \n{formato['extensao']}",
-                key=f"btn_{formato['id']}",
-                use_container_width=True
-            )
-            if clicked:
-                st.session_state.formato_selecionado = formato['id']
-
-    # Descrições
-    descricoes = {
-        'SHAPE': {
-            'titulo':'🗺️ Shapefile (SHP)',
-            'texto':"""O Shapefile é um formato vetorial de pontos, linhas ou polígonos com referência espacial. 
-            Usa arquivos .shp (geometrias), .shx (índice) e .dbf (atributos). Pode incluir .prj para o SRC."""
-        },
-        'KML': {
-            'titulo':'🌍 KML/KMZ',
-            'texto':"""KML é XML para dados geográficos em apps como Google Earth. Suporta pontos, linhas, polígonos e imagens.
-            KMZ é o KML compactado. Ótimo para visualização e compartilhamento."""
-        },
-        'CSV': {
-            'titulo':'📊 CSV com Coordenadas',
-            'texto':"""CSV armazena dados tabulares com latitude e longitude por linha.
-            Compatível com planilhas, bancos e SIG. Ideal para análises e integrações."""
-        },
-        'PDF': {
-            'titulo':'📄 PDF com Mapas',
-            'texto':"""PDF preserva layout e qualidade de impressão. Excelente para relatórios, documentos oficiais e mapas estáticos."""
-        },
-        'GEOJSON': {
-            'titulo':'⚡ GeoJSON',
-            'texto':"""GeoJSON codifica geometrias em JSON. Leve, legível e perfeito para web e APIs.
-            Suporta Point, LineString, Polygon e coleções."""
+        # Descrições
+        descricoes = {
+            'SHAPE': {'titulo':'🧭 Shapefile (SHP)',
+                      'texto':'Formato vetorial com .shp, .shx e .dbf. Pode incluir .prj para SRC.'},
+            'KML':   {'titulo':'🌍 KML/KMZ',
+                      'texto':'XML para Google Earth. Suporta pontos, linhas e polígonos. KMZ é compactado.'},
+            'CSV':   {'titulo':'📊 CSV com Coordenadas',
+                      'texto':'Tabela com latitude e longitude por linha. Integra bem com planilhas e SIG.'},
+            'PDF':   {'titulo':'📄 PDF com Mapas',
+                      'texto':'Preserva layout e qualidade. Ideal para relatórios e impressão.'},
+            'GEOJSON':{'titulo':'⚡ GeoJSON',
+                       'texto':'Geometrias em JSON. Leve e perfeito para web e APIs. Point, LineString, Polygon e coleções.'}
         }
-    }
 
-    desc = descricoes[st.session_state.formato_selecionado]
-    st.markdown(f"""
-    <div class="desc-box">
-      <div class="desc-title">{desc['titulo']}</div>
-      <p class="desc-text">{desc['texto']}</p>
-    </div>
-    """, unsafe_allow_html=True)
+        d = descricoes[st.session_state.formato_selecionado]
+        st.markdown(f"""
+          <div class="desc-box">
+            <div class="desc-title">{d['titulo']}</div>
+            <p class="desc-text">{d['texto']}</p>
+          </div>
+        """, unsafe_allow_html=True)
 
-    st.markdown('</div>', unsafe_allow_html=True)
 
 
 # =====================================================
