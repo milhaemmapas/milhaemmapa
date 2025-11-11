@@ -1137,7 +1137,7 @@ with tab_map["🏗️ Painel de Obras"]:
                         paper_bgcolor='rgba(0,0,0,0)',
                         font=dict(color='#2c3e50'),
                         showlegend=False,
-                        height=450
+                        height=480
                     )
                     
                     fig_ano.update_traces(
