@@ -316,26 +316,128 @@ def create_header():
         unsafe_allow_html=True,
     )
 
-    # Botões da HOME
+# Botões da HOME - Versão Moderna
     if st.session_state.page == 'home':
-        st.markdown("<div id='home-nav'><div class='row'>", unsafe_allow_html=True)
-        col1, col2, col3 = st.columns(3)
+        st.markdown("""
+        <style>
+        .modern-nav-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 15px;
+            padding: 25px 15px;
+            color: white;
+            font-weight: bold;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            text-align: center;
+            margin: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 120px;
+        }
+        .modern-nav-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        }
+        .modern-nav-btn:active {
+            transform: translateY(-2px);
+        }
+        .btn-icon {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        .btn-text {
+            font-size: 1em;
+            line-height: 1.3;
+        }
+        .nav-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 2rem 0;
+            flex-wrap: wrap;
+        }
+        @media (max-width: 768px) {
+            .nav-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            .modern-nav-btn {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+        </style>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("<div class='nav-container'>", unsafe_allow_html=True)
+        
+        col1, col2, col3 = st.columns([1,1,1])
+        
         with col1:
-            if st.button("🗺️ Milhã em Mapas", key="btn_mapas", use_container_width=True):
+            if st.button(
+                "**🗺️**\n\n**Milhã em Mapas**\n\nVisualize dados geoespaciais do município", 
+                key="btn_mapas", 
+                use_container_width=True
+            ):
                 st.session_state.page = "maps"
                 st.session_state.default_tab = "maps"
                 st.rerun()
+        
         with col2:
-            if st.button("🏗️ Painel de Obras", key="btn_obras", use_container_width=True):
+            if st.button(
+                "**🏗️**\n\n**Painel de Obras**\n\nAcompanhe investimentos municipais", 
+                key="btn_obras", 
+                use_container_width=True
+            ):
                 st.session_state.page = "works"
                 st.session_state.default_tab = "works"
                 st.rerun()
+        
         with col3:
-            if st.button("📊 Todos os Dados", key="btn_dados", use_container_width=True):
+            if st.button(
+                "**📊**\n\n**Todos os Dados**\n\nAcesse todas as informações", 
+                key="btn_dados", 
+                use_container_width=True
+            ):
                 st.session_state.page = "data"
                 st.session_state.default_tab = "home"
                 st.rerun()
-        st.markdown("</div></div>", unsafe_allow_html=True)
+        
+        st.markdown("</div>", unsafe_allow_html=True)
+        
+        # Versão alternativa com HTML/CSS (mais customizável)
+        st.markdown("""
+        <div class='nav-container'>
+            <button class='modern-nav-btn' onclick="streamlitSetPage('maps')">
+                <div class='btn-icon'>🗺️</div>
+                <div class='btn-text'>Milhã em Mapas<br><small>Visualize dados geoespaciais</small></div>
+            </button>
+            
+            <button class='modern-nav-btn' onclick="streamlitSetPage('works')">
+                <div class='btn-icon'>🏗️</div>
+                <div class='btn-text'>Painel de Obras<br><small>Acompanhe investimentos</small></div>
+            </button>
+            
+            <button class='modern-nav-btn' onclick="streamlitSetPage('data')">
+                <div class='btn-icon'>📊</div>
+                <div class='btn-text'>Todos os Dados<br><small>Acesse todas as informações</small></div>
+            </button>
+        </div>
+        
+        <script>
+        function streamlitSetPage(page) {
+            const streamlit = window.parent.document.querySelector('iframe').contentWindow.streamlit;
+            streamlit.setComponentValue('page_' + page);
+        }
+        </script>
+        """, unsafe_allow_html=True)
+        
         st.markdown("---")
 
 
