@@ -1824,7 +1824,7 @@ with tab_map["🏠 Página Inicial"]:
     with st.container(border=True):
         st.markdown("""
           <div class="download-title">
-            <span>🗂️</span><h2 style="margin:0">Formatos de Mapas para Download</h2>
+            <span>🗂️</span><h2 style="margin:0">Formatos de dados utilizados</h2>
           </div>
         """, unsafe_allow_html=True)
 
