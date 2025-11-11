@@ -795,13 +795,12 @@ with tab_map["🏗️ Painel de Obras"]:
             return next((c for c in cols if c in [norm_col(o) for o in options]), None)
 
         c_obra    = pick_norm("Obra", "Nome", "Projeto", "Descrição")
-        c_status  = pick_norm("Status", "Situação")
+        c_status  = pick_norm("Status", "Situação", "Andamento")  # Adicionado "Andamento"
         c_empresa = pick_norm("Empresa", "Contratada")
-        c_valor   = pick_norm("Valor", "Valor Total", "Custo")
+        c_valor   = pick_norm("Valor", "Valor Total", "Custo", "valor_total")  # Adicionado "valor_total"
         c_bairro  = pick_norm("Bairro", "Localidade")
-        c_dtini   = pick_norm("Início", "Data Início", "Inicio")
+        c_dtini   = pick_norm("Início", "Data Início", "Inicio", "data_inicio")  # Adicionado "data_inicio"
         c_dtfim   = pick_norm("Término", "Data Fim", "Termino")
-        c_ano     = pick_norm("Ano", "Data Ano", "Exercício")
 
         # =====================================================
         # KPIs ESTILIZADOS NO TOPO - APENAS OS 3 SOLICITADOS
@@ -812,7 +811,7 @@ with tab_map["🏗️ Painel de Obras"]:
         total_obras = len(df_obras)
         obras_com_coords = len(df_map)
         
-        # Calcular valor total das obras
+        # Calcular valor total das obras - usando valor_total
         valor_total = 0
         if c_valor:
             try:
@@ -822,12 +821,17 @@ with tab_map["🏗️ Painel de Obras"]:
                     if pd.notna(x) and str(x).strip() != '' else 0)
                 )
                 valor_total = valores.sum()
-            except:
+            except Exception as e:
+                st.warning(f"Aviso na conversão de valores: {e}")
                 valor_total = 0
         
-        # Contar obras por status
-        status_counts = df_obras[c_status].value_counts() if c_status else pd.Series()
-        obras_concluidas = status_counts.get('Concluído', 0) + status_counts.get('Concluída', 0) if not status_counts.empty else 0
+        # Contar obras concluídas - considerando "CONCLUÍDA" na coluna Andamento
+        obras_concluidas = 0
+        if c_status:
+            # Converter para string e normalizar
+            status_series = df_obras[c_status].astype(str).str.upper().str.strip()
+            # Contar obras concluídas (considerando diferentes variações)
+            obras_concluidas = status_series.str.contains('CONCLUÍDA|CONCLUIDA|FINALIZADA|TERMINADA', na=False).sum()
         
         # Formatar valor total no padrão brasileiro
         def formatar_valor_br(valor):
@@ -1033,28 +1037,35 @@ with tab_map["🏗️ Painel de Obras"]:
         st.markdown("---")
         st.markdown("### 📊 Investimento em Obras por Ano")
         
-        # Preparar dados para o gráfico
-        if c_ano and c_valor:
-            # Extrair ano das datas se necessário
-            if c_ano in df_obras.columns:
-                # Tentar converter para ano
-                df_obras['ano_extraido'] = df_obras[c_ano].astype(str).str.extract(r'(\d{4})')[0]
+        # Preparar dados para o gráfico - usando data_inicio e valor_total
+        if c_dtini and c_valor:
+            try:
+                # Extrair ano da data_inicio
+                df_obras['ano_extraido'] = df_obras[c_dtini].astype(str).str.extract(r'(\d{4})')[0]
                 
-                # Se não conseguir extrair ano, usar o valor original
-                df_obras['ano_final'] = df_obras['ano_extraido'].fillna(df_obras[c_ano])
+                # Se não conseguir extrair ano da data_inicio, tentar outras colunas
+                if df_obras['ano_extraido'].isna().all():
+                    st.info("Tentando extrair ano de outras colunas de data...")
+                    # Tentar extrair ano de qualquer coluna que possa conter data
+                    for coluna in df_obras.columns:
+                        if 'data' in coluna.lower() or 'ano' in coluna.lower():
+                            df_obras['ano_extraido'] = df_obras[coluna].astype(str).str.extract(r'(\d{4})')[0]
+                            if not df_obras['ano_extraido'].isna().all():
+                                st.success(f"Usando anos extraídos da coluna: {coluna}")
+                                break
                 
                 # Filtrar apenas anos válidos
-                df_anos_validos = df_obras[df_obras['ano_final'].str.match(r'^\d{4}$', na=False)].copy()
+                df_anos_validos = df_obras[df_obras['ano_extraido'].notna() & df_obras['ano_extraido'].str.match(r'^\d{4}$', na=False)].copy()
                 
                 if not df_anos_validos.empty:
-                    # Converter valor para numérico
+                    # Converter valor_total para numérico
                     df_anos_validos['valor_numerico'] = df_anos_validos[c_valor].apply(
                         lambda x: float(re.sub(r'[^\d,]', '', str(x)).replace(',', '.')) 
                         if pd.notna(x) and str(x).strip() != '' else 0
                     )
                     
                     # Agrupar por ano
-                    investimento_por_ano = df_anos_validos.groupby('ano_final')['valor_numerico'].sum().sort_index()
+                    investimento_por_ano = df_anos_validos.groupby('ano_extraido')['valor_numerico'].sum().sort_index()
                     
                     # Criar filtro de ano
                     anos_disponiveis = sorted(investimento_por_ano.index.tolist())
@@ -1098,14 +1109,25 @@ with tab_map["🏗️ Painel de Obras"]:
                         plt.tight_layout()
                         
                         st.pyplot(fig)
+                        
+                        # Mostrar estatísticas
+                        st.info(f"**Estatísticas:** {len(dados_grafico)} ano(s) com investimento total de {formatar_valor_br(dados_grafico.sum())}")
                     else:
                         st.info("Não há dados disponíveis para o ano selecionado.")
                 else:
-                    st.info("Não foram encontrados anos válidos para análise.")
-            else:
-                st.info("Coluna de ano não encontrada nos dados.")
+                    st.info("Não foram encontrados anos válidos para análise nas datas de início.")
+                    # Mostrar preview das datas disponíveis para debug
+                    st.write("**Preview das datas disponíveis:**")
+                    st.write(df_obras[c_dtini].head(10))
+                    
+            except Exception as e:
+                st.error(f"Erro ao processar dados para o gráfico: {e}")
+                st.write("**Detalhes do erro:**", str(e))
         else:
-            st.info("Dados de ano ou valor não disponíveis para gerar o gráfico.")
+            colunas_faltantes = []
+            if not c_dtini: colunas_faltantes.append("data_inicio")
+            if not c_valor: colunas_faltantes.append("valor_total")
+            st.info(f"Colunas necessárias não encontradas: {', '.join(colunas_faltantes)}")
 
         st.markdown("### 📋 Tabela de Obras")
         priority = [c_obra, c_status, c_empresa, c_valor, c_bairro, c_dtini, c_dtfim]
