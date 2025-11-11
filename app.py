@@ -1749,6 +1749,183 @@ with tab_map["🏠 Página Inicial"]:
         <p>Navegue pelas abas superiores para acessar os mapas e informações específicas do município</p>
     </div>
     """, unsafe_allow_html=True)
+    
+    # =====================================================
+    # SEÇÃO: FORMATOS DE MAPAS PARA DOWNLOAD
+    # =====================================================
+    st.markdown("---")
+    
+    st.markdown("""
+    <div style='text-align: center; margin: 3rem 0;'>
+        <h2 style='color: #2A4D9B; font-size: 2.2em; margin-bottom: 2rem;'>🗂️ Formatos de Mapas para Download</h2>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Container principal
+    st.markdown("""
+    <style>
+    .formatos-container {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 2rem;
+        border-radius: 15px;
+        margin: 2rem 0;
+    }
+    .formatos-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    .formato-item {
+        background: white;
+        padding: 1.5rem 1rem;
+        border-radius: 10px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .formato-item:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        border-color: #2A4D9B;
+    }
+    .formato-item.active {
+        background: linear-gradient(135deg, #2A4D9B 0%, #1a3658 100%);
+        color: white;
+        border-color: #2A4D9B;
+    }
+    .formato-icon {
+        font-size: 2.5em;
+        margin-bottom: 0.5rem;
+    }
+    .formato-nome {
+        font-weight: bold;
+        font-size: 1.1em;
+        margin-bottom: 0.5rem;
+    }
+    .formato-extensao {
+        font-size: 0.9em;
+        opacity: 0.8;
+    }
+    .descricao-container {
+        background: white;
+        padding: 2rem;
+        border-radius: 10px;
+        border-left: 5px solid #2A4D9B;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .descricao-titulo {
+        color: #2A4D9B;
+        font-weight: bold;
+        margin-bottom: 1rem;
+        font-size: 1.3em;
+    }
+    .descricao-texto {
+        line-height: 1.6;
+        color: #555;
+    }
+    @media (max-width: 768px) {
+        .formatos-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+        }
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    # Inicializar estado do formato selecionado
+    if 'formato_selecionado' not in st.session_state:
+        st.session_state.formato_selecionado = 'SHAPE'
+    
+    # Grid de formatos
+    st.markdown('<div class="formatos-container">', unsafe_allow_html=True)
+    
+    st.markdown('<div class="formatos-grid">', unsafe_allow_html=True)
+    
+    formatos = [
+        {'id': 'SHAPE', 'nome': 'Shapefile', 'extensao': '.shp .shx .dbf', 'icon': '🗺️'},
+        {'id': 'KML', 'nome': 'KML', 'extensao': '.kml .kmz', 'icon': '🌍'},
+        {'id': 'CSV', 'nome': 'CSV', 'extensao': '.csv', 'icon': '📊'},
+        {'id': 'PDF', 'nome': 'PDF', 'extensao': '.pdf', 'icon': '📄'},
+        {'id': 'GEOJSON', 'nome': 'GeoJSON', 'extensao': '.geojson', 'icon': '⚡'}
+    ]
+    
+    # Criar colunas para os botões
+    cols = st.columns(5)
+    
+    for i, formato in enumerate(formatos):
+        with cols[i]:
+            if st.button(
+                f"{formato['icon']}\n\n**{formato['nome']}**\n\n{formato['extensao']}",
+                key=f"btn_{formato['id']}",
+                use_container_width=True
+            ):
+                st.session_state.formato_selecionado = formato['id']
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Descrição do formato selecionado
+    descricoes = {
+        'SHAPE': {
+            'titulo': '🗺️ Shapefile (SHP)',
+            'texto': """
+            O **Shapefile** é um formato vetorial que representa feições geográficas em formato de ponto, 
+            linha ou polígono com referência espacial (coordenadas geográficas). É composto por um conjunto 
+            de arquivos, sendo três obrigatórios: **.shp** (geometrias), **.shx** (índice) e **.dbf** (atributos). 
+            Arquivos adicionais como **.prj** (sistema de coordenadas), **.sbn** e **.sbx** (índices espaciais) 
+            podem ser gerados para complementar os dados.
+            """
+        },
+        'KML': {
+            'titulo': '🌍 KML/KMZ',
+            'texto': """
+            **KML** (Keyhole Markup Language) é um formato baseado em XML para representar dados geográficos 
+            em aplicações como Google Earth. Pode conter pontos, linhas, polígonos, imagens e modelos 3D. 
+            O **KMZ** é uma versão compactada do KML que inclui arquivos relacionados. Ideal para visualização 
+            em softwares de globo virtual e compartilhamento de dados geográficos.
+            """
+        },
+        'CSV': {
+            'titulo': '📊 CSV com Coordenadas',
+            'texto': """
+            **CSV** (Comma-Separated Values) é um formato de texto simples que armazena dados tabulares, 
+            incluindo coordenadas geográficas. Cada linha representa uma feição e as colunas contêm atributos 
+            e coordenadas (latitude/longitude). Amplamente compatível com planilhas, bancos de dados e 
+            sistemas de informação geográfica. Ideal para análise de dados e integração com outras ferramentas.
+            """
+        },
+        'PDF': {
+            'titulo': '📄 PDF com Mapas',
+            'texto': """
+            **PDF** (Portable Document Format) é um formato que preserva a formatação original de documentos, 
+            incluindo mapas e layouts cartográficos. Mantém a qualidade de impressão e é amplamente acessível 
+            em diferentes dispositivos. Ideal para relatórios, documentos oficiais e compartilhamento de 
+            mapas estáticos com alta qualidade gráfica.
+            """
+        },
+        'GEOJSON': {
+            'titulo': '⚡ GeoJSON',
+            'texto': """
+            **GeoJSON** é um formato baseado em JSON para codificar estruturas de dados geográficos. 
+            Suporta geometrias como Point, LineString, Polygon e collections dessas geometrias. 
+            É legível por humanos e máquinas, amplamente utilizado em aplicações web modernas e APIs. 
+            Ideal para desenvolvimento web, aplicações interativas e intercâmbio de dados geoespaciais.
+            """
+        }
+    }
+    
+    descricao = descricoes[st.session_state.formato_selecionado]
+    
+    st.markdown(f"""
+    <div class="descricao-container">
+        <div class="descricao-titulo">{descricao['titulo']}</div>
+        <div class="descricao-texto">{descricao['texto']}</div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # =====================================================
 # Rodapé
