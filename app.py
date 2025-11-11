@@ -362,26 +362,51 @@ def create_header():
             margin: 2rem 0;
             flex-wrap: wrap;
         }
+        .stButton > button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+            border: none !important;
+            border-radius: 15px !important;
+            padding: 25px 15px !important;
+            color: white !important;
+            font-weight: bold !important;
+            font-size: 1.1em !important;
+            transition: all 0.3s ease !important;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
+            text-align: center !important;
+            min-height: 120px !important;
+            white-space: pre-wrap !important;
+            line-height: 1.4 !important;
+        }
+        .stButton > button:hover {
+            transform: translateY(-5px) !important;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2) !important;
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%) !important;
+        }
         @media (max-width: 768px) {
             .nav-container {
                 flex-direction: column;
                 align-items: center;
             }
-            .modern-nav-btn {
-                width: 100%;
-                max-width: 300px;
+            .stButton > button {
+                width: 100% !important;
+                max-width: 300px !important;
             }
         }
         </style>
         """, unsafe_allow_html=True)
         
-        st.markdown("<div class='nav-container'>", unsafe_allow_html=True)
+        st.markdown("""
+        <div style='text-align: center; margin-bottom: 2rem;'>
+            <h2 style='color: #2A4D9B;'>🚀 Navegação Rápida</h2>
+            <p style='color: #666;'>Escolha uma das opções abaixo para explorar os dados</p>
+        </div>
+        """, unsafe_allow_html=True)
         
-        col1, col2, col3 = st.columns([1,1,1])
+        col1, col2, col3 = st.columns(3)
         
         with col1:
             if st.button(
-                "**🗺️**\n\n**Milhã em Mapas**\n\nVisualize dados geoespaciais do município", 
+                "🗺️\n\n**Milhã em Mapas**\n\nVisualize dados geoespaciais do município", 
                 key="btn_mapas", 
                 use_container_width=True
             ):
@@ -391,7 +416,7 @@ def create_header():
         
         with col2:
             if st.button(
-                "**🏗️**\n\n**Painel de Obras**\n\nAcompanhe investimentos municipais", 
+                "🏗️\n\n**Painel de Obras**\n\nAcompanhe investimentos municipais", 
                 key="btn_obras", 
                 use_container_width=True
             ):
@@ -401,42 +426,13 @@ def create_header():
         
         with col3:
             if st.button(
-                "**📊**\n\n**Todos os Dados**\n\nAcesse todas as informações", 
+                "📊\n\n**Todos os Dados**\n\nAcesse todas as informações", 
                 key="btn_dados", 
                 use_container_width=True
             ):
                 st.session_state.page = "data"
                 st.session_state.default_tab = "home"
                 st.rerun()
-        
-        st.markdown("</div>", unsafe_allow_html=True)
-        
-        # Versão alternativa com HTML/CSS (mais customizável)
-        st.markdown("""
-        <div class='nav-container'>
-            <button class='modern-nav-btn' onclick="streamlitSetPage('maps')">
-                <div class='btn-icon'>🗺️</div>
-                <div class='btn-text'>Milhã em Mapas<br><small>Visualize dados geoespaciais</small></div>
-            </button>
-            
-            <button class='modern-nav-btn' onclick="streamlitSetPage('works')">
-                <div class='btn-icon'>🏗️</div>
-                <div class='btn-text'>Painel de Obras<br><small>Acompanhe investimentos</small></div>
-            </button>
-            
-            <button class='modern-nav-btn' onclick="streamlitSetPage('data')">
-                <div class='btn-icon'>📊</div>
-                <div class='btn-text'>Todos os Dados<br><small>Acesse todas as informações</small></div>
-            </button>
-        </div>
-        
-        <script>
-        function streamlitSetPage(page) {
-            const streamlit = window.parent.document.querySelector('iframe').contentWindow.streamlit;
-            streamlit.setComponentValue('page_' + page);
-        }
-        </script>
-        """, unsafe_allow_html=True)
         
         st.markdown("---")
 
