@@ -1692,12 +1692,11 @@ with tab_map["🏠 Página Inicial"]:
       .home-hero{{
         background: var(--bg-grad);
         border-radius: 18px;
-        padding: 2rem;
+        padding: 3.2rem 2rem;
         text-align:center;
         position: relative;
         overflow: hidden;
         box-shadow: var(--shadow);
-        margin-bottom: 1rem;
       }}
       .home-hero:before,.home-hero:after{{
         content:""; position:absolute; inset:auto;
@@ -1708,6 +1707,8 @@ with tab_map["🏠 Página Inicial"]:
       .home-hero:before{{ background:#7aa2ff; top:-60px; left:-40px;}}
       .home-hero:after{{ background:#f093fb; bottom:-80px; right:-40px; animation-delay:1.8s;}}
       @keyframes float{{ 0%,100%{{transform: translateY(0)}} 50%{{transform: translateY(-16px)}}}}
+      .home-title{{ color:var(--primary); font-size:2.4rem; margin:0 0 .4rem 0}}
+      .home-sub{{ color:var(--muted); font-size:1.05rem; margin:0}}
 
       .glass-card{{
         background: var(--glass-bg);
@@ -1726,19 +1727,11 @@ with tab_map["🏠 Página Inicial"]:
       .grad-2{{ background: linear-gradient(135deg,#f093fb 0%, #f5576c 100%); }}
       .grad-3{{ background: linear-gradient(135deg,#4facfe 0%, #00f2fe 100%); }}
 
-      /* KPIs com paleta do app */
+      /* KPIs com paleta */
       .kpis{{ display:grid; grid-template-columns: repeat(3,1fr); gap:14px; margin:18px 0 6px}}
-      .kpi{{ 
-        background: linear-gradient(135deg, {PRIMARY} 0%, {PRIMARY_2} 100%);
-        border-radius:14px; 
-        padding:20px; 
-        box-shadow: var(--shadow); 
-        border:1px solid {PRIMARY};
-        color: white;
-        text-align: center;
-      }}
-      .kpi .lbl{{ color:#e8eeff; font-size:.82rem; font-weight: 500;}}
-      .kpi .val{{ color:#ffffff; font-size:1.8rem; font-weight:700; line-height:1; margin-top:8px}}
+      .kpi{{ background:#fff; border-radius:14px; padding:14px; box-shadow: var(--shadow); border:1px solid #eef2ff}}
+      .kpi .lbl{{ color:var(--muted); font-size:.82rem}}
+      .kpi .val{{ color:var(--primary); font-size:1.4rem; font-weight:700; line-height:1; margin-top:4px}}
 
       /* Seções */
       .sec-title{{ color:var(--text); font-size:1.2rem; margin:.3rem 0 .8rem 0}}
@@ -1747,13 +1740,8 @@ with tab_map["🏠 Página Inicial"]:
       .cta p{{ color:var(--muted); margin:0}}
 
       /* Download panel: borda em todo o container */
-      .download-container {{
-        border: 2px solid {PRIMARY};
-        border-radius: 18px;
-        padding: 2rem;
-        background: var(--bg-grad);
-        margin: 2rem 0;
-      }}
+      .download-title{{ display:flex; align-items:center; gap:12px; margin:0 0 10px 6px; color:#1f2937; }}
+      .download-title span{{font-size:1.8rem}}
       .formatos-grid{{ display:grid; grid-template-columns: repeat(5,1fr); gap:12px; margin:6px 0 12px }}
       @media (max-width: 1000px){{ .formatos-grid{{ grid-template-columns: repeat(3,1fr);}} }}
       @media (max-width: 768px){{ .formatos-grid{{ grid-template-columns: repeat(2,1fr);}} }}
@@ -1766,30 +1754,19 @@ with tab_map["🏠 Página Inicial"]:
         padding:16px 12px !important; white-space:normal;
         transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
       }}
-      .stButton>button:hover{{ 
-        transform: translateY(-3px); 
-        border-color:var(--primary); 
-        box-shadow: 0 12px 26px rgba(0,0,0,.10);
-        background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%);
-      }}
+      .stButton>button:hover{{ transform: translateY(-3px); border-color:var(--primary); box-shadow: 0 12px 26px rgba(0,0,0,.10) }}
 
-      .desc-box{{ 
-        background:#fff; 
-        border: 2px solid {PRIMARY};
-        border-radius:14px; 
-        padding:20px; 
-        box-shadow: 0 8px 22px rgba(0,0,0,.08); 
-        margin-top: 1rem;
-      }}
-      .desc-title{{ color:var(--primary); font-weight:700; margin-bottom:.4rem; font-size: 1.2rem }}
+      .desc-box{{ background:#fff; border-left:5px solid var(--primary); border-radius:14px; padding:14px; box-shadow: 0 8px 22px rgba(0,0,0,.08); }}
+      .desc-title{{ color:var(--primary); font-weight:700; margin-bottom:.4rem }}
       .desc-text{{ color:#4b5563; line-height:1.6; margin:0 }}
     </style>
     """, unsafe_allow_html=True)
 
-    # ---------- HERO (SEM TÍTULO) ----------
+    # ---------- HERO ----------
     st.markdown("""
     <div class="home-hero">
-      <!-- Título e subtítulo removidos conforme solicitado -->
+      <h1 class="home-title">🗺️ Portal GeoMilhã</h1>
+      <p class="home-sub">Plataforma de Geoinformação do Município de Milhã.</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -1798,18 +1775,9 @@ with tab_map["🏠 Página Inicial"]:
     k_camadas, k_mapas, k_update = 42, 12, "10/11/2025"
     st.markdown(f"""
     <div class="kpis">
-      <div class="kpi">
-        <div class="lbl">Camadas publicadas</div>
-        <div class="val">🧩 {k_camadas}</div>
-      </div>
-      <div class="kpi">
-        <div class="lbl">Mapas interativos</div>
-        <div class="val">🗺️ {k_mapas}</div>
-      </div>
-      <div class="kpi">
-        <div class="lbl">Última atualização</div>
-        <div class="val">🕒 {k_update}</div>
-      </div>
+      <div class="kpi"><div class="lbl">Camadas publicadas</div><div class="val">🧩 {k_camadas}</div></div>
+      <div class="kpi"><div class="lbl">Mapas interativos</div><div class="val">🗺️ {k_mapas}</div></div>
+      <div class="kpi"><div class="lbl">Última atualização</div><div class="val">🕒 {k_update}</div></div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -1878,9 +1846,14 @@ with tab_map["🏠 Página Inicial"]:
     # =====================================================
     # SEÇÃO: FORMATOS DE MAPAS PARA DOWNLOAD com contorno total
     # =====================================================
-    with st.container():
-        st.markdown('<div class="download-container">', unsafe_allow_html=True)
-        
+    with st.container(border=True):
+        # cabeçalho
+        st.markdown("""
+          <div class="download-title">
+            <span>🗂️</span><h2 style="margin:0">Formatos de Mapas para Download</h2>
+          </div>
+        """, unsafe_allow_html=True)
+
         # Estado
         if 'formato_selecionado' not in st.session_state:
             st.session_state.formato_selecionado = 'GEOJSON'
@@ -1924,8 +1897,6 @@ with tab_map["🏠 Página Inicial"]:
             <p class="desc-text">{d['texto']}</p>
           </div>
         """, unsafe_allow_html=True)
-        
-        st.markdown('</div>', unsafe_allow_html=True)
 
 
 
