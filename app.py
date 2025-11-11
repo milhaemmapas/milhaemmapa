@@ -321,12 +321,12 @@ def create_header():
         st.markdown("<div id='home-nav'><div class='row'>", unsafe_allow_html=True)
         col1, col2, col3 = st.columns(3)
         with col1:
-            if st.button("🗺️ Explorar Mapas", key="btn_mapas", use_container_width=True):
+            if st.button("🗺️ Milhã em Mapas", key="btn_mapas", use_container_width=True):
                 st.session_state.page = "maps"
                 st.session_state.default_tab = "maps"
                 st.rerun()
         with col2:
-            if st.button("🏗️ Ver Obras", key="btn_obras", use_container_width=True):
+            if st.button("🏗️ Painel de Obras", key="btn_obras", use_container_width=True):
                 st.session_state.page = "works"
                 st.session_state.default_tab = "works"
                 st.rerun()
