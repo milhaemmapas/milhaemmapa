@@ -1667,16 +1667,14 @@ with tab_map["🗺️ Milhã em Mapas"]:
     folium_static(m3, width=1200, height=700)
 
 # =====================================================
-# 1) Página Inicial — sem hero e sem título/subtítulo
+# 1) Página Inicial — espaçamento ampliado entre containers
 # =====================================================
 with tab_map["🏠 Página Inicial"]:
-    # ---------- Paleta ----------
-    PRIMARY = "#2A4D9B"     # azul principal do app
-    PRIMARY_2 = "#1a326a"   # variação escura
+    PRIMARY = "#2A4D9B"
+    PRIMARY_2 = "#1a326a"
     TEXT = "#1f2937"
     MUTED = "#6b7280"
 
-    # ---------- CSS ----------
     st.markdown(f"""
     <style>
       :root{{
@@ -1684,16 +1682,19 @@ with tab_map["🏠 Página Inicial"]:
         --primary-2:{PRIMARY_2};
         --text:{TEXT};
         --muted:{MUTED};
-        --bg-grad: linear-gradient(135deg,#e8eeff 0%, #f6f9ff 60%, #fdfdfd 100%);
-        --glass-bg: rgba(255,255,255,0.75);
-        --glass-br: 16px;
         --shadow: 0 10px 30px rgba(0,0,0,.10);
       }}
 
+      /* Espaçamento geral */
+      .block-spacer {{
+        margin-top: 2.5rem;
+        margin-bottom: 2.5rem;
+      }}
+
       .glass-card{{
-        background: var(--glass-bg);
+        background: rgba(255,255,255,0.75);
         border: 1px solid rgba(255,255,255,.6);
-        border-radius: var(--glass-br);
+        border-radius: 16px;
         padding: 1.25rem 1.1rem;
         box-shadow: var(--shadow);
         backdrop-filter: blur(10px);
@@ -1707,43 +1708,77 @@ with tab_map["🏠 Página Inicial"]:
       .grad-2{{ background: linear-gradient(135deg,#7aa2ff 0%, #2A4D9B 100%); }}
       .grad-3{{ background: linear-gradient(135deg,#4facfe 0%, #2A4D9B 100%); }}
 
-      /* KPIs na paleta */
-      .kpis{{ display:grid; grid-template-columns: repeat(3,1fr); gap:14px; margin:6px 0 10px}}
-      .kpi{{ background:#fff; border-radius:14px; padding:14px; box-shadow: var(--shadow); border:1px solid #eef2ff}}
-      .kpi .lbl{{ color:var(--muted); font-size:.82rem}}
-      .kpi .val{{ color:var(--primary); font-size:1.4rem; font-weight:700; line-height:1; margin-top:4px}}
+      /* KPIs */
+      .kpis{{ display:grid; grid-template-columns: repeat(3,1fr); gap:18px; margin:2rem 0 2.5rem}}
+      .kpi{{ background:#fff; border-radius:14px; padding:16px; box-shadow: var(--shadow); border:1px solid #eef2ff}}
+      .kpi .lbl{{ color:var(--muted); font-size:.85rem}}
+      .kpi .val{{ color:var(--primary); font-size:1.45rem; font-weight:700; line-height:1; margin-top:6px}}
 
-      /* Seções */
-      .sec-title{{ color:var(--text); font-size:1.2rem; margin:.3rem 0 .8rem 0}}
-      .cta{{ background:#f8f9fa; border:1px solid #edf0f7; border-radius:14px; padding:1.4rem; text-align:center}}
-      .cta h4{{ color:var(--primary); margin:.2rem 0 .4rem 0}}
-      .cta p{{ color:var(--muted); margin:0}}
+      /* Título de seção */
+      .sec-title{{ color:var(--text); font-size:1.25rem; margin:1.8rem 0 .8rem 0; font-weight:600 }}
+
+      /* CTA */
+      .cta{{ 
+        background:#f8f9fa; 
+        border:1px solid #edf0f7; 
+        border-radius:16px; 
+        padding:1.8rem; 
+        text-align:center;
+        margin-top:2.8rem;
+        margin-bottom:2.8rem;
+      }}
+      .cta h4{{ color:var(--primary); margin:.3rem 0 .6rem 0; font-size:1.3rem }}
+      .cta p{{ color:var(--muted); margin:0; font-size:.95rem }}
 
       /* Área de downloads */
-      .download-title{{ display:flex; align-items:center; gap:12px; margin:0 0 10px 6px; color:#1f2937; }}
+      .download-title{{ 
+        display:flex; align-items:center; gap:12px; 
+        margin:0 0 20px 6px; color:#1f2937;
+      }}
       .download-title span{{font-size:1.8rem}}
-      .formatos-grid{{ display:grid; grid-template-columns: repeat(5,1fr); gap:12px; margin:6px 0 12px }}
+      .formatos-grid{{ 
+        display:grid; 
+        grid-template-columns: repeat(5,1fr); 
+        gap:16px; 
+        margin:12px 0 24px;
+      }}
       @media (max-width: 1000px){{ .formatos-grid{{ grid-template-columns: repeat(3,1fr);}} }}
       @media (max-width: 768px){{ .formatos-grid{{ grid-template-columns: repeat(2,1fr);}} }}
 
-      /* Botões de formato */
+      /* Botões */
       .stButton>button{{
-        width:100% !important; height:100%;
-        background:#fff; border-radius:14px; border:1px solid #eef2ff;
+        width:100% !important; 
+        height:100%;
+        background:#fff; 
+        border-radius:14px; 
+        border:1px solid #eef2ff;
         box-shadow: 0 6px 18px rgba(0,0,0,.06);
-        padding:16px 12px !important; white-space:normal;
+        padding:18px 12px !important; 
+        white-space:normal;
         transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
       }}
-      .stButton>button:hover{{ transform: translateY(-3px); border-color:var(--primary); box-shadow: 0 12px 26px rgba(0,0,0,.10) }}
+      .stButton>button:hover{{ 
+        transform: translateY(-3px); 
+        border-color:var(--primary); 
+        box-shadow: 0 12px 26px rgba(0,0,0,.10);
+      }}
 
-      .desc-box{{ background:#fff; border-left:5px solid var(--primary); border-radius:14px; padding:14px; box-shadow: 0 8px 22px rgba(0,0,0,.08); }}
-      .desc-title{{ color:var(--primary); font-weight:700; margin-bottom:.4rem }}
+      /* Descrição */
+      .desc-box{{ 
+        background:#fff; 
+        border-left:5px solid var(--primary); 
+        border-radius:14px; 
+        padding:18px; 
+        box-shadow: 0 8px 22px rgba(0,0,0,.08);
+        margin-top:1.5rem;
+        margin-bottom:1rem;
+      }}
+      .desc-title{{ color:var(--primary); font-weight:700; margin-bottom:.4rem; font-size:1.1rem }}
       .desc-text{{ color:#4b5563; line-height:1.6; margin:0 }}
     </style>
     """, unsafe_allow_html=True)
 
     # ---------- KPIs ----------
-    # Substitua pelos seus valores dinâmicos
     k_camadas, k_mapas, k_update = 42, 12, "10/11/2025"
     st.markdown(f"""
     <div class="kpis">
@@ -1777,36 +1812,6 @@ with tab_map["🏠 Página Inicial"]:
         </div>
         """, unsafe_allow_html=True)
 
-    st.markdown("")
-
-    # ---------- Funcionalidades ----------
-    st.markdown('<div class="sec-title">🛠️ Funcionalidades</div>', unsafe_allow_html=True)
-    f1, f2 = st.columns(2)
-    with f1:
-        st.markdown("""
-        **🏗️ Painel de Obras**  
-        • Monitoramento de obras municipais.  
-        • Investimentos e andamento.  
-        • Localização geográfica.  
-
-        **🏥 Saúde Pública**  
-        • Unidades de saúde.  
-        • Postos e cobertura.  
-        • Distribuição territorial.
-        """)
-    with f2:
-        st.markdown("""
-        **🎓 Educação**  
-        • Escolas municipais.  
-        • Infraestrutura educacional.  
-        • Mapeamento de unidades.  
-
-        **🗺️ Território**  
-        • Distritos e localidades.  
-        • Limites administrativos.  
-        • Base cartográfica.
-        """)
-
     # ---------- CTA ----------
     st.markdown(f"""
     <div class="cta">
@@ -1815,18 +1820,14 @@ with tab_map["🏠 Página Inicial"]:
     </div>
     """, unsafe_allow_html=True)
 
-    # =====================================================
-    # SEÇÃO: FORMATOS DE MAPAS PARA DOWNLOAD
-    # =====================================================
+    # ---------- DOWNLOAD ----------
     with st.container(border=True):
-        # cabeçalho
         st.markdown("""
           <div class="download-title">
             <span>🗂️</span><h2 style="margin:0">Formatos de Mapas para Download</h2>
           </div>
         """, unsafe_allow_html=True)
 
-        # Estado
         if 'formato_selecionado' not in st.session_state:
             st.session_state.formato_selecionado = 'GEOJSON'
 
@@ -1838,7 +1839,6 @@ with tab_map["🏠 Página Inicial"]:
             {'id':'GEOJSON','nome':'GeoJSON','extensao':'.geojson','icon':'⚡'},
         ]
 
-        # Grid de botões
         st.markdown('<div class="formatos-grid">', unsafe_allow_html=True)
         cols = st.columns(5, gap="small")
         for i, f in enumerate(formatos):
@@ -1848,7 +1848,6 @@ with tab_map["🏠 Página Inicial"]:
                     st.session_state.formato_selecionado = f['id']
         st.markdown('</div>', unsafe_allow_html=True)
 
-        # Descrições
         descricoes = {
             'SHAPE': {'titulo':'🧭 Shapefile (SHP)',
                       'texto':'Formato vetorial com .shp, .shx e .dbf. Pode incluir .prj para SRC.'},
@@ -1859,7 +1858,7 @@ with tab_map["🏠 Página Inicial"]:
             'PDF':   {'titulo':'📄 PDF com Mapas',
                       'texto':'Preserva layout e qualidade. Ideal para relatórios e impressão.'},
             'GEOJSON':{'titulo':'⚡ GeoJSON',
-                       'texto':'Geometrias em JSON. Leve e perfeito para web e APIs. Point, LineString, Polygon e coleções.'}
+                       'texto':'Geometrias em JSON. Leve e perfeito para web e APIs.'}
         }
 
         d = descricoes[st.session_state.formato_selecionado]
@@ -1869,6 +1868,7 @@ with tab_map["🏠 Página Inicial"]:
             <p class="desc-text">{d['texto']}</p>
           </div>
         """, unsafe_allow_html=True)
+
 
 
 
