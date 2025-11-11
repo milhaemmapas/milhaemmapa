@@ -801,6 +801,7 @@ with tab_map["🏗️ Painel de Obras"]:
         c_bairro  = pick_norm("Bairro", "Localidade")
         c_dtini   = pick_norm("Início", "Data Início", "Inicio")
         c_dtfim   = pick_norm("Término", "Data Fim", "Termino")
+        c_ano     = pick_norm("Ano", "Data Ano", "Exercício")
 
         # =====================================================
         # KPIs ESTILIZADOS NO TOPO - APENAS OS 3 SOLICITADOS
@@ -828,6 +829,19 @@ with tab_map["🏗️ Painel de Obras"]:
         status_counts = df_obras[c_status].value_counts() if c_status else pd.Series()
         obras_concluidas = status_counts.get('Concluído', 0) + status_counts.get('Concluída', 0) if not status_counts.empty else 0
         
+        # Formatar valor total no padrão brasileiro
+        def formatar_valor_br(valor):
+            """Formata valor no padrão brasileiro: R$ 38.553.879,00"""
+            if valor == 0:
+                return "R$ 0,00"
+            # Formatar com separadores de milhar e 2 casas decimais
+            valor_str = f"{valor:,.2f}"
+            # Substituir pontos por vírgulas e vírgulas por pontos
+            valor_str = valor_str.replace(",", "X").replace(".", ",").replace("X", ".")
+            return f"R$ {valor_str}"
+        
+        valor_total_formatado = formatar_valor_br(valor_total)
+        
         # Criar colunas para os KPIs
         col1, col2, col3 = st.columns(3)
         
@@ -848,9 +862,10 @@ with tab_map["🏗️ Painel de Obras"]:
             transform: translateY(-5px);
         }
         .kpi-value {
-            font-size: 2.5em;
+            font-size: 2em;
             font-weight: bold;
             margin: 10px 0;
+            line-height: 1.2;
         }
         .kpi-label {
             font-size: 1.1em;
@@ -868,7 +883,7 @@ with tab_map["🏗️ Painel de Obras"]:
             st.markdown(f"""
             <div class="kpi-card">
                 <div class="kpi-icon">💰</div>
-                <div class="kpi-value">R$ {valor_total:,.0f}</div>
+                <div class="kpi-value">{valor_total_formatado}</div>
                 <div class="kpi-label">Valor Total Investido</div>
             </div>
             """, unsafe_allow_html=True)
@@ -899,7 +914,6 @@ with tab_map["🏗️ Painel de Obras"]:
         gj_distritos = load_geojson_any([os.path.join(b, "milha_dist_polig.geojson") for b in base_dir_candidates])
         gj_sede      = load_geojson_any([os.path.join(b, "Distritos_pontos.geojson") for b in base_dir_candidates])
 
-        # REMOVIDA A COLUNA LATERAL DE INFORMAÇÕES
         # Apenas o mapa ocupando toda a largura
         col_map = st.columns([1])[0]
 
@@ -1012,6 +1026,86 @@ with tab_map["🏗️ Painel de Obras"]:
             # Layer control com basemaps e overlays visíveis
             folium.LayerControl(collapsed=True, position='topleft').add_to(m2)
             folium_static(m2, width=800, height=600)
+
+        # =====================================================
+        # GRÁFICO DE BARRAS COM FILTRO DE ANO
+        # =====================================================
+        st.markdown("---")
+        st.markdown("### 📊 Investimento em Obras por Ano")
+        
+        # Preparar dados para o gráfico
+        if c_ano and c_valor:
+            # Extrair ano das datas se necessário
+            if c_ano in df_obras.columns:
+                # Tentar converter para ano
+                df_obras['ano_extraido'] = df_obras[c_ano].astype(str).str.extract(r'(\d{4})')[0]
+                
+                # Se não conseguir extrair ano, usar o valor original
+                df_obras['ano_final'] = df_obras['ano_extraido'].fillna(df_obras[c_ano])
+                
+                # Filtrar apenas anos válidos
+                df_anos_validos = df_obras[df_obras['ano_final'].str.match(r'^\d{4}$', na=False)].copy()
+                
+                if not df_anos_validos.empty:
+                    # Converter valor para numérico
+                    df_anos_validos['valor_numerico'] = df_anos_validos[c_valor].apply(
+                        lambda x: float(re.sub(r'[^\d,]', '', str(x)).replace(',', '.')) 
+                        if pd.notna(x) and str(x).strip() != '' else 0
+                    )
+                    
+                    # Agrupar por ano
+                    investimento_por_ano = df_anos_validos.groupby('ano_final')['valor_numerico'].sum().sort_index()
+                    
+                    # Criar filtro de ano
+                    anos_disponiveis = sorted(investimento_por_ano.index.tolist())
+                    ano_selecionado = st.selectbox(
+                        "**Selecione o Ano:**",
+                        options=["Todos"] + anos_disponiveis,
+                        index=0
+                    )
+                    
+                    # Filtrar dados conforme seleção
+                    if ano_selecionado == "Todos":
+                        dados_grafico = investimento_por_ano
+                        titulo_grafico = "Investimento Total em Obras por Ano"
+                    else:
+                        dados_grafico = investimento_por_ano[investimento_por_ano.index == ano_selecionado]
+                        titulo_grafico = f"Investimento em Obras - Ano {ano_selecionado}"
+                    
+                    if not dados_grafico.empty:
+                        # Criar gráfico de barras
+                        fig, ax = plt.subplots(figsize=(12, 6))
+                        
+                        # Converter valores para milhões para melhor visualização
+                        valores_em_milhoes = dados_grafico.values / 1000000
+                        
+                        bars = ax.bar(dados_grafico.index.astype(str), valores_em_milhoes, 
+                                    color='#667eea', alpha=0.8, edgecolor='#764ba2', linewidth=2)
+                        
+                        # Adicionar valores nas barras
+                        for bar, valor in zip(bars, dados_grafico.values):
+                            altura = bar.get_height()
+                            valor_formatado = formatar_valor_br(valor)
+                            ax.text(bar.get_x() + bar.get_width()/2, altura + (max(valores_em_milhoes) * 0.01),
+                                   valor_formatado, ha='center', va='bottom', fontweight='bold', fontsize=10)
+                        
+                        ax.set_ylabel('Valor (Milhões de R$)', fontsize=12, fontweight='bold')
+                        ax.set_xlabel('Ano', fontsize=12, fontweight='bold')
+                        ax.set_title(titulo_grafico, fontsize=14, fontweight='bold', pad=20)
+                        
+                        # Ajustar layout
+                        plt.xticks(rotation=45)
+                        plt.tight_layout()
+                        
+                        st.pyplot(fig)
+                    else:
+                        st.info("Não há dados disponíveis para o ano selecionado.")
+                else:
+                    st.info("Não foram encontrados anos válidos para análise.")
+            else:
+                st.info("Coluna de ano não encontrada nos dados.")
+        else:
+            st.info("Dados de ano ou valor não disponíveis para gerar o gráfico.")
 
         st.markdown("### 📋 Tabela de Obras")
         priority = [c_obra, c_status, c_empresa, c_valor, c_bairro, c_dtini, c_dtfim]
