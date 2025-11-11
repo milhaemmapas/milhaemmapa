@@ -1667,7 +1667,7 @@ with tab_map["🗺️ Milhã em Mapas"]:
     folium_static(m3, width=1200, height=700)
 
 # =====================================================
-# 1) Página Inicial — versão moderna com paleta unificada
+# 1) Página Inicial — sem hero e sem título/subtítulo
 # =====================================================
 with tab_map["🏠 Página Inicial"]:
     # ---------- Paleta ----------
@@ -1689,26 +1689,6 @@ with tab_map["🏠 Página Inicial"]:
         --glass-br: 16px;
         --shadow: 0 10px 30px rgba(0,0,0,.10);
       }}
-      .home-hero{{
-        background: var(--bg-grad);
-        border-radius: 18px;
-        padding: 3.2rem 2rem;
-        text-align:center;
-        position: relative;
-        overflow: hidden;
-        box-shadow: var(--shadow);
-      }}
-      .home-hero:before,.home-hero:after{{
-        content:""; position:absolute; inset:auto;
-        width:260px; height:260px; border-radius:50%;
-        filter: blur(60px); opacity:.25;
-        animation: float 9s ease-in-out infinite;
-      }}
-      .home-hero:before{{ background:#7aa2ff; top:-60px; left:-40px;}}
-      .home-hero:after{{ background:#f093fb; bottom:-80px; right:-40px; animation-delay:1.8s;}}
-      @keyframes float{{ 0%,100%{{transform: translateY(0)}} 50%{{transform: translateY(-16px)}}}}
-      .home-title{{ color:var(--primary); font-size:2.4rem; margin:0 0 .4rem 0}}
-      .home-sub{{ color:var(--muted); font-size:1.05rem; margin:0}}
 
       .glass-card{{
         background: var(--glass-bg);
@@ -1723,12 +1703,12 @@ with tab_map["🏠 Página Inicial"]:
       .glass-card:hover{{ transform: translateY(-4px); box-shadow: 0 16px 40px rgba(0,0,0,.12)}}
       .glass-card h3{{ color:#fff; margin:.2rem 0 .6rem 0; font-size:1.05rem}}
       .glass-card p{{ color:#f8fafc; margin:0; font-size:.95rem}}
-      .grad-1{{ background: linear-gradient(135deg,#667eea 0%, #764ba2 100%); }}
-      .grad-2{{ background: linear-gradient(135deg,#f093fb 0%, #f5576c 100%); }}
-      .grad-3{{ background: linear-gradient(135deg,#4facfe 0%, #00f2fe 100%); }}
+      .grad-1{{ background: linear-gradient(135deg,#2A4D9B 0%, #1a326a 100%); }}
+      .grad-2{{ background: linear-gradient(135deg,#7aa2ff 0%, #2A4D9B 100%); }}
+      .grad-3{{ background: linear-gradient(135deg,#4facfe 0%, #2A4D9B 100%); }}
 
-      /* KPIs com paleta */
-      .kpis{{ display:grid; grid-template-columns: repeat(3,1fr); gap:14px; margin:18px 0 6px}}
+      /* KPIs na paleta */
+      .kpis{{ display:grid; grid-template-columns: repeat(3,1fr); gap:14px; margin:6px 0 10px}}
       .kpi{{ background:#fff; border-radius:14px; padding:14px; box-shadow: var(--shadow); border:1px solid #eef2ff}}
       .kpi .lbl{{ color:var(--muted); font-size:.82rem}}
       .kpi .val{{ color:var(--primary); font-size:1.4rem; font-weight:700; line-height:1; margin-top:4px}}
@@ -1739,12 +1719,12 @@ with tab_map["🏠 Página Inicial"]:
       .cta h4{{ color:var(--primary); margin:.2rem 0 .4rem 0}}
       .cta p{{ color:var(--muted); margin:0}}
 
-      /* Download panel: borda em todo o container */
-      .download-title{{ display:flex; align-items:center; gap:12px; margin:0px 10px 10px 6px; color:#1f2937; }}
+      /* Área de downloads */
+      .download-title{{ display:flex; align-items:center; gap:12px; margin:0 0 10px 6px; color:#1f2937; }}
       .download-title span{{font-size:1.8rem}}
       .formatos-grid{{ display:grid; grid-template-columns: repeat(5,1fr); gap:12px; margin:6px 0 12px }}
       @media (max-width: 1000px){{ .formatos-grid{{ grid-template-columns: repeat(3,1fr);}} }}
-      @media (max-width: 720px){{ .formatos-grid{{ grid-template-columns: repeat(2,1fr);}} }}
+      @media (max-width: 768px){{ .formatos-grid{{ grid-template-columns: repeat(2,1fr);}} }}
 
       /* Botões de formato */
       .stButton>button{{
@@ -1762,16 +1742,8 @@ with tab_map["🏠 Página Inicial"]:
     </style>
     """, unsafe_allow_html=True)
 
-    # ---------- HERO ----------
-    st.markdown("""
-    <div class="home-hero">
-      <h1 class="home-title">🗺️ Portal GeoMilhã</h1>
-      <p class="home-sub">Plataforma de Geoinformação do Município de Milhã.</p>
-    </div>
-    """, unsafe_allow_html=True)
-
     # ---------- KPIs ----------
-    # Troque pelos seus valores dinâmicos se quiser
+    # Substitua pelos seus valores dinâmicos
     k_camadas, k_mapas, k_update = 42, 12, "10/11/2025"
     st.markdown(f"""
     <div class="kpis">
@@ -1844,7 +1816,7 @@ with tab_map["🏠 Página Inicial"]:
     """, unsafe_allow_html=True)
 
     # =====================================================
-    # SEÇÃO: FORMATOS DE MAPAS PARA DOWNLOAD com contorno total
+    # SEÇÃO: FORMATOS DE MAPAS PARA DOWNLOAD
     # =====================================================
     with st.container(border=True):
         # cabeçalho
@@ -1897,6 +1869,7 @@ with tab_map["🏠 Página Inicial"]:
             <p class="desc-text">{d['texto']}</p>
           </div>
         """, unsafe_allow_html=True)
+
 
 
 
