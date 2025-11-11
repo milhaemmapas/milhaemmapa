@@ -1742,9 +1742,9 @@ with tab_map["🏠 Página Inicial"]:
       /* Download panel: borda em todo o container */
       .download-title{{ display:flex; align-items:center; gap:12px; margin:0px 10px 10px 6px; color:#1f2937; }}
       .download-title span{{font-size:1.8rem}}
-      .formatos-grid{{ display:grid; grid-template-columns: repeat(5,1fr); gap:12px; margin:26px 0 12px }}
+      .formatos-grid{{ display:grid; grid-template-columns: repeat(5,1fr); gap:12px; margin:6px 0 12px }}
       @media (max-width: 1000px){{ .formatos-grid{{ grid-template-columns: repeat(3,1fr);}} }}
-      @media (max-width: 768px){{ .formatos-grid{{ grid-template-columns: repeat(2,1fr);}} }}
+      @media (max-width: 799px){{ .formatos-grid{{ grid-template-columns: repeat(2,1fr);}} }}
 
       /* Botões de formato */
       .stButton>button{{
