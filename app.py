@@ -1667,265 +1667,246 @@ with tab_map["🗺️ Milhã em Mapas"]:
     folium_static(m3, width=1200, height=700)
 
 # =====================================================
-# 1) Página Inicial
+# 1) Página Inicial — versão moderna
 # =====================================================
 with tab_map["🏠 Página Inicial"]:
+    # ---------- CSS global da Home ----------
     st.markdown("""
-    <div style='text-align: center; padding: 2rem;'>
-        <h1 style='color: #2A4D9B; margin-bottom: 1rem;'>🗺️ Portal GeoMilhã</h1>
-        <h3 style='color: #555; font-weight: normal;'>Plataforma de Geoinformação do Município de Milhã</h3>
+    <style>
+      :root{
+        --primary:#2A4D9B;
+        --primary-2:#1a326a;
+        --text:#1f2937;
+        --muted:#6b7280;
+        --bg-grad: linear-gradient(135deg,#e8eeff 0%, #f6f9ff 60%, #fdfdfd 100%);
+        --glass-bg: rgba(255,255,255,0.75);
+        --glass-br: 16px;
+        --shadow: 0 10px 30px rgba(0,0,0,.10);
+      }
+      .home-hero{
+        background: var(--bg-grad);
+        border-radius: 18px;
+        padding: 3.2rem 2rem;
+        text-align:center;
+        position: relative;
+        overflow: hidden;
+        box-shadow: var(--shadow);
+      }
+      .home-hero:before,.home-hero:after{
+        content:""; position:absolute; inset:auto;
+        width:260px; height:260px; border-radius:50%;
+        filter: blur(60px); opacity:.25;
+        animation: float 9s ease-in-out infinite;
+      }
+      .home-hero:before{ background:#7aa2ff; top:-60px; left:-40px;}
+      .home-hero:after{ background:#f093fb; bottom:-80px; right:-40px; animation-delay:1.8s;}
+      @keyframes float{ 0%,100%{transform: translateY(0)} 50%{transform: translateY(-16px)}}
+      .home-title{ color:var(--primary); font-size:2.2rem; margin:0 0 .4rem 0}
+      .home-sub{ color:var(--muted); font-size:1.1rem; margin:0}
+      .glass-card{
+        background: var(--glass-bg);
+        border: 1px solid rgba(255,255,255,.6);
+        border-radius: var(--glass-br);
+        padding: 1.25rem 1.1rem;
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(10px);
+        transition: transform .25s ease, box-shadow .25s ease;
+        height: 100%;
+      }
+      .glass-card:hover{ transform: translateY(-4px); box-shadow: 0 16px 40px rgba(0,0,0,.12)}
+      .glass-card h3{ color:#fff; margin:.2rem 0 .6rem 0; font-size:1.05rem}
+      .glass-card p{ color:#f8fafc; margin:0; font-size:.95rem}
+      .grad-1{ background: linear-gradient(135deg,#667eea 0%, #764ba2 100%); }
+      .grad-2{ background: linear-gradient(135deg,#f093fb 0%, #f5576c 100%); }
+      .grad-3{ background: linear-gradient(135deg,#4facfe 0%, #00f2fe 100%); }
+
+      /* Métricas */
+      .kpis{ display:grid; grid-template-columns: repeat(3,1fr); gap:14px; margin:18px 0 6px}
+      .kpi{ background:#fff; border-radius:14px; padding:14px; box-shadow: var(--shadow); border:1px solid #eef2ff}
+      .kpi .lbl{ color:var(--muted); font-size:.82rem}
+      .kpi .val{ color:var(--primary); font-size:1.4rem; font-weight:700; line-height:1; margin-top:4px}
+
+      /* Seções */
+      .sec-title{ color:var(--text); font-size:1.2rem; margin:.3rem 0 .8rem 0}
+      .cta{ background:#f8f9fa; border:1px solid #edf0f7; border-radius:14px; padding:1.4rem; text-align:center}
+      .cta h4{ color:var(--primary); margin:.2rem 0 .4rem 0}
+      .cta p{ color:var(--muted); margin:0}
+
+      /* Formatos de download */
+      .formatos-container{
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 1.5rem; border-radius: 16px; box-shadow: var(--shadow);
+      }
+      .formatos-grid{ display:grid; grid-template-columns: repeat(5,1fr); gap:10px; }
+      @media (max-width: 1000px){ .formatos-grid{ grid-template-columns: repeat(3,1fr);} }
+      @media (max-width: 768px){ .formatos-grid{ grid-template-columns: repeat(2,1fr);} }
+      .stButton>button{
+        width:100% !important; height:100%;
+        border-radius:12px; padding:14px 10px !important; border:2px solid transparent;
+        background:#fff; box-shadow: var(--shadow);
+        transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease, background .2s ease;
+        white-space: normal;
+      }
+      .stButton>button:hover{ transform: translateY(-3px); border-color: var(--primary)}
+      .desc-box{
+        background:#fff; border-left:5px solid var(--primary);
+        border-radius:12px; padding:1.1rem 1rem; box-shadow: var(--shadow);
+      }
+      .desc-title{ color:var(--primary); font-weight:700; margin-bottom:.4rem; font-size:1.05rem}
+      .desc-text{ color:#4b5563; line-height:1.6; margin:0}
+    </style>
+    """, unsafe_allow_html=True)
+
+    # ---------- HERO ----------
+    st.markdown("""
+    <div class="home-hero">
+      <h1 class="home-title">🗺️ Portal GeoMilhã</h1>
+      <p class="home-sub">Plataforma de Geoinformação do Município de Milhã.</p>
     </div>
     """, unsafe_allow_html=True)
-    
-    # Cards de apresentação
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        st.markdown("""
-        <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-                    padding: 1.5rem; border-radius: 15px; color: white; text-align: center;'>
-            <h3>🎯 Missão</h3>
-            <p>Disponibilizar informações geoespaciais de forma transparente e acessível</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col2:
-        st.markdown("""
-        <div style='background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); 
-                    padding: 1.5rem; border-radius: 15px; color: white; text-align: center;'>
-            <h3>📊 Dados</h3>
-            <p>Mapas temáticos e informações territoriais atualizadas</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col3:
-        st.markdown("""
-        <div style='background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); 
-                    padding: 1.5rem; border-radius: 15px; color: white; text-align: center;'>
-            <h3>🌐 Acesso</h3>
-            <p>Plataforma aberta para cidadãos, gestores e pesquisadores</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    st.markdown("---")
-    
-    # Seção de funcionalidades
-    st.markdown("### 🛠️ Funcionalidades Disponíveis")
-    
-    func_col1, func_col2 = st.columns(2)
-    
-    with func_col1:
-        st.markdown("""
-        **🏗️ Painel de Obras**
-        - Monitoramento de obras municipais
-        - Investimentos e andamento
-        - Localização geográfica
-        
-        **🏥 Saúde Pública**
-        - Unidades de saúde
-        - Postos médicos
-        - Distribuição territorial
-        """)
-    
-    with func_col2:
-        st.markdown("""
-        **🎓 Educação**
-        - Escolas municipais
-        - Infraestrutura educacional
-        - Mapeamento de unidades
-        
-        **🗺️ Território**
-        - Distritos e localidades
-        - Limites administrativos
-        - Base cartográfica
-        """)
-    
-    st.markdown("---")
-    
-    # Chamada para ação
-    st.markdown("""
-    <div style='background-color: #f8f9fa; padding: 2rem; border-radius: 10px; text-align: center;'>
-        <h4 style='color: #2A4D9B;'>🚀 Explore os Dados</h4>
-        <p>Navegue pelas abas superiores para acessar os mapas e informações específicas do município</p>
+
+    # ---------- KPIs rápidos (preencha os valores reais no Python e formate aqui via f-string se quiser) ----------
+    # Exemplo: k_camadas, k_mapas, k_update = 42, 12, "10/11/2025"
+    k_camadas, k_mapas, k_update = 42, 12, "10/11/2025"
+    st.markdown(f"""
+    <div class="kpis">
+      <div class="kpi"><div class="lbl">Camadas publicadas</div><div class="val">🧩 {k_camadas}</div></div>
+      <div class="kpi"><div class="lbl">Mapas interativos</div><div class="val">🗺️ {k_mapas}</div></div>
+      <div class="kpi"><div class="lbl">Última atualização</div><div class="val">🕒 {k_update}</div></div>
     </div>
     """, unsafe_allow_html=True)
-    
+
+    # ---------- Cards (glass) ----------
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        st.markdown("""
+        <div class="glass-card grad-1">
+          <h3>🎯 Missão</h3>
+          <p>Disponibilizar informações geoespaciais de forma transparente e acessível.</p>
+        </div>
+        """, unsafe_allow_html=True)
+    with c2:
+        st.markdown("""
+        <div class="glass-card grad-2">
+          <h3>📊 Dados</h3>
+          <p>Mapas temáticos e informações territoriais atualizadas.</p>
+        </div>
+        """, unsafe_allow_html=True)
+    with c3:
+        st.markdown("""
+        <div class="glass-card grad-3">
+          <h3>🌐 Acesso</h3>
+          <p>Aberto para cidadãos, gestores e pesquisadores.</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("")
+
+    # ---------- Funcionalidades ----------
+    st.markdown('<div class="sec-title">🛠️ Funcionalidades</div>', unsafe_allow_html=True)
+    f1, f2 = st.columns(2)
+    with f1:
+        st.markdown("""
+        **🏗️ Painel de Obras**  
+        • Monitoramento de obras municipais.  
+        • Investimentos e andamento.  
+        • Localização geográfica.  
+
+        **🏥 Saúde Pública**  
+        • Unidades de saúde.  
+        • Postos e cobertura.  
+        • Distribuição territorial.
+        """)
+    with f2:
+        st.markdown("""
+        **🎓 Educação**  
+        • Escolas municipais.  
+        • Infraestrutura educacional.  
+        • Mapeamento de unidades.  
+
+        **🗺️ Território**  
+        • Distritos e localidades.  
+        • Limites administrativos.  
+        • Base cartográfica.
+        """)
+
+    # ---------- CTA ----------
+    st.markdown("""
+    <div class="cta">
+      <h4>🚀 Explore os dados</h4>
+      <p>Navegue nas abas para acessar mapas e informações do município.</p>
+    </div>
+    """, unsafe_allow_html=True)
+
     # =====================================================
     # SEÇÃO: FORMATOS DE MAPAS PARA DOWNLOAD
     # =====================================================
-    st.markdown("---")
-    
-    st.markdown("""
-    <div style='text-align: center; margin: 3rem 0;'>
-        <h2 style='color: #2A4D9B; font-size: 2.2em; margin-bottom: 2rem;'>🗂️ Formatos de Mapas para Download</h2>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Container principal
-    st.markdown("""
-    <style>
-    .formatos-container {
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-        padding: 2rem;
-        border-radius: 15px;
-        margin: 2rem 0;
-    }
-    .formatos-grid {
-        display: grid;
-        grid-template-columns: repeat(5, 1fr);
-        gap: 1rem;
-        margin-bottom: 2rem;
-    }
-    .formato-item {
-        background: white;
-        padding: 1.5rem 1rem;
-        border-radius: 10px;
-        text-align: center;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        border: 2px solid transparent;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    .formato-item:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-        border-color: #2A4D9B;
-    }
-    .formato-item.active {
-        background: linear-gradient(135deg, #2A4D9B 0%, #1a3658 100%);
-        color: white;
-        border-color: #2A4D9B;
-    }
-    .formato-icon {
-        font-size: 2.5em;
-        margin-bottom: 0.5rem;
-    }
-    .formato-nome {
-        font-weight: bold;
-        font-size: 1.1em;
-        margin-bottom: 0.5rem;
-    }
-    .formato-extensao {
-        font-size: 0.9em;
-        opacity: 0.8;
-    }
-    .descricao-container {
-        background: white;
-        padding: 2rem;
-        border-radius: 10px;
-        border-left: 5px solid #2A4D9B;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    }
-    .descricao-titulo {
-        color: #2A4D9B;
-        font-weight: bold;
-        margin-bottom: 1rem;
-        font-size: 1.3em;
-    }
-    .descricao-texto {
-        line-height: 1.6;
-        color: #555;
-    }
-    @media (max-width: 768px) {
-        .formatos-grid {
-            grid-template-columns: repeat(2, 1fr);
-            gap: 0.5rem;
-        }
-    }
-    </style>
-    """, unsafe_allow_html=True)
-    
-    # Inicializar estado do formato selecionado
+    st.markdown("## 🗂️ Formatos de Mapas para Download")
+
+    # Estado do formato
     if 'formato_selecionado' not in st.session_state:
         st.session_state.formato_selecionado = 'SHAPE'
-    
-    # Grid de formatos
-    st.markdown('<div class="formatos-container">', unsafe_allow_html=True)
-    
-    st.markdown('<div class="formatos-grid">', unsafe_allow_html=True)
-    
+
     formatos = [
-        {'id': 'SHAPE', 'nome': 'Shapefile', 'extensao': '.shp .shx .dbf', 'icon': '🗺️'},
-        {'id': 'KML', 'nome': 'KML', 'extensao': '.kml .kmz', 'icon': '🌍'},
-        {'id': 'CSV', 'nome': 'CSV', 'extensao': '.csv', 'icon': '📊'},
-        {'id': 'PDF', 'nome': 'PDF', 'extensao': '.pdf', 'icon': '📄'},
-        {'id': 'GEOJSON', 'nome': 'GeoJSON', 'extensao': '.geojson', 'icon': '⚡'}
+        {'id':'SHAPE','nome':'Shapefile','extensao':'.shp .shx .dbf','icon':'🗺️'},
+        {'id':'KML','nome':'KML','extensao':'.kml .kmz','icon':'🌍'},
+        {'id':'CSV','nome':'CSV','extensao':'.csv','icon':'📊'},
+        {'id':'PDF','nome':'PDF','extensao':'.pdf','icon':'📄'},
+        {'id':'GEOJSON','nome':'GeoJSON','extensao':'.geojson','icon':'⚡'},
     ]
-    
-    # Criar colunas para os botões
-    cols = st.columns(5)
-    
+
+    st.markdown('<div class="formatos-container">', unsafe_allow_html=True)
+
+    # Grid responsivo de botões
+    cols = st.columns(5, gap="small")
     for i, formato in enumerate(formatos):
         with cols[i]:
-            if st.button(
-                f"{formato['icon']}\n\n**{formato['nome']}**\n\n{formato['extensao']}",
+            clicked = st.button(
+                f"{formato['icon']}  \n**{formato['nome']}**  \n{formato['extensao']}",
                 key=f"btn_{formato['id']}",
                 use_container_width=True
-            ):
+            )
+            if clicked:
                 st.session_state.formato_selecionado = formato['id']
-    
-    st.markdown('</div>', unsafe_allow_html=True)
-    
-    # Descrição do formato selecionado
+
+    # Descrições
     descricoes = {
         'SHAPE': {
-            'titulo': '🗺️ Shapefile (SHP)',
-            'texto': """
-            O **Shapefile** é um formato vetorial que representa feições geográficas em formato de ponto, 
-            linha ou polígono com referência espacial (coordenadas geográficas). É composto por um conjunto 
-            de arquivos, sendo três obrigatórios: **.shp** (geometrias), **.shx** (índice) e **.dbf** (atributos). 
-            Arquivos adicionais como **.prj** (sistema de coordenadas), **.sbn** e **.sbx** (índices espaciais) 
-            podem ser gerados para complementar os dados.
-            """
+            'titulo':'🗺️ Shapefile (SHP)',
+            'texto':"""O Shapefile é um formato vetorial de pontos, linhas ou polígonos com referência espacial. 
+            Usa arquivos .shp (geometrias), .shx (índice) e .dbf (atributos). Pode incluir .prj para o SRC."""
         },
         'KML': {
-            'titulo': '🌍 KML/KMZ',
-            'texto': """
-            **KML** (Keyhole Markup Language) é um formato baseado em XML para representar dados geográficos 
-            em aplicações como Google Earth. Pode conter pontos, linhas, polígonos, imagens e modelos 3D. 
-            O **KMZ** é uma versão compactada do KML que inclui arquivos relacionados. Ideal para visualização 
-            em softwares de globo virtual e compartilhamento de dados geográficos.
-            """
+            'titulo':'🌍 KML/KMZ',
+            'texto':"""KML é XML para dados geográficos em apps como Google Earth. Suporta pontos, linhas, polígonos e imagens.
+            KMZ é o KML compactado. Ótimo para visualização e compartilhamento."""
         },
         'CSV': {
-            'titulo': '📊 CSV com Coordenadas',
-            'texto': """
-            **CSV** (Comma-Separated Values) é um formato de texto simples que armazena dados tabulares, 
-            incluindo coordenadas geográficas. Cada linha representa uma feição e as colunas contêm atributos 
-            e coordenadas (latitude/longitude). Amplamente compatível com planilhas, bancos de dados e 
-            sistemas de informação geográfica. Ideal para análise de dados e integração com outras ferramentas.
-            """
+            'titulo':'📊 CSV com Coordenadas',
+            'texto':"""CSV armazena dados tabulares com latitude e longitude por linha.
+            Compatível com planilhas, bancos e SIG. Ideal para análises e integrações."""
         },
         'PDF': {
-            'titulo': '📄 PDF com Mapas',
-            'texto': """
-            **PDF** (Portable Document Format) é um formato que preserva a formatação original de documentos, 
-            incluindo mapas e layouts cartográficos. Mantém a qualidade de impressão e é amplamente acessível 
-            em diferentes dispositivos. Ideal para relatórios, documentos oficiais e compartilhamento de 
-            mapas estáticos com alta qualidade gráfica.
-            """
+            'titulo':'📄 PDF com Mapas',
+            'texto':"""PDF preserva layout e qualidade de impressão. Excelente para relatórios, documentos oficiais e mapas estáticos."""
         },
         'GEOJSON': {
-            'titulo': '⚡ GeoJSON',
-            'texto': """
-            **GeoJSON** é um formato baseado em JSON para codificar estruturas de dados geográficos. 
-            Suporta geometrias como Point, LineString, Polygon e collections dessas geometrias. 
-            É legível por humanos e máquinas, amplamente utilizado em aplicações web modernas e APIs. 
-            Ideal para desenvolvimento web, aplicações interativas e intercâmbio de dados geoespaciais.
-            """
+            'titulo':'⚡ GeoJSON',
+            'texto':"""GeoJSON codifica geometrias em JSON. Leve, legível e perfeito para web e APIs.
+            Suporta Point, LineString, Polygon e coleções."""
         }
     }
-    
-    descricao = descricoes[st.session_state.formato_selecionado]
-    
+
+    desc = descricoes[st.session_state.formato_selecionado]
     st.markdown(f"""
-    <div class="descricao-container">
-        <div class="descricao-titulo">{descricao['titulo']}</div>
-        <div class="descricao-texto">{descricao['texto']}</div>
+    <div class="desc-box">
+      <div class="desc-title">{desc['titulo']}</div>
+      <p class="desc-text">{desc['texto']}</p>
     </div>
     """, unsafe_allow_html=True)
-    
+
     st.markdown('</div>', unsafe_allow_html=True)
+
 
 # =====================================================
 # Rodapé
