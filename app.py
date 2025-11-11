@@ -1709,7 +1709,7 @@ with tab_map["🏠 Página Inicial"]:
       .grad-3{{ background: linear-gradient(135deg,#4facfe 0%, #2A4D9B 100%); }}
 
       /* KPIs */
-      .kpis{{ display:grid; grid-template-columns: repeat(5,1fr); gap:18px; margin:2rem 0 2.5rem}}
+      .kpis{{ display:grid; grid-template-columns: repeat(3,1fr); gap:18px; margin:2rem 0 2.5rem}}
       .kpi{{ background:#fff; border-radius:14px; padding:16px; box-shadow: var(--shadow); border:1px solid #eef2ff}}
       .kpi .lbl{{ color:var(--muted); font-size:.85rem}}
       .kpi .val{{ color:var(--primary); font-size:1.45rem; font-weight:700; line-height:1; margin-top:6px}}
@@ -1733,12 +1733,12 @@ with tab_map["🏠 Página Inicial"]:
       /* Área de downloads */
       .download-title{{ 
         display:flex; align-items:center; gap:12px; 
-        margin:0 0 0px 6px; color:#1f2937;
+        margin:0 0 20px 6px; color:#1f2937;
       }}
       .download-title span{{font-size:1.8rem}}
       .formatos-grid{{ 
         display:grid; 
-        grid-template-columns: repeat(3,1fr); 
+        grid-template-columns: repeat(5,1fr); 
         gap:16px; 
         margin:12px 0 24px;
       }}
@@ -1824,7 +1824,7 @@ with tab_map["🏠 Página Inicial"]:
     with st.container(border=True):
         st.markdown("""
           <div class="download-title">
-            <span>🗂️</span><h2 style="margin:0">Formatos de dados utilizados</h2>
+            <span>🗂️</span><h2 style="margin:0">Formatos de Mapas para Download</h2>
           </div>
         """, unsafe_allow_html=True)
 
@@ -1868,6 +1868,7 @@ with tab_map["🏠 Página Inicial"]:
             <p class="desc-text">{d['texto']}</p>
           </div>
         """, unsafe_allow_html=True)
+
 
 # =====================================================
 # Rodapé
