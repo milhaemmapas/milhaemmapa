@@ -800,56 +800,101 @@ with tab_map["🏗️ Painel de Obras"]:
             return next((c for c in cols if c in [norm_col(o) for o in options]), None)
 
         c_obra    = pick_norm("Obra", "Nome", "Projeto", "Descrição")
-        c_status  = pick_norm("Status", "Situação", "Andamento")  # Adicionado "Andamento"
+        c_status  = pick_norm("Status", "Situação", "Andamento")
         c_empresa = pick_norm("Empresa", "Contratada")
-        c_valor   = pick_norm("Valor", "Valor Total", "Custo", "valor_total")  # Adicionado "valor_total"
+        c_valor   = pick_norm("Valor", "Valor Total", "Custo", "valor_total")
         c_bairro  = pick_norm("Bairro", "Localidade")
-        c_dtini   = pick_norm("Início", "Data Início", "Inicio", "data_inicio")  # Adicionado "data_inicio"
+        c_dtini   = pick_norm("Início", "Data Início", "Inicio", "data_inicio")
         c_dtfim   = pick_norm("Término", "Data Fim", "Termino")
+
+        # =====================================================
+        # PREPARAR DADOS PARA FILTROS
+        # =====================================================
+        # Extrair ano da data_inicio
+        df_obras['ano_extraido'] = df_obras[c_dtini].astype(str).str.extract(r'(\d{4})')[0] if c_dtini else None
+        
+        # Preparar dados de status/andamento
+        status_options = ["Todos"]
+        if c_status:
+            status_disponiveis = df_obras[c_status].dropna().unique()
+            status_options.extend(sorted([str(s) for s in status_disponiveis if str(s).strip() != ""]))
+
+        # Preparar dados de ano
+        ano_options = ["Todos"]
+        if 'ano_extraido' in df_obras.columns and df_obras['ano_extraido'].notna().any():
+            anos_disponiveis = sorted(df_obras['ano_extraido'].dropna().unique())
+            ano_options.extend(anos_disponiveis)
+
+        # =====================================================
+        # FILTROS NO TOPO
+        # =====================================================
+        st.markdown("---")
+        col_filtro1, col_filtro2 = st.columns(2)
+        
+        with col_filtro1:
+            ano_selecionado = st.selectbox(
+                "**📅 Filtrar por Ano:**",
+                options=ano_options,
+                index=0,
+                key="filtro_ano"
+            )
+        
+        with col_filtro2:
+            status_selecionado = st.selectbox(
+                "**📊 Filtrar por Andamento:**",
+                options=status_options,
+                index=0,
+                key="filtro_status"
+            )
+        
+        # Aplicar filtros ao DataFrame
+        df_filtrado = df_obras.copy()
+        
+        if ano_selecionado != "Todos":
+            df_filtrado = df_filtrado[df_filtrado['ano_extraido'] == ano_selecionado]
+        
+        if status_selecionado != "Todos":
+            df_filtrado = df_filtrado[df_filtrado[c_status] == status_selecionado]
+        
+        df_map_filtrado = df_filtrado.dropna(subset=["__LAT__", "__LON__"]).copy()
 
         # =====================================================
         # KPIs ESTILIZADOS NO TOPO - APENAS OS 3 SOLICITADOS
         # =====================================================
-        st.markdown("---")
         
-        # Calcular métricas para os KPIs
-        total_obras = len(df_obras)
-        obras_com_coords = len(df_map)
+        # Calcular métricas para os KPIs com dados filtrados
+        total_obras_filtrado = len(df_filtrado)
+        obras_com_coords_filtrado = len(df_map_filtrado)
         
         # Calcular valor total das obras - usando valor_total
-        valor_total = 0
+        valor_total_filtrado = 0
         if c_valor:
             try:
-                # Converter valores para numérico, removendo caracteres não numéricos
-                valores = df_obras[c_valor].apply(lambda x: 
+                valores = df_filtrado[c_valor].apply(lambda x: 
                     float(re.sub(r'[^\d,]', '', str(x)).replace(',', '.') 
                     if pd.notna(x) and str(x).strip() != '' else 0)
                 )
-                valor_total = valores.sum()
+                valor_total_filtrado = valores.sum()
             except Exception as e:
                 st.warning(f"Aviso na conversão de valores: {e}")
-                valor_total = 0
+                valor_total_filtrado = 0
         
         # Contar obras concluídas - considerando "CONCLUÍDA" na coluna Andamento
-        obras_concluidas = 0
+        obras_concluidas_filtrado = 0
         if c_status:
-            # Converter para string e normalizar
-            status_series = df_obras[c_status].astype(str).str.upper().str.strip()
-            # Contar obras concluídas (considerando diferentes variações)
-            obras_concluidas = status_series.str.contains('CONCLUÍDA|CONCLUIDA|FINALIZADA|TERMINADA', na=False).sum()
+            status_series = df_filtrado[c_status].astype(str).str.upper().str.strip()
+            obras_concluidas_filtrado = status_series.str.contains('CONCLUÍDA|CONCLUIDA|FINALIZADA|TERMINADA', na=False).sum()
         
         # Formatar valor total no padrão brasileiro
         def formatar_valor_br(valor):
             """Formata valor no padrão brasileiro: R$ 38.553.879,00"""
             if valor == 0:
                 return "R$ 0,00"
-            # Formatar com separadores de milhar e 2 casas decimais
             valor_str = f"{valor:,.2f}"
-            # Substituir pontos por vírgulas e vírgulas por pontos
             valor_str = valor_str.replace(",", "X").replace(".", ",").replace("X", ".")
             return f"R$ {valor_str}"
         
-        valor_total_formatado = formatar_valor_br(valor_total)
+        valor_total_formatado = formatar_valor_br(valor_total_filtrado)
         
         # Criar colunas para os KPIs
         col1, col2, col3 = st.columns(3)
@@ -885,8 +930,27 @@ with tab_map["🏗️ Painel de Obras"]:
             font-size: 2em;
             margin-bottom: 10px;
         }
+        .filtro-info {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            text-align: center;
+            font-weight: bold;
+        }
         </style>
         """, unsafe_allow_html=True)
+        
+        # Mostrar informações do filtro
+        filtro_info = []
+        if ano_selecionado != "Todos":
+            filtro_info.append(f"Ano: {ano_selecionado}")
+        if status_selecionado != "Todos":
+            filtro_info.append(f"Andamento: {status_selecionado}")
+        
+        if filtro_info:
+            st.markdown(f'<div class="filtro-info">🎯 Filtros Ativos: {" | ".join(filtro_info)}</div>', unsafe_allow_html=True)
         
         with col1:
             st.markdown(f"""
@@ -901,7 +965,7 @@ with tab_map["🏗️ Painel de Obras"]:
             st.markdown(f"""
             <div class="kpi-card">
                 <div class="kpi-icon">📋</div>
-                <div class="kpi-value">{total_obras}</div>
+                <div class="kpi-value">{total_obras_filtrado}</div>
                 <div class="kpi-label">Total de Obras</div>
             </div>
             """, unsafe_allow_html=True)
@@ -910,20 +974,22 @@ with tab_map["🏗️ Painel de Obras"]:
             st.markdown(f"""
             <div class="kpi-card">
                 <div class="kpi-icon">✅</div>
-                <div class="kpi-value">{obras_concluidas}</div>
+                <div class="kpi-value">{obras_concluidas_filtrado}</div>
                 <div class="kpi-label">Obras Concluídas</div>
             </div>
             """, unsafe_allow_html=True)
         
         st.markdown("---")
 
-        st.success(f"✅ **{len(df_map)} obra(s)** com coordenadas válidas encontradas")
+        st.success(f"✅ **{len(df_map_filtrado)} obra(s)** com coordenadas válidas encontradas")
 
         base_dir_candidates = ["dados", "/mnt/data"]
         gj_distritos = load_geojson_any([os.path.join(b, "milha_dist_polig.geojson") for b in base_dir_candidates])
         gj_sede      = load_geojson_any([os.path.join(b, "Distritos_pontos.geojson") for b in base_dir_candidates])
 
-        # Apenas o mapa ocupando toda a largura
+        # =====================================================
+        # MAPA COM FILTROS APLICADOS
+        # =====================================================
         col_map = st.columns([1])[0]
 
         with col_map:
@@ -975,7 +1041,7 @@ with tab_map["🏗️ Painel de Obras"]:
                     folium.Marker([y, x], tooltip=nome, icon=folium.Icon(color="darkgreen", icon="home")).add_to(fg_sede)
                 fg_sede.add_to(m2)
 
-            if sidebar_state["show_obras"] and not df_map.empty:
+            if sidebar_state["show_obras"] and not df_map_filtrado.empty:
                 def status_icon_color(status_val: str):
                     s = (str(status_val) if status_val is not None else "").strip().lower()
                     if any(k in s for k in ["conclu", "finaliz"]):     return "green"
@@ -986,7 +1052,7 @@ with tab_map["🏗️ Painel de Obras"]:
 
                 fg_obras = FG("Obras Municipais", True)
                 ignore_cols = {"__LAT__", "__LON__"}
-                for _, r in df_map.iterrows():
+                for _, r in df_map_filtrado.iterrows():
                     nome   = str(r.get(c_obra, "Obra")) if c_obra else "Obra"
                     status = str(r.get(c_status, "-")) if c_status else "-"
                     empresa= str(r.get(c_empresa, "-")) if c_empresa else "-"
@@ -996,7 +1062,7 @@ with tab_map["🏗️ Painel de Obras"]:
                     dtfim  = str(r.get(c_dtfim, "-")) if c_dtfim else "-"
 
                     extra_rows = []
-                    for c in df_obras.columns:
+                    for c in df_filtrado.columns:
                         if c in ignore_cols or c in {c_obra, c_status, c_empresa, c_valor, c_bairro, c_dtini, c_dtfim}:
                             continue
                         val = r.get(c, "")
@@ -1028,145 +1094,152 @@ with tab_map["🏗️ Painel de Obras"]:
             if bounds:
                 (min_lat, min_lon), (max_lat, max_lon) = bounds
                 m2.fit_bounds([[min_lat, min_lon], [max_lat, max_lon]])
-            elif not df_map.empty:
-                m2.fit_bounds([[df_map["__LAT__"].min(), df_map["__LON__"].min()],
-                               [df_map["__LAT__"].max(), df_map["__LON__"].max()]])
+            elif not df_map_filtrado.empty:
+                m2.fit_bounds([[df_map_filtrado["__LAT__"].min(), df_map_filtrado["__LON__"].min()],
+                               [df_map_filtrado["__LAT__"].max(), df_map_filtrado["__LON__"].max()]])
 
             # Layer control com basemaps e overlays visíveis
             folium.LayerControl(collapsed=True, position='topleft').add_to(m2)
             folium_static(m2, width=800, height=600)
 
         # =====================================================
-        # GRÁFICO DE BARRAS COM FILTRO DE ANO
+        # GRÁFICO MODERNO COM PLOTLY
         # =====================================================
         st.markdown("---")
-        st.markdown("### 📊 Investimento em Obras por Ano")
+        st.markdown("### 📊 Análise de Investimento em Obras")
         
-        # Preparar dados para o gráfico - usando data_inicio e valor_total
-        df_filtrado_ano = df_obras.copy()  # DataFrame para filtro
-        
-        if c_dtini and c_valor:
+        if c_dtini and c_valor and c_status:
             try:
-                # Extrair ano da data_inicio
-                df_obras['ano_extraido'] = df_obras[c_dtini].astype(str).str.extract(r'(\d{4})')[0]
-                df_filtrado_ano['ano_extraido'] = df_obras['ano_extraido']  # Copiar para o DataFrame de filtro
+                # Preparar dados para gráficos
+                df_grafico = df_filtrado.copy()
+                df_grafico['valor_numerico'] = df_grafico[c_valor].apply(
+                    lambda x: float(re.sub(r'[^\d,]', '', str(x)).replace(',', '.')) 
+                    if pd.notna(x) and str(x).strip() != '' else 0
+                )
                 
-                # Se não conseguir extrair ano da data_inicio, tentar outras colunas
-                if df_obras['ano_extraido'].isna().all():
-                    st.info("Tentando extrair ano de outras colunas de data...")
-                    # Tentar extrair ano de qualquer coluna que possa conter data
-                    for coluna in df_obras.columns:
-                        if 'data' in coluna.lower() or 'ano' in coluna.lower():
-                            df_obras['ano_extraido'] = df_obras[coluna].astype(str).str.extract(r'(\d{4})')[0]
-                            df_filtrado_ano['ano_extraido'] = df_obras['ano_extraido']  # Atualizar também no DataFrame de filtro
-                            if not df_obras['ano_extraido'].isna().all():
-                                st.success(f"Usando anos extraídos da coluna: {coluna}")
-                                break
-                
-                # Filtrar apenas anos válidos
-                df_anos_validos = df_obras[df_obras['ano_extraido'].notna() & df_obras['ano_extraido'].str.match(r'^\d{4}$', na=False)].copy()
-                
-                if not df_anos_validos.empty:
-                    # Converter valor_total para numérico
-                    df_anos_validos['valor_numerico'] = df_anos_validos[c_valor].apply(
-                        lambda x: float(re.sub(r'[^\d,]', '', str(x)).replace(',', '.')) 
-                        if pd.notna(x) and str(x).strip() != '' else 0
+                # Gráfico 1: Investimento por Ano (se houver anos)
+                if 'ano_extraido' in df_grafico.columns and df_grafico['ano_extraido'].notna().any():
+                    invest_por_ano = df_grafico.groupby('ano_extraido')['valor_numerico'].sum().reset_index()
+                    invest_por_ano = invest_por_ano.sort_values('ano_extraido')
+                    
+                    fig_ano = px.bar(
+                        invest_por_ano,
+                        x='ano_extraido',
+                        y='valor_numerico',
+                        title='<b>💰 Investimento por Ano</b>',
+                        labels={'ano_extraido': 'Ano', 'valor_numerico': 'Valor Investido (R$)'},
+                        color='valor_numerico',
+                        color_continuous_scale='viridis'
                     )
                     
-                    # Agrupar por ano
-                    investimento_por_ano = df_anos_validos.groupby('ano_extraido')['valor_numerico'].sum().sort_index()
-                    
-                    # Criar filtro de ano
-                    anos_disponiveis = sorted(investimento_por_ano.index.tolist())
-                    ano_selecionado = st.selectbox(
-                        "**Selecione o Ano:**",
-                        options=["Todos"] + anos_disponiveis,
-                        index=0
+                    fig_ano.update_layout(
+                        plot_bgcolor='rgba(0,0,0,0)',
+                        paper_bgcolor='rgba(0,0,0,0)',
+                        font=dict(color='#2c3e50'),
+                        showlegend=False,
+                        height=400
                     )
                     
-                    # Filtrar dados conforme seleção
-                    if ano_selecionado == "Todos":
-                        dados_grafico = investimento_por_ano
-                        titulo_grafico = "Investimento Total em Obras por Ano"
-                        # Para tabela - usar todos os dados
-                        df_tabela_filtrado = df_obras
-                    else:
-                        dados_grafico = investimento_por_ano[investimento_por_ano.index == ano_selecionado]
-                        titulo_grafico = f"Investimento em Obras - Ano {ano_selecionado}"
-                        # Para tabela - filtrar pelo ano selecionado
-                        df_tabela_filtrado = df_filtrado_ano[df_filtrado_ano['ano_extraido'] == ano_selecionado]
+                    fig_ano.update_traces(
+                        hovertemplate='<b>Ano %{x}</b><br>Valor: R$ %{y:,.2f}<extra></extra>',
+                        texttemplate='R$ %{y:,.0f}',
+                        textposition='outside'
+                    )
                     
-                    if not dados_grafico.empty:
-                        # Criar gráfico de barras
-                        fig, ax = plt.subplots(figsize=(12, 6))
-                        
-                        # Converter valores para milhões para melhor visualização
-                        valores_em_milhoes = dados_grafico.values / 1000000
-                        
-                        bars = ax.bar(dados_grafico.index.astype(str), valores_em_milhoes, 
-                                    color='#667eea', alpha=0.8, edgecolor='#764ba2', linewidth=2)
-                        
-                        # Adicionar valores nas barras
-                        for bar, valor in zip(bars, dados_grafico.values):
-                            altura = bar.get_height()
-                            valor_formatado = formatar_valor_br(valor)
-                            ax.text(bar.get_x() + bar.get_width()/2, altura + (max(valores_em_milhoes) * 0.01),
-                                   valor_formatado, ha='center', va='bottom', fontweight='bold', fontsize=10)
-                        
-                        ax.set_ylabel('Valor (Milhões de R$)', fontsize=12, fontweight='bold')
-                        ax.set_xlabel('Ano', fontsize=12, fontweight='bold')
-                        ax.set_title(titulo_grafico, fontsize=14, fontweight='bold', pad=20)
-                        
-                        # Ajustar layout
-                        plt.xticks(rotation=45)
-                        plt.tight_layout()
-                        
-                        st.pyplot(fig)
-                        
-                        # Mostrar estatísticas
-                        st.info(f"**Estatísticas:** {len(dados_grafico)} ano(s) com investimento total de {formatar_valor_br(dados_grafico.sum())}")
-                    else:
-                        st.info("Não há dados disponíveis para o ano selecionado.")
-                        df_tabela_filtrado = df_obras
-                else:
-                    st.info("Não foram encontrados anos válidos para análise nas datas de início.")
-                    # Mostrar preview das datas disponíveis para debug
-                    st.write("**Preview das datas disponíveis:**")
-                    st.write(df_obras[c_dtini].head(10))
-                    df_tabela_filtrado = df_obras
+                    st.plotly_chart(fig_ano, use_container_width=True)
+                
+                # Gráfico 2: Investimento por Status/Andamento
+                invest_por_status = df_grafico.groupby(c_status)['valor_numerico'].sum().reset_index()
+                invest_por_status = invest_por_status.sort_values('valor_numerico', ascending=False)
+                
+                fig_status = px.pie(
+                    invest_por_status,
+                    values='valor_numerico',
+                    names=c_status,
+                    title='<b>📊 Distribuição por Andamento</b>',
+                    hole=0.4,
+                    color_discrete_sequence=px.colors.sequential.Viridis
+                )
+                
+                fig_status.update_layout(
+                    plot_bgcolor='rgba(0,0,0,0)',
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    font=dict(color='#2c3e50'),
+                    height=400,
+                    showlegend=True
+                )
+                
+                fig_status.update_traces(
+                    hovertemplate='<b>%{label}</b><br>Valor: R$ %{value:,.2f}<br>Percentual: %{percent}<extra></extra>',
+                    textinfo='percent+label'
+                )
+                
+                col_grafico1, col_grafico2 = st.columns(2)
+                
+                with col_grafico1:
+                    st.plotly_chart(fig_status, use_container_width=True)
+                
+                # Gráfico 3: Quantidade de Obras por Status
+                contagem_status = df_grafico[c_status].value_counts().reset_index()
+                contagem_status.columns = [c_status, 'quantidade']
+                
+                fig_contagem = px.bar(
+                    contagem_status,
+                    x=c_status,
+                    y='quantidade',
+                    title='<b>📈 Quantidade de Obras por Andamento</b>',
+                    labels={c_status: 'Status', 'quantidade': 'Quantidade de Obras'},
+                    color='quantidade',
+                    color_continuous_scale='plasma'
+                )
+                
+                fig_contagem.update_layout(
+                    plot_bgcolor='rgba(0,0,0,0)',
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    font=dict(color='#2c3e50'),
+                    showlegend=False,
+                    height=400
+                )
+                
+                fig_contagem.update_traces(
+                    hovertemplate='<b>%{x}</b><br>Quantidade: %{y} obras<extra></extra>',
+                    texttemplate='%{y}',
+                    textposition='outside'
+                )
+                
+                with col_grafico2:
+                    st.plotly_chart(fig_contagem, use_container_width=True)
                     
             except Exception as e:
-                st.error(f"Erro ao processar dados para o gráfico: {e}")
-                st.write("**Detalhes do erro:**", str(e))
-                df_tabela_filtrado = df_obras
-        else:
-            colunas_faltantes = []
-            if not c_dtini: colunas_faltantes.append("data_inicio")
-            if not c_valor: colunas_faltantes.append("valor_total")
-            st.info(f"Colunas necessárias não encontradas: {', '.join(colunas_faltantes)}")
-            df_tabela_filtrado = df_obras
+                st.error(f"Erro ao gerar gráficos: {e}")
 
         # =====================================================
-        # TABELA FILTRADA POR ANO
+        # TABELA FILTRADA
         # =====================================================
         st.markdown("### 📋 Tabela de Obras")
         
         # Mostrar contagem de obras filtradas
-        if 'ano_selecionado' in locals() and ano_selecionado != "Todos":
-            st.write(f"**Mostrando {len(df_tabela_filtrado)} obra(s) do ano {ano_selecionado}**")
+        filtro_info_tabela = []
+        if ano_selecionado != "Todos":
+            filtro_info_tabela.append(f"Ano: {ano_selecionado}")
+        if status_selecionado != "Todos":
+            filtro_info_tabela.append(f"Andamento: {status_selecionado}")
+        
+        if filtro_info_tabela:
+            st.write(f"**🎯 Mostrando {len(df_filtrado)} obra(s) - {' | '.join(filtro_info_tabela)}**")
         else:
-            st.write(f"**Mostrando todas as {len(df_tabela_filtrado)} obra(s)**")
+            st.write(f"**📋 Mostrando todas as {len(df_filtrado)} obra(s)**")
         
         # Adicionar coluna de ano se disponível
-        if 'ano_extraido' in df_tabela_filtrado.columns:
+        if 'ano_extraido' in df_filtrado.columns:
             priority = ['ano_extraido', c_obra, c_status, c_empresa, c_valor, c_bairro, c_dtini, c_dtfim]
         else:
             priority = [c_obra, c_status, c_empresa, c_valor, c_bairro, c_dtini, c_dtfim]
             
-        ordered = [c for c in priority if c and c in df_tabela_filtrado.columns]
-        rest = [c for c in df_tabela_filtrado.columns if c not in ordered and c not in ['ano_extraido', '__LAT__', '__LON__']]
+        ordered = [c for c in priority if c and c in df_filtrado.columns]
+        rest = [c for c in df_filtrado.columns if c not in ordered and c not in ['ano_extraido', '__LAT__', '__LON__']]
         
-        st.dataframe(df_tabela_filtrado[ordered + rest] if ordered else df_tabela_filtrado, use_container_width=True)
+        st.dataframe(df_filtrado[ordered + rest] if ordered else df_filtrado, use_container_width=True)
     else:
         st.error(f"❌ Não foi possível carregar o CSV de obras em: {CSV_OBRAS}")
 
