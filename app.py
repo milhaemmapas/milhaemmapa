@@ -1709,7 +1709,7 @@ with tab_map["🏠 Página Inicial"]:
       .grad-3{{ background: linear-gradient(135deg,#4facfe 0%, #2A4D9B 100%); }}
 
       /* KPIs */
-      .kpis{{ display:grid; grid-template-columns: repeat(5,1fr); gap:18px; margin:2rem 0 1.5rem}}
+      .kpis{{ display:grid; grid-template-columns: repeat(5,1fr); gap:18px; margin:2rem 0 2.5rem}}
       .kpi{{ background:#fff; border-radius:14px; padding:16px; box-shadow: var(--shadow); border:1px solid #eef2ff}}
       .kpi .lbl{{ color:var(--muted); font-size:.85rem}}
       .kpi .val{{ color:var(--primary); font-size:1.45rem; font-weight:700; line-height:1; margin-top:6px}}
