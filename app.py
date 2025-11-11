@@ -1744,7 +1744,7 @@ with tab_map["🏠 Página Inicial"]:
       .download-title span{{font-size:1.8rem}}
       .formatos-grid{{ display:grid; grid-template-columns: repeat(5,1fr); gap:12px; margin:6px 0 12px }}
       @media (max-width: 1000px){{ .formatos-grid{{ grid-template-columns: repeat(3,1fr);}} }}
-      @media (max-width: 799px){{ .formatos-grid{{ grid-template-columns: repeat(2,1fr);}} }}
+      @media (max-width: 720px){{ .formatos-grid{{ grid-template-columns: repeat(2,1fr);}} }}
 
       /* Botões de formato */
       .stButton>button{{
