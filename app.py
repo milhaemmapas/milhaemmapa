@@ -1733,7 +1733,7 @@ with tab_map["🏠 Página Inicial"]:
       /* Área de downloads */
       .download-title{{ 
         display:flex; align-items:center; gap:12px; 
-        margin:0 0 20px 6px; color:#1f2937;
+        margin:0 0 10px 6px; color:#1f2937;
       }}
       .download-title span{{font-size:1.8rem}}
       .formatos-grid{{ 
@@ -1868,10 +1868,6 @@ with tab_map["🏠 Página Inicial"]:
             <p class="desc-text">{d['texto']}</p>
           </div>
         """, unsafe_allow_html=True)
-
-
-
-
 
 # =====================================================
 # Rodapé
