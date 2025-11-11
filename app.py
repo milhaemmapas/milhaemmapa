@@ -730,6 +730,7 @@ else:
 # 2) Painel de Obras
 # =====================================================
 with tab_map["🏗️ Painel de Obras"]:
+        
     def render_card(title_html: str, body_html: str):
         st.markdown(
             f"""
@@ -1039,10 +1040,13 @@ with tab_map["🏗️ Painel de Obras"]:
         st.markdown("### 📊 Investimento em Obras por Ano")
         
         # Preparar dados para o gráfico - usando data_inicio e valor_total
+        df_filtrado_ano = df_obras.copy()  # DataFrame para filtro
+        
         if c_dtini and c_valor:
             try:
                 # Extrair ano da data_inicio
                 df_obras['ano_extraido'] = df_obras[c_dtini].astype(str).str.extract(r'(\d{4})')[0]
+                df_filtrado_ano['ano_extraido'] = df_obras['ano_extraido']  # Copiar para o DataFrame de filtro
                 
                 # Se não conseguir extrair ano da data_inicio, tentar outras colunas
                 if df_obras['ano_extraido'].isna().all():
@@ -1051,6 +1055,7 @@ with tab_map["🏗️ Painel de Obras"]:
                     for coluna in df_obras.columns:
                         if 'data' in coluna.lower() or 'ano' in coluna.lower():
                             df_obras['ano_extraido'] = df_obras[coluna].astype(str).str.extract(r'(\d{4})')[0]
+                            df_filtrado_ano['ano_extraido'] = df_obras['ano_extraido']  # Atualizar também no DataFrame de filtro
                             if not df_obras['ano_extraido'].isna().all():
                                 st.success(f"Usando anos extraídos da coluna: {coluna}")
                                 break
@@ -1080,9 +1085,13 @@ with tab_map["🏗️ Painel de Obras"]:
                     if ano_selecionado == "Todos":
                         dados_grafico = investimento_por_ano
                         titulo_grafico = "Investimento Total em Obras por Ano"
+                        # Para tabela - usar todos os dados
+                        df_tabela_filtrado = df_obras
                     else:
                         dados_grafico = investimento_por_ano[investimento_por_ano.index == ano_selecionado]
                         titulo_grafico = f"Investimento em Obras - Ano {ano_selecionado}"
+                        # Para tabela - filtrar pelo ano selecionado
+                        df_tabela_filtrado = df_filtrado_ano[df_filtrado_ano['ano_extraido'] == ano_selecionado]
                     
                     if not dados_grafico.empty:
                         # Criar gráfico de barras
@@ -1115,26 +1124,46 @@ with tab_map["🏗️ Painel de Obras"]:
                         st.info(f"**Estatísticas:** {len(dados_grafico)} ano(s) com investimento total de {formatar_valor_br(dados_grafico.sum())}")
                     else:
                         st.info("Não há dados disponíveis para o ano selecionado.")
+                        df_tabela_filtrado = df_obras
                 else:
                     st.info("Não foram encontrados anos válidos para análise nas datas de início.")
                     # Mostrar preview das datas disponíveis para debug
                     st.write("**Preview das datas disponíveis:**")
                     st.write(df_obras[c_dtini].head(10))
+                    df_tabela_filtrado = df_obras
                     
             except Exception as e:
                 st.error(f"Erro ao processar dados para o gráfico: {e}")
                 st.write("**Detalhes do erro:**", str(e))
+                df_tabela_filtrado = df_obras
         else:
             colunas_faltantes = []
             if not c_dtini: colunas_faltantes.append("data_inicio")
             if not c_valor: colunas_faltantes.append("valor_total")
             st.info(f"Colunas necessárias não encontradas: {', '.join(colunas_faltantes)}")
+            df_tabela_filtrado = df_obras
 
+        # =====================================================
+        # TABELA FILTRADA POR ANO
+        # =====================================================
         st.markdown("### 📋 Tabela de Obras")
-        priority = [c_obra, c_status, c_empresa, c_valor, c_bairro, c_dtini, c_dtfim]
-        ordered = [c for c in priority if c and c in df_obras.columns]
-        rest = [c for c in df_obras.columns if c not in ordered]
-        st.dataframe(df_obras[ordered + rest] if ordered else df_obras, use_container_width=True)
+        
+        # Mostrar contagem de obras filtradas
+        if 'ano_selecionado' in locals() and ano_selecionado != "Todos":
+            st.write(f"**Mostrando {len(df_tabela_filtrado)} obra(s) do ano {ano_selecionado}**")
+        else:
+            st.write(f"**Mostrando todas as {len(df_tabela_filtrado)} obra(s)**")
+        
+        # Adicionar coluna de ano se disponível
+        if 'ano_extraido' in df_tabela_filtrado.columns:
+            priority = ['ano_extraido', c_obra, c_status, c_empresa, c_valor, c_bairro, c_dtini, c_dtfim]
+        else:
+            priority = [c_obra, c_status, c_empresa, c_valor, c_bairro, c_dtini, c_dtfim]
+            
+        ordered = [c for c in priority if c and c in df_tabela_filtrado.columns]
+        rest = [c for c in df_tabela_filtrado.columns if c not in ordered and c not in ['ano_extraido', '__LAT__', '__LON__']]
+        
+        st.dataframe(df_tabela_filtrado[ordered + rest] if ordered else df_tabela_filtrado, use_container_width=True)
     else:
         st.error(f"❌ Não foi possível carregar o CSV de obras em: {CSV_OBRAS}")
 
