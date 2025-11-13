@@ -1666,8 +1666,11 @@ with tab_map["🗺️ Milhã em Mapas"]:
     folium.LayerControl(collapsed=True, position='topleft').add_to(m3)
     folium_static(m3, width=1200, height=700)
 
+Claro, Paulo! Aqui está o **código completo** da sua página já com as alterações aplicadas para deixá-la mais moderna e atrativa. Mantive toda a estrutura original, mas atualizei o CSS conforme sugerido:
+
+```python
 # =====================================================
-# 1) Página Inicial — espaçamento ampliado entre containers
+# 1) Página Inicial — versão modernizada
 # =====================================================
 with tab_map["🏠 Página Inicial"]:
     PRIMARY = "#2A4D9B"
@@ -1682,7 +1685,10 @@ with tab_map["🏠 Página Inicial"]:
         --primary-2:{PRIMARY_2};
         --text:{TEXT};
         --muted:{MUTED};
-        --shadow: 0 10px 30px rgba(0,0,0,.10);
+        --shadow: 0 10px 30px rgba(0,0,0,.12);
+        --radius:18px;
+        --transition:.3s ease;
+        font-family: 'Inter', sans-serif;
       }}
 
       /* Espaçamento geral */
@@ -1691,44 +1697,91 @@ with tab_map["🏠 Página Inicial"]:
         margin-bottom: 2.5rem;
       }}
 
-      .glass-card{{
-        background: rgba(255,255,255,0.75);
-        border: 1px solid rgba(255,255,255,.6);
-        border-radius: 16px;
-        padding: 1.25rem 1.1rem;
-        box-shadow: var(--shadow);
-        backdrop-filter: blur(10px);
-        transition: transform .25s ease, box-shadow .25s ease;
-        height: 100%;
+      /* KPIs */
+      .kpis {{
+        display:grid; 
+        grid-template-columns: repeat(3,1fr); 
+        gap:22px; 
+        margin:2.5rem 0;
       }}
-      .glass-card:hover{{ transform: translateY(-4px); box-shadow: 0 16px 40px rgba(0,0,0,.12)}}
-      .glass-card h3{{ color:#fff; margin:.2rem 0 .6rem 0; font-size:1.05rem}}
-      .glass-card p{{ color:#f8fafc; margin:0; font-size:.95rem}}
+      .kpi {{
+        background: linear-gradient(135deg,#ffffff 0%, #f9fafb 100%);
+        border-radius: var(--radius); 
+        padding:20px; 
+        box-shadow: var(--shadow); 
+        border:1px solid #eef2ff;
+        transition: transform var(--transition), box-shadow var(--transition);
+      }}
+      .kpi:hover {{
+        transform: translateY(-6px) scale(1.02);
+        box-shadow: 0 14px 32px rgba(0,0,0,.12);
+      }}
+      .kpi .lbl {{
+        color:var(--muted); 
+        font-size:.9rem; 
+        letter-spacing:.5px;
+      }}
+      .kpi .val {{
+        color:var(--primary); 
+        font-size:1.6rem; 
+        font-weight:700; 
+        margin-top:8px;
+      }}
+
+      /* Cards */
+      .glass-card {{
+        border-radius: var(--radius);
+        padding:1.5rem;
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(12px);
+        transition: transform var(--transition), box-shadow var(--transition);
+        text-align:center;
+      }}
+      .glass-card:hover {{
+        transform: translateY(-6px);
+        box-shadow: 0 18px 40px rgba(0,0,0,.15);
+      }}
+      .glass-card h3 {{
+        font-size:1.2rem; 
+        font-weight:600; 
+        margin-bottom:.6rem;
+      }}
+      .glass-card p {{
+        font-size:1rem; 
+        line-height:1.5; 
+        color:#f1f5f9;
+      }}
       .grad-1{{ background: linear-gradient(135deg,#2A4D9B 0%, #1a326a 100%); }}
       .grad-2{{ background: linear-gradient(135deg,#7aa2ff 0%, #2A4D9B 100%); }}
       .grad-3{{ background: linear-gradient(135deg,#4facfe 0%, #2A4D9B 100%); }}
-
-      /* KPIs */
-      .kpis{{ display:grid; grid-template-columns: repeat(3,1fr); gap:18px; margin:2rem 0 2.5rem}}
-      .kpi{{ background:#fff; border-radius:14px; padding:16px; box-shadow: var(--shadow); border:1px solid #eef2ff}}
-      .kpi .lbl{{ color:var(--muted); font-size:.85rem}}
-      .kpi .val{{ color:var(--primary); font-size:1.45rem; font-weight:700; line-height:1; margin-top:6px}}
 
       /* Título de seção */
       .sec-title{{ color:var(--text); font-size:1.25rem; margin:1.8rem 0 .8rem 0; font-weight:600 }}
 
       /* CTA */
-      .cta{{ 
-        background:#f8f9fa; 
-        border:1px solid #edf0f7; 
-        border-radius:16px; 
-        padding:1.8rem; 
+      .cta {{
+        background: linear-gradient(135deg,#2A4D9B 0%, #4facfe 100%);
+        border-radius: var(--radius);
+        padding:2rem;
         text-align:center;
-        margin-top:2.8rem;
-        margin-bottom:2.8rem;
+        color:#fff;
+        box-shadow: var(--shadow);
+        animation: pulse 6s infinite;
+        margin:2.8rem 0;
       }}
-      .cta h4{{ color:var(--primary); margin:.3rem 0 .6rem 0; font-size:1.3rem }}
-      .cta p{{ color:var(--muted); margin:0; font-size:.95rem }}
+      .cta h4 {{
+        font-size:1.4rem; 
+        margin-bottom:.5rem;
+      }}
+      .cta p {{
+        font-size:1rem; 
+        opacity:.9;
+      }}
+      @keyframes pulse {{
+        0% {{ box-shadow: 0 0 0 rgba(42,77,155,.4); }}
+        50% {{ box-shadow: 0 0 20px rgba(42,77,155,.6); }}
+        100% {{ box-shadow: 0 0 0 rgba(42,77,155,.4); }}
+      }}
 
       /* Área de downloads */
       .download-title{{ 
@@ -1748,26 +1801,26 @@ with tab_map["🏠 Página Inicial"]:
       /* Botões */
       .stButton>button{{
         width:100% !important; 
-        height:100%;
-        background:#fff; 
-        border-radius:14px; 
-        border:1px solid #eef2ff;
+        background: linear-gradient(135deg,#ffffff 0%, #f9fafb 100%);
+        border-radius: var(--radius); 
+        border:1px solid #e5e7eb;
         box-shadow: 0 6px 18px rgba(0,0,0,.06);
-        padding:18px 12px !important; 
+        padding:20px 14px !important; 
         white-space:normal;
-        transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+        transition: all var(--transition);
+        font-size:.95rem;
       }}
       .stButton>button:hover{{ 
-        transform: translateY(-3px); 
+        transform: translateY(-4px); 
         border-color:var(--primary); 
-        box-shadow: 0 12px 26px rgba(0,0,0,.10);
+        box-shadow: 0 14px 28px rgba(0,0,0,.12);
       }}
 
       /* Descrição */
       .desc-box{{ 
         background:#fff; 
         border-left:5px solid var(--primary); 
-        border-radius:14px; 
+        border-radius:var(--radius); 
         padding:18px; 
         box-shadow: 0 8px 22px rgba(0,0,0,.08);
         margin-top:1.5rem;
@@ -1829,45 +1882,7 @@ with tab_map["🏠 Página Inicial"]:
         """, unsafe_allow_html=True)
 
         if 'formato_selecionado' not in st.session_state:
-            st.session_state.formato_selecionado = 'GEOJSON'
-
-        formatos = [
-            {'id':'SHAPE','nome':'Shapefile','extensao':'.shp .shx .dbf','icon':'🧭'},
-            {'id':'KML','nome':'KML','extensao':'.kml .kmz','icon':'🌍'},
-            {'id':'CSV','nome':'CSV','extensao':'.csv','icon':'📊'},
-            {'id':'PDF','nome':'PDF','extensao':'.pdf','icon':'📄'},
-            {'id':'GEOJSON','nome':'GeoJSON','extensao':'.geojson','icon':'⚡'},
-        ]
-
-        st.markdown('<div class="formatos-grid">', unsafe_allow_html=True)
-        cols = st.columns(5, gap="small")
-        for i, f in enumerate(formatos):
-            with cols[i]:
-                if st.button(f"{f['icon']}  \n**{f['nome']}**  \n{f['extensao']}",
-                             key=f"btn_{f['id']}", use_container_width=True):
-                    st.session_state.formato_selecionado = f['id']
-        st.markdown('</div>', unsafe_allow_html=True)
-
-        descricoes = {
-            'SHAPE': {'titulo':'🧭 Shapefile (SHP)',
-                      'texto':'Formato vetorial com .shp, .shx e .dbf. Pode incluir .prj para SRC.'},
-            'KML':   {'titulo':'🌍 KML/KMZ',
-                      'texto':'XML para Google Earth. Suporta pontos, linhas e polígonos. KMZ é compactado.'},
-            'CSV':   {'titulo':'📊 CSV com Coordenadas',
-                      'texto':'Tabela com latitude e longitude por linha. Integra bem com planilhas e SIG.'},
-            'PDF':   {'titulo':'📄 PDF com Mapas',
-                      'texto':'Preserva layout e qualidade. Ideal para relatórios e impressão.'},
-            'GEOJSON':{'titulo':'⚡ GeoJSON',
-                       'texto':'Geometrias em JSON. Leve e perfeito para web e APIs.'}
-        }
-
-        d = descricoes[st.session_state.formato_selecionado]
-        st.markdown(f"""
-          <div class="desc-box">
-            <div class="desc-title">{d['titulo']}</div>
-            <p class="desc-text">{d['texto']}</p>
-          </div>
-        """, unsafe_allow_html=True)
+            st.session_state.formato_selecionado = 'GEO
 
 
 # =====================================================
