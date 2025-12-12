@@ -1849,17 +1849,32 @@ with tab_map["🏠 Página Inicial"]:
         st.markdown('</div>', unsafe_allow_html=True)
 
         descricoes = {
-            'SHAPE': {'titulo':'🧭 Shapefile (SHP)',
-                      'texto':'Formato vetorial com .shp, .shx e .dbf. Pode incluir .prj para SRC.'},
-            'KML':   {'titulo':'🌍 KML/KMZ',
-                      'texto':'XML para Google Earth. Suporta pontos, linhas e polígonos. KMZ é compactado.'},
-            'CSV':   {'titulo':'📊 CSV com Coordenadas',
-                      'texto':'Tabela com latitude e longitude por linha. Integra bem com planilhas e SIG.'},
-            'PDF':   {'titulo':'📄 PDF com Mapas',
-                      'texto':'Preserva layout e qualidade. Ideal para relatórios e impressão.'},
-            'GEOJSON':{'titulo':'⚡ GeoJSON',
-                       'texto':'Geometrias em JSON. Leve e perfeito para web e APIs.'}
-        }
+            'SHAPE': {
+                'titulo': '🧭 Shapefile (SHP)',
+                'texto': 'Formato vetorial com .shp, .shx e .dbf. Pode incluir .prj para SRC.',
+                'link': 'https://milhaemmapas.up.railway.app/geoserver/web'
+            },
+            'KML': {
+                'titulo': '🌍 KML/KMZ',
+                'texto': 'XML para Google Earth. Suporta pontos, linhas e polígonos. KMZ é compactado.',
+                'link': 'https://milhaemmapas.up.railway.app/geoserver/web'
+            },
+            'CSV': {
+                'titulo': '📊 CSV com Coordenadas',
+                'texto': 'Tabela com latitude e longitude por linha. Integra bem com planilhas e SIG.',
+                'link': 'https://milhaemmapas.up.railway.app/geoserver/web'
+            },
+            'PDF': {
+                'titulo': '📄 PDF com Mapas',
+                'texto': 'Preserva layout e qualidade. Ideal para relatórios e impressão.',
+                'link': 'https://milhaemmapas.up.railway.app/geoserver/web'
+            },
+            'GEOJSON': {
+                'titulo': '⚡ GeoJSON',
+                'texto': 'Geometrias em JSON. Leve e perfeito para web e APIs.',
+                'link': 'https://milhaemmapas.up.railway.app/geoserver/web'
+            }
+
 
         d = descricoes[st.session_state.formato_selecionado]
         st.markdown(f"""
