@@ -1874,6 +1874,7 @@ with tab_map["🏠 Página Inicial"]:
                 'texto': 'Geometrias em JSON. Leve e perfeito para web e APIs.',
                 'link': 'https://milhaemmapas.up.railway.app/geoserver/web'
             }
+        }
 
 
         d = descricoes[st.session_state.formato_selecionado]
