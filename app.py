@@ -1913,7 +1913,7 @@ st.markdown(
             <span style='color: {COLORS["secondary"]};'>Geoespacial</span>
         </div>
         <p style='font-size: 1.1rem; margin-bottom: 1rem;'><strong>Milhã - Ceará</strong></p>
-        <p style='font-size: 0.9rem; opacity: 0.7;'>Desenvolvido para transparência e gestão pública eficiente • © 2024 Prefeitura Municipal de Milhã</p>
+        <p style='font-size: 0.9rem; opacity: 0.7;'>Desenvolvido para transparência e gestão pública eficiente • © 2025 Prefeitura Municipal de Milhã</p>
     </div>
     """,
     unsafe_allow_html=True
