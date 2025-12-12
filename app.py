@@ -1820,7 +1820,7 @@ with tab_map["🏠 Página Inicial"]:
     </div>
     """, unsafe_allow_html=True)
 
-    # ---------- DOWNLOAD ----------
+# ---------- DOWNLOAD ----------
     with st.container(border=True):
         st.markdown("""
           <div class="download-title">
@@ -1848,6 +1848,7 @@ with tab_map["🏠 Página Inicial"]:
                     st.session_state.formato_selecionado = f['id']
         st.markdown('</div>', unsafe_allow_html=True)
 
+        # DICIONÁRIO COM OS LINKS - CORRIGIDO E MANTIDO
         descricoes = {
             'SHAPE': {
                 'titulo': '🧭 Shapefile (SHP)',
@@ -1876,15 +1877,29 @@ with tab_map["🏠 Página Inicial"]:
             }
         }
 
-
+        # --- PARTE CORRIGIDA: EXIBE DESCRIÇÃO E BOTÃO DE LINK ---
         d = descricoes[st.session_state.formato_selecionado]
+        
+        # 1. Exibe a caixa de descrição normalmente
         st.markdown(f"""
           <div class="desc-box">
             <div class="desc-title">{d['titulo']}</div>
             <p class="desc-text">{d['texto']}</p>
           </div>
         """, unsafe_allow_html=True)
-
+        
+        # 2. Adiciona um botão/abaixo que é CLICÁVEL e direciona para o link
+        st.markdown(
+            f'<div style="text-align: center; margin-top: 1rem; margin-bottom: 2.5rem;">'
+            f'<a href="{d["link"]}" target="_blank">'
+            f'<button style="background: linear-gradient(135deg, #2A4D9B 0%, #1a326a 100%); '
+            f'color: white; border: none; padding: 12px 32px; border-radius: 12px; '
+            f'font-weight: bold; cursor: pointer; font-size: 1rem; '
+            f'box-shadow: 0 6px 18px rgba(42, 77, 155, 0.25);">'
+            f'🌐 Acessar GeoServer para Download'
+            f'</button></a></div>',
+            unsafe_allow_html=True
+        )
 
 # =====================================================
 # Rodapé
